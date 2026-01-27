@@ -616,7 +616,9 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(get
     quote_dict["created_at"] = quote_dict["created_at"].isoformat()
     quote_dict["valid_until"] = quote_dict["valid_until"].isoformat()
     
-    await db.quotes.insert_one(quote_dict)
+    # Create a copy for insertion to avoid ObjectId contamination
+    insert_dict = quote_dict.copy()
+    await db.quotes.insert_one(insert_dict)
     return quote_dict
 
 @api_router.get("/quotes", response_model=List[dict])
