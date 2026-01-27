@@ -1,0 +1,122 @@
+{
+  "timestamp": "2026-01-27T15:08:46.393220",
+  "total_tests": 19,
+  "passed_tests": 14,
+  "success_rate": 73.68421052631578,
+  "results": [
+    {
+      "test": "Init Default Data",
+      "success": true,
+      "details": "Data already exists or created successfully",
+      "response_data": null
+    },
+    {
+      "test": "Admin Login",
+      "success": true,
+      "details": "Token received, User: Sistem Yöneticisi",
+      "response_data": null
+    },
+    {
+      "test": "Dashboard Stats",
+      "success": true,
+      "details": "Stats: 6 products, 0 customers",
+      "response_data": null
+    },
+    {
+      "test": "Get Products",
+      "success": true,
+      "details": "Retrieved 6 products",
+      "response_data": null
+    },
+    {
+      "test": "Product Count Check",
+      "success": true,
+      "details": "Has 6 products (≥6 required)",
+      "response_data": null
+    },
+    {
+      "test": "Create Product",
+      "success": false,
+      "details": "Creation failed: {'status_code': 520, 'text': 'Internal Server Error'}",
+      "response_data": null
+    },
+    {
+      "test": "Get Customers",
+      "success": true,
+      "details": "Retrieved 0 customers",
+      "response_data": null
+    },
+    {
+      "test": "Create Customer",
+      "success": false,
+      "details": "Creation failed: {'status_code': 520, 'text': 'Internal Server Error'}",
+      "response_data": null
+    },
+    {
+      "test": "Get Quotes",
+      "success": true,
+      "details": "Retrieved 0 quotes",
+      "response_data": null
+    },
+    {
+      "test": "Create Quote",
+      "success": false,
+      "details": "No customer or product available for quote creation",
+      "response_data": null
+    },
+    {
+      "test": "Get Users",
+      "success": true,
+      "details": "Retrieved 1 users",
+      "response_data": null
+    },
+    {
+      "test": "Create User",
+      "success": true,
+      "details": "Created user ID: 3ce33120-04aa-49a3-9fbf-988d5e9d1678",
+      "response_data": null
+    },
+    {
+      "test": "Get Dealers",
+      "success": true,
+      "details": "Retrieved 0 dealers",
+      "response_data": null
+    },
+    {
+      "test": "Create Dealer",
+      "success": false,
+      "details": "Creation failed: {'status_code': 520, 'text': 'Internal Server Error'}",
+      "response_data": null
+    },
+    {
+      "test": "Stock Movement",
+      "success": false,
+      "details": "No product available for stock testing",
+      "response_data": null
+    },
+    {
+      "test": "Get Company Settings",
+      "success": true,
+      "details": "Company: Solar Enerji A.Ş.",
+      "response_data": null
+    },
+    {
+      "test": "Update Company Settings",
+      "success": true,
+      "details": "Settings updated successfully",
+      "response_data": null
+    },
+    {
+      "test": "Sales by User Report",
+      "success": true,
+      "details": "Retrieved 0 user sales records",
+      "response_data": null
+    },
+    {
+      "test": "Sales by Dealer Report",
+      "success": true,
+      "details": "Retrieved 0 dealer sales records",
+      "response_data": null
+    }
+  ]
+}
