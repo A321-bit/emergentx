@@ -404,7 +404,9 @@ async def create_product(product_data: ProductCreate, current_user: dict = Depen
     product_dict = product.model_dump()
     product_dict["created_at"] = product_dict["created_at"].isoformat()
     
-    await db.products.insert_one(product_dict)
+    # Create a copy for insertion to avoid ObjectId contamination
+    insert_dict = product_dict.copy()
+    await db.products.insert_one(insert_dict)
     return product_dict
 
 @api_router.get("/products", response_model=List[dict])
