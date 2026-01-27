@@ -1,0 +1,147 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "Creative Designer",
+    "mission": "Create a Solar Energy SaaS that feels like a high-end engineering tool, not a generic admin panel.",
+    "principles": [
+      "Fusion: Industrial Precision + Organic Warmth",
+      "Density: High-density data visualization (Bento Grids)",
+      "Clarity: Zero ambiguity in data presentation",
+      "Aesthetics: Clean Tech (Light) vs. Energy Flow (Dark)"
+    ]
+  },
+  "typography": {
+    "primary_font": "Outfit",
+    "secondary_font": "Inter",
+    "font_weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "bold": 700
+    },
+    "usage": {
+      "headings": "Outfit, font-bold, tracking-tight",
+      "body": "Inter, font-regular, tracking-normal",
+      "data_labels": "Inter, font-medium, uppercase, tracking-wider, text-xs",
+      "numbers": "Outfit, font-bold, tabular-nums"
+    }
+  },
+  "colors": {
+    "theme_strategy": "Dual Theme (Solar Day / Solar Night)",
+    "light_theme": {
+      "background": "#F8FAFC",
+      "foreground": "#0F172A",
+      "card": "#FFFFFF",
+      "card_foreground": "#0F172A",
+      "primary": "#F59E0B",
+      "primary_foreground": "#FFFFFF",
+      "secondary": "#E2E8F0",
+      "secondary_foreground": "#0F172A",
+      "muted": "#F1F5F9",
+      "muted_foreground": "#64748B",
+      "accent": "#0EA5E9",
+      "accent_foreground": "#FFFFFF",
+      "destructive": "#EF4444",
+      "border": "#E2E8F0",
+      "input": "#E2E8F0",
+      "ring": "#F59E0B"
+    },
+    "dark_theme": {
+      "background": "#020617",
+      "foreground": "#F8FAFC",
+      "card": "#0F172A",
+      "card_foreground": "#F8FAFC",
+      "primary": "#FBBF24",
+      "primary_foreground": "#020617",
+      "secondary": "#1E293B",
+      "secondary_foreground": "#F8FAFC",
+      "muted": "#1E293B",
+      "muted_foreground": "#94A3B8",
+      "accent": "#38BDF8",
+      "accent_foreground": "#020617",
+      "destructive": "#F87171",
+      "border": "#1E293B",
+      "input": "#1E293B",
+      "ring": "#FBBF24"
+    },
+    "chart_colors": [
+      "#F59E0B",
+      "#0EA5E9",
+      "#10B981",
+      "#8B5CF6",
+      "#F43F5E"
+    ]
+  },
+  "layout": {
+    "grid_system": "Bento Grid",
+    "spacing_scale": "Tailwind (p-4, p-6, p-8)",
+    "container_padding": "px-4 md:px-8 lg:px-12",
+    "dashboard_grid": "grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6",
+    "card_radius": "rounded-xl",
+    "button_radius": "rounded-md"
+  },
+  "components": {
+    "buttons": {
+      "default": "h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm font-medium",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+      "ghost": "hover:bg-accent hover:text-accent-foreground"
+    },
+    "cards": {
+      "style": "bg-card text-card-foreground border border-border shadow-sm hover:shadow-md transition-shadow duration-200",
+      "header": "flex flex-col space-y-1.5 p-6",
+      "content": "p-6 pt-0"
+    },
+    "inputs": {
+      "style": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "sidebar": {
+      "width": "w-64",
+      "collapsed_width": "w-16",
+      "style": "border-r border-border bg-card/50 backdrop-blur-xl h-screen sticky top-0"
+    }
+  },
+  "assets": {
+    "images": {
+      "login_background": "https://images.unsplash.com/photo-1669155985309-cf569561c159?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dashboard_hero": "https://images.unsplash.com/photo-1761472823286-9f6093ed6663?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "product_placeholders": {
+        "panel": "https://images.unsplash.com/photo-1766757084313-8d0f199482ea?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "inverter": "https://images.unsplash.com/photo-1654644709246-794d8a715588?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "battery": "https://images.pexels.com/photos/33751679/pexels-photo-33751679.jpeg"
+      },
+      "avatars": [
+        "https://images.unsplash.com/photo-1560174351-69e996c3aad6?crop=entropy&cs=srgb&fm=jpg&q=85"
+      ]
+    },
+    "icons": "Lucide React (default)",
+    "logo_placeholder": "https://via.placeholder.com/150x50?text=SOLAR+SAAS"
+  },
+  "motion": {
+    "libraries": ["framer-motion"],
+    "transitions": {
+      "default": "transition-all duration-200 ease-in-out",
+      "hover": "scale-[1.02] shadow-lg",
+      "page_load": "initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}"
+    }
+  },
+  "libraries": {
+    "charts": "recharts",
+    "pdf_generation": "jspdf jspdf-autotable",
+    "date_handling": "date-fns",
+    "icons": "lucide-react",
+    "toast": "sonner"
+  },
+  "universal_guidelines": [
+    "DO NOT use gradients for backgrounds. Use solid colors or subtle noise textures.",
+    "DO NOT center text in dashboards. Left align everything for scanability.",
+    "Use 'Inter' for all data tables and dense information.",
+    "Use 'Outfit' for all headings and KPIs.",
+    "Ensure all text labels are in TURKISH language.",
+    "Implement Dark/Light mode toggle in the sidebar or header.",
+    "Use 'Bento Grid' layout for the main dashboard view.",
+    "All interactive elements MUST have 'data-testid' attributes.",
+    "Use 'sonner' for all toast notifications.",
+    "For PDF generation, use a clean, table-based layout with the company logo at the top."
+  ],
+  "instructions_to_main_agent": "You are building a Solar Energy Sales SaaS. Focus on the 'Admin Dashboard' and 'Quote Creation' flows first. Use the provided image URLs for the login page and product demos. Ensure the 'Bento Grid' layout is implemented in the dashboard. The UI must be in Turkish."
+}
