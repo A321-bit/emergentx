@@ -671,7 +671,9 @@ async def create_dealer(dealer_data: DealerCreate, current_user: dict = Depends(
     dealer_dict = dealer.model_dump()
     dealer_dict["created_at"] = dealer_dict["created_at"].isoformat()
     
-    await db.dealers.insert_one(dealer_dict)
+    # Create a copy for insertion to avoid ObjectId contamination
+    insert_dict = dealer_dict.copy()
+    await db.dealers.insert_one(insert_dict)
     return dealer_dict
 
 @api_router.get("/dealers", response_model=List[dict])
