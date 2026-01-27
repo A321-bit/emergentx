@@ -500,7 +500,9 @@ async def create_customer(customer_data: CustomerCreate, current_user: dict = De
     customer_dict = customer.model_dump()
     customer_dict["created_at"] = customer_dict["created_at"].isoformat()
     
-    await db.customers.insert_one(customer_dict)
+    # Create a copy for insertion to avoid ObjectId contamination
+    insert_dict = customer_dict.copy()
+    await db.customers.insert_one(insert_dict)
     return customer_dict
 
 @api_router.get("/customers", response_model=List[dict])
