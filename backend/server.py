@@ -465,7 +465,9 @@ async def create_stock_movement(movement_data: StockMovementCreate, current_user
     movement_dict = movement.model_dump()
     movement_dict["created_at"] = movement_dict["created_at"].isoformat()
     
-    await db.stock_movements.insert_one(movement_dict)
+    # Create a copy for insertion to avoid ObjectId contamination
+    insert_dict = movement_dict.copy()
+    await db.stock_movements.insert_one(insert_dict)
     
     # Update product stock
     quantity_change = movement_data.quantity if movement_data.movement_type == "giris" else -movement_data.quantity
