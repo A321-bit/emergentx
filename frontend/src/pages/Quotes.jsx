@@ -159,31 +159,30 @@ const Quotes = () => {
     }
   };
 
-  const loadImageAsBase64 = (url) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          const dataURL = canvas.toDataURL('image/jpeg', 0.9);
-          resolve(dataURL);
-        } catch (e) {
-          console.error('Canvas error:', e);
+  const loadImageAsBase64 = async (url) => {
+    try {
+      // Axios ile blob olarak indir
+      const response = await axios.get(url, { 
+        responseType: 'blob',
+        timeout: 10000
+      });
+      
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          console.log('Image converted to base64 successfully');
+          resolve(reader.result);
+        };
+        reader.onerror = (e) => {
+          console.error('FileReader error:', e);
           resolve(null);
-        }
-      };
-      img.onerror = (e) => {
-        console.error('Image load error:', e);
-        resolve(null);
-      };
-      // Add timestamp to bypass cache
-      img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-    });
+        };
+        reader.readAsDataURL(response.data);
+      });
+    } catch (e) {
+      console.error('Axios image load error:', e.message);
+      return null;
+    }
   };
 
   const generatePDF = async (quote) => {
