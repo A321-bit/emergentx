@@ -237,7 +237,7 @@ const Products = () => {
                   </TableCell>
                   {isBayi && (
                     <TableCell className="text-right currency text-primary font-medium">
-                      {formatCurrency(product.dealer_price)}
+                      {formatCurrency(product.dealer_price, product.currency || 'USD')}
                     </TableCell>
                   )}
                   {isAdmin && (
