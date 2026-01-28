@@ -60,6 +60,13 @@ Güneş enerjisi (panel, inverter, batarya) satışı için kapsamlı B2B/B2C y�
   - Edinme kaynakları (Santral, Referans, Facebook, Instagram, Google Ads)
 - [x] **Müşteri Ayarları Sayfası**: Kategori ve kaynak yönetimi için ayrı sayfa
 - [x] **Excel Import/Export**: Toplu ürün yükleme ve ürün listesi indirme
+- [x] **Gelişmiş PDF Teklif Sistemi**: 
+  - Kapak görseli (tam sayfa A4)
+  - Müşteri bilgileri (ad, telefon, il/ilçe, adres)
+  - Ürün tablosu (ad, miktar, birim, fiyat, toplam)
+  - Teklif şartları ve koşulları
+  - Banka hesap bilgileri
+  - Modern, profesyonel tasarım
 
 ---
 
