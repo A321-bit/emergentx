@@ -19,7 +19,7 @@ Güneş enerjisi (panel, inverter, batarya) satışı için kapsamlı B2B/B2C y�
 - [x] User management with role-based access
 - [x] Product management (Panel, Inverter, Batarya, Aksesuar)
 - [x] Stock management with entry/exit tracking
-- [x] Customer management (Villa, İşletme, Fabrika)
+- [x] Customer management (Bireysel/Kurumsal)
 - [x] Quote/Proposal creation with PDF generation
 - [x] Multi-currency support (TRY, USD, EUR)
 - [x] Dealer management with discount rates
@@ -27,14 +27,16 @@ Güneş enerjisi (panel, inverter, batarya) satışı için kapsamlı B2B/B2C y�
 - [x] Dark/Light theme toggle
 - [x] Company logo upload
 
-## What's Been Implemented (27 Ocak 2026)
+---
 
-### FAZ 1 - ÇEKİRDEK SİSTEM ✅
+## What's Been Implemented
+
+### FAZ 1 - ÇEKİRDEK SİSTEM ✅ (27 Ocak 2026)
 - [x] JWT tabanlı kullanıcı girişi ve rol bazlı yetkilendirme
 - [x] Admin paneli: Dashboard istatistikleri, grafikler
 - [x] Ürün yönetimi: CRUD, kategori filtreleme, arama
 - [x] Stok yönetimi: Giriş/çıkış hareketleri, toplam değer hesabı
-- [x] Müşteri yönetimi: CRUD, müşteri tipi (villa/işletme/fabrika)
+- [x] Müşteri yönetimi: CRUD, müşteri tipi
 - [x] Teklif sistemi: Ürün seçimi, iskonto, PDF indirme
 - [x] Teklif durumu: Gönderildi → Onaylandı → Satışa Döndü / İptal
 - [x] Kullanıcı yönetimi: Personel/bayi ekleme, rol atama
@@ -43,47 +45,80 @@ Güneş enerjisi (panel, inverter, batarya) satışı için kapsamlı B2B/B2C y�
 - [x] Ayarlar: Şirket bilgileri, logo yükleme, garanti metni
 - [x] Dark/Light tema desteği
 
-### Backend API'ler
-- Auth: login, me
-- Users: CRUD
-- Products: CRUD
-- Stock Movements: create, list
-- Customers: CRUD
-- Quotes: CRUD, status update
-- Dealers: CRUD
-- Settings: company settings, logo upload
-- Stats: dashboard, sales-by-user, sales-by-dealer
+### FAZ 2 - GELİŞMİŞ ÖZELLİKLER ✅ (28 Ocak 2026)
+- [x] **Dinamik Kategori Yönetimi**: Admin kategori oluşturabilir, her kategoriye varsayılan kar marjı tanımlanabilir
+- [x] **Gelişmiş Fiyatlandırma**: Alış fiyatı (KDV hariç) + %20 KDV = Maliyet → + Kar Marjı = Satış Fiyatı
+- [x] **Çoklu Para Birimi**: USD, EUR, TRY desteği
+- [x] **Bayi Grupları (Tier)**: Silver (%5), Gold (%10), Plus (%15) gibi iskonto grupları
+- [x] **Özel Roller ve Yetkiler**: Checkbox bazlı granüler yetki matrisi (22 farklı yetki)
+- [x] **Bayi Kullanıcı Hesabı**: Bayi oluştururken otomatik kullanıcı hesabı oluşturma
+- [x] **Ürün Medya Yönetimi**: Çoklu resim yükleme (JPEG/PNG) ve PDF datasheet yükleme
+- [x] **Gelişmiş Müşteri Yönetimi**: 
+  - Bireysel/Kurumsal müşteri ayrımı
+  - TC Kimlik (bireysel) / Vergi No & Dairesi (kurumsal)
+  - Müşteri kategorileri (On-Grid, Off-Grid, Hibrit, Sulama)
+  - Edinme kaynakları (Santral, Referans, Facebook, Instagram, Google Ads)
+- [x] **Müşteri Ayarları Sayfası**: Kategori ve kaynak yönetimi için ayrı sayfa
+
+---
+
+## Backend API Endpoints
+- Auth: `/api/auth/login`, `/api/auth/me`
+- Users: `/api/users` (CRUD)
+- Roles: `/api/roles` (CRUD), `/api/permissions` (list)
+- Products: `/api/products` (CRUD)
+- Product Media: `/api/products/{id}/upload-images`, `/api/products/{id}/upload-datasheet`
+- Categories: `/api/categories` (CRUD)
+- Customer Categories: `/api/customer-categories` (CRUD)
+- Customer Sources: `/api/customer-sources` (CRUD)
+- Customers: `/api/customers` (CRUD)
+- Stock Movements: `/api/stock-movements` (create, list)
+- Quotes: `/api/quotes` (CRUD), `/api/quotes/{id}/status`
+- Dealers: `/api/dealers` (CRUD with user creation)
+- Dealer Groups: `/api/dealer-groups` (CRUD)
+- Settings: `/api/settings/company`, `/api/settings/upload-logo`
+- Stats: `/api/stats/dashboard`, `/api/stats/sales-by-user`, `/api/stats/sales-by-dealer`
+- Init: `/api/init-data`
+
+---
 
 ## Prioritized Backlog
 
-### P0 (Kritik) - Tamamlandı ✅
-- Kullanıcı rolleri ve yetkilendirme
-- Ürün & stok yönetimi
-- Teklif oluşturma ve PDF çıktı
-
-### P1 (Yüksek Öncelik) - FAZ 2
+### P1 (Yüksek Öncelik) - Sonraki Görevler
+- [ ] PDF Teklif Geliştirme: Ürün datasheet'lerini teklife ekleme
 - [ ] WhatsApp entegrasyonu (teklif gönderimi)
 - [ ] Email teklif gönderimi
 - [ ] Müşteri onay linki (teklif onaylama butonu)
-- [ ] Personel prim hesaplama sistemi
 
-### P2 (Orta Öncelik) - FAZ 3
+### P2 (Orta Öncelik)
 - [ ] Logo/Mikro ERP entegrasyonu
 - [ ] Mobil responsive iyileştirmeler
 - [ ] Depo bazlı stok yönetimi
-- [ ] API dokümantasyonu
+- [ ] Personel prim hesaplama sistemi
 
 ### P3 (Düşük Öncelik)
 - [ ] Sipariş yönetimi modülü (bayi siparişleri)
 - [ ] Fatura oluşturma
 - [ ] Detaylı raporlar ve export
+- [ ] API dokümantasyonu
 
-## Next Tasks
-1. WhatsApp Business API entegrasyonu
-2. Email teklif gönderme özelliği
-3. Müşteri portalı (teklif görüntüleme/onaylama)
-4. Personel prim raporu
+---
 
-## Default Admin
-- Email: admin@solar.com
-- Password: admin123
+## Test Credentials
+- **Admin**: admin@solar.com / admin123
+- **Bayi (örnek)**: bayi@email.com / bayi123
+
+## Default Data (init-data endpoint ile oluşturulur)
+- 3 Rol: Yönetici (tam yetki), Satış Personeli, Bayi
+- 3 Bayi Grubu: Silver (%5), Gold (%10), Plus (%15)
+- 4 Müşteri Kategorisi: On-Grid, Off-Grid, Hibrit, Sulama
+- 6 Edinme Kaynağı: Santral, Referans, Lead, Facebook, Instagram, Google Ads
+
+---
+
+## Files Reference
+- Backend: `/app/backend/server.py`
+- Frontend Pages: `/app/frontend/src/pages/`
+- Design Guidelines: `/app/design_guidelines.json`
+- User Guide: `/app/KULLANIM_KILAVUZU.md`
+- Test Reports: `/app/test_reports/`
