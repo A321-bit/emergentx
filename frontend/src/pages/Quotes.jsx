@@ -159,325 +159,268 @@ const Quotes = () => {
     }
   };
 
+  const loadImageAsBase64 = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = url + '?t=' + Date.now(); // Cache busting
+    });
+  };
+
   const generatePDF = async (quote) => {
     try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
+      toast.info('PDF oluşturuluyor...');
+      
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 15;
       
       // Colors
-      const primaryColor = [245, 158, 11]; // Amber
-      const darkColor = [31, 41, 55]; // Gray-800
-      const lightGray = [249, 250, 251]; // Gray-50
+      const primaryColor = [245, 158, 11];
+      const darkColor = [51, 51, 51];
 
       // ============= PAGE 1: COVER PAGE =============
       if (companySettings.quote_cover_image) {
         try {
-          const imgUrl = `${API_URL}${companySettings.quote_cover_image}`;
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = imgUrl;
-          });
-          
-          // Add cover image full page
-          doc.addImage(img, 'JPEG', 0, 0, pageWidth, pageHeight);
+          const coverBase64 = await loadImageAsBase64(`${API_URL}${companySettings.quote_cover_image}`);
+          doc.addImage(coverBase64, 'PNG', 0, 0, pageWidth, pageHeight);
           doc.addPage();
-        } catch (imgError) {
-          console.warn('Cover image could not be loaded:', imgError);
+        } catch (e) {
+          console.warn('Kapak görseli yüklenemedi:', e);
         }
       }
 
       // ============= PAGE 2: QUOTE DETAILS =============
-      let yPos = margin;
-      
-      // Header background
+      // Header Bar
       doc.setFillColor(...primaryColor);
-      doc.rect(0, 0, pageWidth, 45, 'F');
+      doc.rect(0, 0, pageWidth, 40, 'F');
       
-      // Company Logo
+      // Logo
+      let logoX = margin;
       if (companySettings.logo_url) {
         try {
-          const logoUrl = `${API_URL}${companySettings.logo_url}`;
-          const logoImg = new Image();
-          logoImg.crossOrigin = 'anonymous';
-          
-          await new Promise((resolve, reject) => {
-            logoImg.onload = resolve;
-            logoImg.onerror = reject;
-            logoImg.src = logoUrl;
-          });
-          
-          doc.addImage(logoImg, 'PNG', margin, 8, 30, 30);
-          yPos = 12;
-        } catch (logoError) {
-          console.warn('Logo could not be loaded');
-          yPos = 12;
+          const logoBase64 = await loadImageAsBase64(`${API_URL}${companySettings.logo_url}`);
+          doc.addImage(logoBase64, 'PNG', margin, 5, 30, 30);
+          logoX = margin + 35;
+        } catch (e) {
+          console.warn('Logo yüklenemedi:', e);
         }
       }
       
-      // Company Name & Contact (white text on amber background)
+      // Company Info (white text)
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(companySettings.company_name || 'Solar Enerji', 55, yPos + 5);
+      doc.text(companySettings.company_name || 'Sirket Adi', logoX, 15);
       
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      let contactY = yPos + 12;
-      if (companySettings.phone) {
-        doc.text(`Tel: ${companySettings.phone}`, 55, contactY);
-        contactY += 5;
-      }
-      if (companySettings.email) {
-        doc.text(`Email: ${companySettings.email}`, 55, contactY);
-        contactY += 5;
-      }
+      if (companySettings.phone) doc.text('Tel: ' + companySettings.phone, logoX, 22);
+      if (companySettings.email) doc.text('Email: ' + companySettings.email, logoX, 28);
       
-      // Quote Number Box (right side)
+      // Quote Box (right side)
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(pageWidth - 70, 8, 55, 30, 3, 3, 'F');
+      doc.roundedRect(pageWidth - 55, 5, 45, 30, 2, 2, 'F');
       doc.setTextColor(...darkColor);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text('TEKLİF', pageWidth - 42.5, 16, { align: 'center' });
-      doc.setFontSize(11);
-      doc.text(quote.quote_number, pageWidth - 42.5, 24, { align: 'center' });
+      doc.text('TEKLIF', pageWidth - 32.5, 13, { align: 'center' });
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.text(formatDate(quote.created_at), pageWidth - 42.5, 32, { align: 'center' });
-      
-      // Customer Info Section
-      yPos = 55;
-      doc.setFillColor(...lightGray);
-      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'F');
+      doc.text(quote.quote_number, pageWidth - 32.5, 20, { align: 'center' });
+      doc.text(formatDate(quote.created_at), pageWidth - 32.5, 26, { align: 'center' });
+      doc.text('Gecerli: ' + formatDate(quote.valid_until), pageWidth - 32.5, 32, { align: 'center' });
+
+      // Customer Section
+      let yPos = 50;
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
       
       doc.setTextColor(...darkColor);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text('MÜŞTERİ BİLGİLERİ', margin + 5, yPos + 8);
+      doc.text('MUSTERI BILGILERI', margin + 5, yPos + 8);
       
-      doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.text(quote.customer_name || '-', margin + 5, yPos + 17);
+      doc.text(quote.customer_name || '-', margin + 5, yPos + 16);
       
-      // Customer details in columns
       const customer = customers.find(c => c.id === quote.customer_id);
       doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
       if (customer) {
-        let detailX = margin + 5;
-        let detailY = yPos + 25;
-        
-        if (customer.phone) {
-          doc.text(`Tel: ${customer.phone}`, detailX, detailY);
-          detailX += 50;
-        }
-        if (customer.city) {
-          doc.text(`İl: ${customer.city}`, detailX, detailY);
-          detailX += 40;
-        }
-        if (customer.district) {
-          doc.text(`İlçe: ${customer.district}`, detailX, detailY);
-        }
-        if (customer.address) {
-          doc.text(`Adres: ${customer.address.substring(0, 60)}${customer.address.length > 60 ? '...' : ''}`, margin + 5, detailY + 6);
-        }
+        let info = [];
+        if (customer.phone) info.push('Tel: ' + customer.phone);
+        if (customer.city) info.push('Il: ' + customer.city);
+        if (customer.district) info.push('Ilce: ' + customer.district);
+        doc.text(info.join('   |   '), margin + 5, yPos + 24);
       }
-      
-      // Quote validity info
-      doc.setFontSize(9);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Geçerlilik: ${formatDate(quote.valid_until)}`, pageWidth - margin - 5, yPos + 8, { align: 'right' });
-      
+
       // Products Table
-      yPos = 100;
+      yPos = 90;
       doc.setTextColor(...darkColor);
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('ÜRÜNLER', margin, yPos);
+      doc.text('URUNLER', margin, yPos);
       
-      // Build table data with product info
-      const tableData = quote.items.map(item => {
-        const product = products.find(p => p.id === item.product_id);
-        return [
-          item.product_name || '-',
-          item.quantity.toString(),
-          product?.unit || 'adet',
-          formatCurrency(item.unit_price, quote.currency),
-          formatCurrency(item.total_price, quote.currency)
-        ];
-      });
+      const tableData = quote.items.map(item => [
+        (item.product_name || '-').substring(0, 35),
+        String(item.quantity),
+        products.find(p => p.id === item.product_id)?.unit || 'adet',
+        formatCurrency(item.unit_price, quote.currency),
+        formatCurrency(item.total_price, quote.currency)
+      ]);
       
       autoTable(doc, {
         startY: yPos + 5,
-        head: [['Ürün Adı', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam']],
+        head: [['Urun Adi', 'Adet', 'Birim', 'Birim Fiyat', 'Toplam']],
         body: tableData,
         theme: 'grid',
+        styles: { 
+          fontSize: 9, 
+          cellPadding: 3,
+          overflow: 'linebreak',
+          font: 'helvetica'
+        },
         headStyles: { 
           fillColor: primaryColor,
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 9,
-          cellPadding: 4
-        },
-        bodyStyles: {
-          fontSize: 9,
-          cellPadding: 4
-        },
-        alternateRowStyles: {
-          fillColor: lightGray
+          halign: 'center'
         },
         columnStyles: {
-          0: { cellWidth: 70 },
+          0: { cellWidth: 60, halign: 'left' },
           1: { cellWidth: 20, halign: 'center' },
           2: { cellWidth: 20, halign: 'center' },
           3: { cellWidth: 35, halign: 'right' },
           4: { cellWidth: 35, halign: 'right' }
         },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        tableWidth: pageWidth - (margin * 2)
       });
       
-      // Totals Section
-      let finalY = (doc.lastAutoTable?.finalY || yPos + 50) + 10;
+      // Totals
+      const finalY = (doc.lastAutoTable?.finalY || 150) + 10;
       
-      // Totals box
-      const totalsX = pageWidth - margin - 80;
-      doc.setFillColor(...lightGray);
-      doc.roundedRect(totalsX, finalY, 80, 40, 3, 3, 'F');
+      doc.setFillColor(245, 245, 245);
+      doc.rect(pageWidth - margin - 70, finalY, 70, 35, 'F');
       
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkColor);
-      
-      doc.text('Ara Toplam:', totalsX + 5, finalY + 10);
-      doc.text(formatCurrency(quote.subtotal, quote.currency), totalsX + 75, finalY + 10, { align: 'right' });
+      doc.text('Ara Toplam:', pageWidth - margin - 65, finalY + 10);
+      doc.text(formatCurrency(quote.subtotal, quote.currency), pageWidth - margin - 5, finalY + 10, { align: 'right' });
       
       if (quote.discount_rate > 0) {
-        doc.text(`İskonto (%${quote.discount_rate}):`, totalsX + 5, finalY + 18);
-        doc.setTextColor(220, 38, 38); // Red
-        doc.text(`-${formatCurrency(quote.discount_amount, quote.currency)}`, totalsX + 75, finalY + 18, { align: 'right' });
+        doc.text('Iskonto (%' + quote.discount_rate + '):', pageWidth - margin - 65, finalY + 18);
+        doc.setTextColor(200, 0, 0);
+        doc.text('-' + formatCurrency(quote.discount_amount, quote.currency), pageWidth - margin - 5, finalY + 18, { align: 'right' });
       }
       
-      // Total with border
       doc.setDrawColor(...primaryColor);
-      doc.setLineWidth(0.5);
-      doc.line(totalsX + 5, finalY + 25, totalsX + 75, finalY + 25);
+      doc.line(pageWidth - margin - 65, finalY + 23, pageWidth - margin - 5, finalY + 23);
       
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...darkColor);
-      doc.text('TOPLAM:', totalsX + 5, finalY + 34);
+      doc.text('TOPLAM:', pageWidth - margin - 65, finalY + 30);
       doc.setTextColor(...primaryColor);
-      doc.text(formatCurrency(quote.total, quote.currency), totalsX + 75, finalY + 34, { align: 'right' });
-      
+      doc.text(formatCurrency(quote.total, quote.currency), pageWidth - margin - 5, finalY + 30, { align: 'right' });
+
       // Notes
       if (quote.notes) {
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...darkColor);
-        doc.text('Notlar:', margin, finalY + 10);
         doc.setFont('helvetica', 'normal');
-        doc.text(quote.notes, margin, finalY + 17);
+        doc.setTextColor(...darkColor);
+        doc.text('Not: ' + quote.notes, margin, finalY + 10);
       }
-      
-      // ============= PAGE 3: TERMS & BANK INFO =============
-      const hasTerms = companySettings.quote_terms;
-      const hasBank = companySettings.bank_iban;
-      
-      if (hasTerms || hasBank) {
+
+      // ============= PAGE 3: TERMS & BANK =============
+      if (companySettings.quote_terms || companySettings.bank_iban) {
         doc.addPage();
-        yPos = margin;
         
         // Header
         doc.setFillColor(...primaryColor);
-        doc.rect(0, 0, pageWidth, 25, 'F');
+        doc.rect(0, 0, pageWidth, 20, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('ŞARTLAR VE ÖDEME BİLGİLERİ', pageWidth / 2, 16, { align: 'center' });
+        doc.text('SARTLAR VE ODEME BILGILERI', pageWidth / 2, 13, { align: 'center' });
         
-        yPos = 40;
+        let termY = 35;
         
-        // Terms Section
-        if (hasTerms) {
+        // Terms
+        if (companySettings.quote_terms) {
           doc.setTextColor(...darkColor);
-          doc.setFontSize(11);
+          doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
-          doc.text('Teklif Şartları', margin, yPos);
+          doc.text('Teklif Sartlari', margin, termY);
           
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
+          termY += 8;
           
-          const terms = companySettings.quote_terms.split('\n');
-          yPos += 8;
-          terms.forEach(line => {
-            if (yPos > pageHeight - 40) {
-              doc.addPage();
-              yPos = margin;
+          const lines = companySettings.quote_terms.split('\n');
+          lines.forEach(line => {
+            if (termY < pageHeight - 60) {
+              doc.text(line.substring(0, 90), margin, termY);
+              termY += 5;
             }
-            doc.text(line, margin, yPos);
-            yPos += 5;
           });
-          
-          yPos += 10;
+          termY += 10;
         }
         
-        // Bank Info Section
-        if (hasBank) {
-          doc.setFillColor(...lightGray);
-          doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 50, 3, 3, 'F');
+        // Bank Info
+        if (companySettings.bank_iban) {
+          doc.setFillColor(245, 245, 245);
+          doc.rect(margin, termY, pageWidth - (margin * 2), 40, 'F');
           
           doc.setTextColor(...darkColor);
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Banka Hesap Bilgileri', margin + 5, yPos + 10);
-          
           doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Banka Hesap Bilgileri', margin + 5, termY + 10);
+          
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
-          let bankY = yPos + 20;
+          let bankY = termY + 18;
           
           if (companySettings.bank_name) {
-            doc.text(`Banka: ${companySettings.bank_name}`, margin + 5, bankY);
-            if (companySettings.bank_branch) {
-              doc.text(`Şube: ${companySettings.bank_branch}`, margin + 100, bankY);
-            }
-            bankY += 7;
+            doc.text('Banka: ' + companySettings.bank_name + (companySettings.bank_branch ? '  |  Sube: ' + companySettings.bank_branch : ''), margin + 5, bankY);
+            bankY += 6;
           }
-          
           if (companySettings.bank_account_holder) {
-            doc.text(`Hesap Sahibi: ${companySettings.bank_account_holder}`, margin + 5, bankY);
-            bankY += 7;
+            doc.text('Hesap Sahibi: ' + companySettings.bank_account_holder, margin + 5, bankY);
+            bankY += 6;
           }
-          
           if (companySettings.bank_iban) {
             doc.setFont('helvetica', 'bold');
-            doc.text(`IBAN: ${companySettings.bank_iban}`, margin + 5, bankY);
-            doc.setFont('helvetica', 'normal');
-            if (companySettings.bank_swift) {
-              doc.text(`SWIFT: ${companySettings.bank_swift}`, margin + 130, bankY);
-            }
+            doc.text('IBAN: ' + companySettings.bank_iban, margin + 5, bankY);
           }
         }
         
-        // Warranty footer
+        // Warranty Footer
         if (companySettings.warranty_text) {
           doc.setFontSize(8);
           doc.setTextColor(100, 100, 100);
           doc.text(companySettings.warranty_text, pageWidth / 2, pageHeight - 15, { align: 'center' });
         }
       }
-      
-      // Save PDF
-      doc.save(`Teklif_${quote.quote_number}.pdf`);
+
+      doc.save('Teklif_' + quote.quote_number + '.pdf');
       toast.success('PDF indirildi');
       
     } catch (error) {
-      console.error('PDF generation error:', error);
-      toast.error('PDF oluşturulamadı: ' + error.message);
+      console.error('PDF hatasi:', error);
+      toast.error('PDF olusturulamadi: ' + error.message);
     }
   };
 
