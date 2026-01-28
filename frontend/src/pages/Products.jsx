@@ -202,6 +202,7 @@ const Products = () => {
               <TableRow>
                 <TableHead>Ürün Adı</TableHead>
                 <TableHead>Kategori</TableHead>
+                <TableHead className="text-center">Para Birimi</TableHead>
                 <TableHead className="text-right">Stok</TableHead>
                 {!isBayi && <TableHead className="text-right">Alış Fiyatı</TableHead>}
                 <TableHead className="text-right">Satış Fiyatı</TableHead>
@@ -218,16 +219,21 @@ const Products = () => {
                       {getCategoryLabel(product.category)}
                     </span>
                   </TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-bold">
+                      {product.currency || 'USD'}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {product.stock_quantity} {product.unit}
                   </TableCell>
                   {!isBayi && (
                     <TableCell className="text-right currency">
-                      {formatCurrency(product.purchase_price)}
+                      {formatCurrency(product.purchase_price, product.currency || 'USD')}
                     </TableCell>
                   )}
                   <TableCell className="text-right currency">
-                    {formatCurrency(product.sale_price)}
+                    {formatCurrency(product.sale_price, product.currency || 'USD')}
                   </TableCell>
                   {isBayi && (
                     <TableCell className="text-right currency text-primary font-medium">
