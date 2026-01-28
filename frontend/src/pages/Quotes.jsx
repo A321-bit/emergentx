@@ -159,20 +159,31 @@ const Quotes = () => {
     }
   };
 
-  const loadImageAsBase64 = async (url) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (e) {
-      console.error('Image load error:', e);
-      return null;
-    }
+  const loadImageAsBase64 = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+          resolve(dataURL);
+        } catch (e) {
+          console.error('Canvas error:', e);
+          resolve(null);
+        }
+      };
+      img.onerror = (e) => {
+        console.error('Image load error:', e);
+        resolve(null);
+      };
+      // Add timestamp to bypass cache
+      img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+    });
   };
 
   const generatePDF = async (quote) => {
@@ -191,35 +202,49 @@ const Quotes = () => {
       const black = [0, 0, 0];
       const lightGray = [245, 245, 245];
 
+      // Görselleri önceden yükle
+      let coverBase64 = null;
+      let logoBase64 = null;
+      
+      if (companySettings.quote_cover_image) {
+        const coverUrl = `${API_URL}${companySettings.quote_cover_image}`;
+        console.log('Loading cover from:', coverUrl);
+        coverBase64 = await loadImageAsBase64(coverUrl);
+        console.log('Cover loaded:', coverBase64 ? 'YES' : 'NO');
+      }
+      
+      if (companySettings.logo_url) {
+        const logoUrl = `${API_URL}${companySettings.logo_url}`;
+        console.log('Loading logo from:', logoUrl);
+        logoBase64 = await loadImageAsBase64(logoUrl);
+        console.log('Logo loaded:', logoBase64 ? 'YES' : 'NO');
+      }
+
       // ========== SAYFA 1: KAPAK ==========
-      // Arka plan rengi
+      // Arka plan rengi (varsayılan)
       doc.setFillColor(30, 58, 138);
       doc.rect(0, 0, pw, ph, 'F');
       
-      // Kapak görseli varsa ekle
-      if (companySettings.quote_cover_image) {
+      // Kapak görseli
+      if (coverBase64) {
         try {
-          const coverBase64 = await loadImageAsBase64(`${API_URL}${companySettings.quote_cover_image}`);
-          if (coverBase64) {
-            doc.addImage(coverBase64, 'JPEG', 0, 0, pw, ph);
-          }
+          doc.addImage(coverBase64, 'JPEG', 0, 0, pw, ph);
         } catch (e) {
-          // Görsel yoksa arka plan rengiyle devam
+          console.error('Cover addImage error:', e);
         }
       }
       
-      // Logo üstte
-      if (companySettings.logo_url) {
+      // Logo üstte (kapak sayfasında)
+      if (logoBase64) {
         try {
-          const logoBase64 = await loadImageAsBase64(`${API_URL}${companySettings.logo_url}`);
-          if (logoBase64) {
-            doc.addImage(logoBase64, 'JPEG', pw/2 - 25, 40, 50, 50);
-          }
-        } catch (e) {}
+          doc.addImage(logoBase64, 'JPEG', pw/2 - 25, 40, 50, 50);
+        } catch (e) {
+          console.error('Logo addImage error:', e);
+        }
       }
       
       // Başlık kutusu
-      doc.setFillColor(255, 255, 255, 0.9);
+      doc.setFillColor(255, 255, 255);
       doc.roundedRect(30, 120, pw - 60, 60, 5, 5, 'F');
       
       doc.setTextColor(...darkBlue);
