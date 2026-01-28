@@ -82,46 +82,46 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {isAdmin && (
           <>
             <Card className="stat-card" data-testid="stat-users">
-              <CardContent className="p-5">
+              <CardContent className="p-3 sm:p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="data-label">Kullanıcılar</p>
-                    <p className="stat-value mt-1">{stats?.total_users || 0}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Kullanıcılar</p>
+                    <p className="text-lg sm:text-2xl font-bold mt-1">{stats?.total_users || 0}</p>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-primary" />
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="stat-card" data-testid="stat-dealers">
-              <CardContent className="p-5">
+              <CardContent className="p-3 sm:p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="data-label">Bayiler</p>
-                    <p className="stat-value mt-1">{stats?.total_dealers || 0}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Bayiler</p>
+                    <p className="text-lg sm:text-2xl font-bold mt-1">{stats?.total_dealers || 0}</p>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-accent" />
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="stat-card" data-testid="stat-stock-value">
-              <CardContent className="p-5">
+              <CardContent className="p-3 sm:p-5">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="data-label">Stok Değeri</p>
-                    <p className="stat-value mt-1 text-lg">{formatCurrency(stats?.stock_value || 0)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Stok Değeri</p>
+                    <p className="text-sm sm:text-lg font-bold mt-1 truncate">{formatCurrency(stats?.stock_value || 0)}</p>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <Boxes className="h-6 w-6 text-green-500" />
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0 ml-2">
+                    <Boxes className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                   </div>
                 </div>
               </CardContent>
@@ -130,53 +130,53 @@ const Dashboard = () => {
         )}
 
         <Card className="stat-card" data-testid="stat-products">
-          <CardContent className="p-5">
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="data-label">Ürünler</p>
-                <p className="stat-value mt-1">{stats?.total_products || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Ürünler</p>
+                <p className="text-lg sm:text-2xl font-bold mt-1">{stats?.total_products || 0}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                <Package className="h-6 w-6 text-orange-500" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <Package className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card" data-testid="stat-customers">
-          <CardContent className="p-5">
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="data-label">Müşteriler</p>
-                <p className="stat-value mt-1">{stats?.total_customers || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Müşteriler</p>
+                <p className="text-lg sm:text-2xl font-bold mt-1">{stats?.total_customers || 0}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-blue-500" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card" data-testid="stat-quotes">
-          <CardContent className="p-5">
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="data-label">Teklifler</p>
-                <p className="stat-value mt-1">{stats?.total_quotes || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Teklifler</p>
+                <p className="text-lg sm:text-2xl font-bold mt-1">{stats?.total_quotes || 0}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-violet-500" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-violet-500/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-violet-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card" data-testid="stat-revenue">
-          <CardContent className="p-5">
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="data-label">Toplam Ciro</p>
-                <p className="stat-value mt-1 text-lg">{formatCurrency(stats?.total_revenue || 0)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Toplam Ciro</p>
+                <p className="text-sm sm:text-lg font-bold mt-1 truncate">{formatCurrency(stats?.total_revenue || 0)}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-emerald-500" />
