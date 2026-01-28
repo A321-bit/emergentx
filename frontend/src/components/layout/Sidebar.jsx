@@ -15,7 +15,9 @@ import {
   Moon,
   TrendingUp,
   UserCircle,
-  Boxes
+  Boxes,
+  Folder,
+  UsersRound
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -27,10 +29,12 @@ const Sidebar = () => {
   const adminNavItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Panel' },
     { path: '/users', icon: Users, label: 'Kullanıcılar' },
+    { path: '/categories', icon: Folder, label: 'Kategoriler' },
     { path: '/products', icon: Package, label: 'Ürünler' },
     { path: '/stock', icon: Boxes, label: 'Stok' },
     { path: '/customers', icon: UserCircle, label: 'Müşteriler' },
     { path: '/quotes', icon: FileText, label: 'Teklifler' },
+    { path: '/dealer-groups', icon: UsersRound, label: 'Bayi Grupları' },
     { path: '/dealers', icon: Building2, label: 'Bayiler' },
     { path: '/finance', icon: TrendingUp, label: 'Finans' },
     { path: '/settings', icon: Settings, label: 'Ayarlar' },
