@@ -59,6 +59,7 @@ Güneş enerjisi (panel, inverter, batarya) satışı için kapsamlı B2B/B2C y�
   - Müşteri kategorileri (On-Grid, Off-Grid, Hibrit, Sulama)
   - Edinme kaynakları (Santral, Referans, Facebook, Instagram, Google Ads)
 - [x] **Müşteri Ayarları Sayfası**: Kategori ve kaynak yönetimi için ayrı sayfa
+- [x] **Excel Import/Export**: Toplu ürün yükleme ve ürün listesi indirme
 
 ---
 
