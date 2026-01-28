@@ -49,11 +49,15 @@ const Products = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const imageInputRef = useRef(null);
   const datasheetInputRef = useRef(null);
+  const excelInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     name: '',
