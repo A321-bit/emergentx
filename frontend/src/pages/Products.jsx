@@ -270,6 +270,72 @@ const Products = () => {
     setIsMediaModalOpen(true);
   };
 
+  // Excel functions
+  const handleExportExcel = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/products/export/excel`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `urunler_${new Date().toISOString().slice(0,10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Excel dosyası indirildi');
+    } catch (error) {
+      toast.error('Excel indirilemedi');
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/products/export/template`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'urun_sablonu.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Şablon indirildi');
+    } catch (error) {
+      toast.error('Şablon indirilemedi');
+    }
+  };
+
+  const handleExcelImport = async (file) => {
+    if (!file) return;
+    
+    setImporting(true);
+    setImportResult(null);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const response = await axios.post(`${API_URL}/api/products/import/excel`, formDataUpload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setImportResult(response.data);
+      if (response.data.imported > 0) {
+        toast.success(`${response.data.imported} ürün eklendi`);
+        fetchData();
+      }
+      if (response.data.errors?.length > 0) {
+        toast.warning(`${response.data.total_errors} hata oluştu`);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Import başarısız');
+      setImportResult({ imported: 0, errors: [error.response?.data?.detail || 'Bilinmeyen hata'], total_errors: 1 });
+    } finally {
+      setImporting(false);
+      if (excelInputRef.current) excelInputRef.current.value = '';
+    }
+  };
+
   const resetForm = () => {
     setEditingProduct(null);
     setFormData({
@@ -306,19 +372,94 @@ const Products = () => {
 
   return (
     <div className="space-y-6 animate-fade-in" data-testid="products-page">
+      {/* Hidden file input for Excel */}
+      <input
+        type="file"
+        ref={excelInputRef}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            handleExcelImport(e.target.files[0]);
+          }
+        }}
+        accept=".xlsx,.xls"
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="page-title">Ürünler</h1>
           <p className="text-muted-foreground mt-1">{products.length} ürün listeleniyor</p>
         </div>
-        {canManage && (
-          <Button onClick={() => { resetForm(); setIsModalOpen(true); }} data-testid="add-product-btn">
-            <Plus className="h-4 w-4 mr-2" />
-            Yeni Ürün
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {canManage && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" data-testid="excel-menu-btn">
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportExcel} data-testid="export-excel-btn">
+                    <Download className="h-4 w-4 mr-2" />
+                    Ürün Listesi İndir
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDownloadTemplate} data-testid="download-template-btn">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Şablon İndir
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => excelInputRef.current?.click()} data-testid="import-excel-btn">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Excel'den Yükle
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button onClick={() => { resetForm(); setIsModalOpen(true); }} data-testid="add-product-btn">
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Ürün
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Import Result Alert */}
+      {importResult && (
+        <Card className={cn(
+          "border",
+          importResult.imported > 0 && importResult.total_errors === 0 
+            ? "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800"
+            : importResult.total_errors > 0 
+              ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"
+              : "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="font-medium">
+                  {importResult.imported > 0 ? `✅ ${importResult.imported} ürün başarıyla eklendi` : '❌ Hiç ürün eklenemedi'}
+                </p>
+                {importResult.errors?.length > 0 && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    <p className="font-medium text-yellow-700 dark:text-yellow-400">Hatalar ({importResult.total_errors}):</p>
+                    <ul className="list-disc list-inside mt-1 max-h-32 overflow-y-auto">
+                      {importResult.errors.map((err, i) => (
+                        <li key={i}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setImportResult(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Warning if no categories */}
       {categories.length === 0 && canManage && (
