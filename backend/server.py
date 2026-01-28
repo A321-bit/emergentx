@@ -981,6 +981,258 @@ async def delete_product(product_id: str, current_user: dict = Depends(require_p
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
     return {"message": "Ürün silindi"}
 
+# ==================== EXCEL IMPORT/EXPORT ROUTES ====================
+
+@api_router.get("/products/export/excel")
+async def export_products_excel(current_user: dict = Depends(require_permission("products_view"))):
+    """Export all products to Excel file"""
+    products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    categories = {c["id"]: c["name"] for c in await db.categories.find({"is_active": True}, {"_id": 0}).to_list(100)}
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Ürünler"
+    
+    # Header styling
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="F59E0B", end_color="F59E0B", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+    
+    # Headers
+    headers = ["Ürün Adı", "Kategori", "Para Birimi", "Alış Fiyatı (KDV Hariç)", "KDV %", 
+               "Kar Marjı %", "Maliyet", "Satış Fiyatı", "Stok", "Birim", "Açıklama"]
+    
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = thin_border
+    
+    # Data rows
+    for row, product in enumerate(products, 2):
+        ws.cell(row=row, column=1, value=product.get("name", "")).border = thin_border
+        ws.cell(row=row, column=2, value=categories.get(product.get("category_id"), "")).border = thin_border
+        ws.cell(row=row, column=3, value=product.get("currency", "USD")).border = thin_border
+        ws.cell(row=row, column=4, value=product.get("purchase_price_without_vat", 0)).border = thin_border
+        ws.cell(row=row, column=5, value=product.get("vat_rate", 20)).border = thin_border
+        ws.cell(row=row, column=6, value=product.get("profit_margin", 30)).border = thin_border
+        ws.cell(row=row, column=7, value=product.get("purchase_price", 0)).border = thin_border
+        ws.cell(row=row, column=8, value=product.get("sale_price", 0)).border = thin_border
+        ws.cell(row=row, column=9, value=product.get("stock_quantity", 0)).border = thin_border
+        ws.cell(row=row, column=10, value=product.get("unit", "adet")).border = thin_border
+        ws.cell(row=row, column=11, value=product.get("description", "")).border = thin_border
+    
+    # Auto-adjust column widths
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[column].width = min(max_length + 2, 50)
+    
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    filename = f"urunler_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@api_router.get("/products/export/template")
+async def export_products_template(current_user: dict = Depends(require_permission("products_manage"))):
+    """Download Excel template for product import"""
+    categories = await db.categories.find({"is_active": True}, {"_id": 0}).to_list(100)
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Ürün Şablonu"
+    
+    # Header styling
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+    note_fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+    
+    # Headers (required fields marked with *)
+    headers = ["Ürün Adı *", "Kategori *", "Para Birimi", "Alış Fiyatı (KDV Hariç) *", 
+               "KDV %", "Kar Marjı %", "Stok", "Birim", "Açıklama"]
+    
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+    
+    # Example row
+    example_data = ["Örnek Solar Panel 400W", categories[0]["name"] if categories else "Panel", 
+                    "USD", 100, 20, 30, 50, "adet", "Açıklama buraya"]
+    for col, value in enumerate(example_data, 1):
+        cell = ws.cell(row=2, column=col, value=value)
+        cell.fill = note_fill
+    
+    # Notes sheet
+    ws_notes = wb.create_sheet("Notlar")
+    ws_notes["A1"] = "KULLANIM TALİMATLARI"
+    ws_notes["A1"].font = Font(bold=True, size=14)
+    
+    notes = [
+        "",
+        "1. 'Ürün Şablonu' sayfasındaki sarı örnek satırı silin",
+        "2. Ürünlerinizi ekleyin (* işaretli alanlar zorunludur)",
+        "3. Dosyayı kaydedin ve sisteme yükleyin",
+        "",
+        "ALAN AÇIKLAMALARI:",
+        "- Ürün Adı: Ürünün tam adı (zorunlu)",
+        "- Kategori: Aşağıdaki listeden seçin (zorunlu)",
+        "- Para Birimi: USD, EUR veya TRY (varsayılan: USD)",
+        "- Alış Fiyatı: KDV hariç alış fiyatı (zorunlu)",
+        "- KDV %: KDV oranı (varsayılan: 20)",
+        "- Kar Marjı %: Kar oranı (boş bırakılırsa kategori marjı kullanılır)",
+        "- Stok: Başlangıç stok miktarı (varsayılan: 0)",
+        "- Birim: adet, paket, kutu vb. (varsayılan: adet)",
+        "",
+        "MEVCUT KATEGORİLER:"
+    ]
+    
+    for i, note in enumerate(notes, 2):
+        ws_notes.cell(row=i, column=1, value=note)
+    
+    # List categories
+    for i, cat in enumerate(categories, len(notes) + 2):
+        ws_notes.cell(row=i, column=1, value=f"  • {cat['name']} (Kar Marjı: %{cat.get('default_profit_margin', 30)})")
+    
+    ws_notes.column_dimensions["A"].width = 60
+    
+    # Auto-adjust main sheet columns
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[column].width = max_length + 4
+    
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=urun_sablonu.xlsx"}
+    )
+
+@api_router.post("/products/import/excel")
+async def import_products_excel(file: UploadFile = File(...), current_user: dict = Depends(require_permission("products_manage"))):
+    """Import products from Excel file"""
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Sadece Excel dosyası (.xlsx, .xls) yüklenebilir")
+    
+    content = await file.read()
+    
+    try:
+        wb = load_workbook(BytesIO(content))
+        ws = wb.active
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Excel dosyası okunamadı: {str(e)}")
+    
+    # Get categories for mapping
+    categories = await db.categories.find({"is_active": True}, {"_id": 0}).to_list(100)
+    category_map = {c["name"].lower(): c for c in categories}
+    
+    imported = 0
+    errors = []
+    
+    # Skip header row
+    for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
+        if not row or not row[0]:  # Skip empty rows
+            continue
+        
+        try:
+            name = str(row[0]).strip() if row[0] else None
+            category_name = str(row[1]).strip().lower() if row[1] else None
+            currency = str(row[2]).strip().upper() if row[2] else "USD"
+            purchase_price_without_vat = float(row[3]) if row[3] else None
+            vat_rate = float(row[4]) if row[4] else 20
+            profit_margin = float(row[5]) if row[5] else None
+            stock_quantity = int(row[6]) if row[6] else 0
+            unit = str(row[7]).strip() if row[7] else "adet"
+            description = str(row[8]).strip() if len(row) > 8 and row[8] else None
+            
+            # Validations
+            if not name:
+                errors.append(f"Satır {row_num}: Ürün adı boş")
+                continue
+            
+            if not category_name or category_name not in category_map:
+                errors.append(f"Satır {row_num}: Geçersiz kategori '{row[1]}'")
+                continue
+            
+            if purchase_price_without_vat is None or purchase_price_without_vat < 0:
+                errors.append(f"Satır {row_num}: Geçersiz alış fiyatı")
+                continue
+            
+            if currency not in ["USD", "EUR", "TRY"]:
+                currency = "USD"
+            
+            category = category_map[category_name]
+            
+            # Calculate prices
+            if profit_margin is None:
+                profit_margin = category.get("default_profit_margin", 30)
+            
+            purchase_price = purchase_price_without_vat * (1 + vat_rate / 100)
+            sale_price = purchase_price * (1 + profit_margin / 100)
+            
+            # Create product
+            product_dict = {
+                "id": str(uuid.uuid4()),
+                "name": name,
+                "category_id": category["id"],
+                "category_name": category["name"],
+                "description": description,
+                "currency": currency,
+                "purchase_price_without_vat": round(purchase_price_without_vat, 2),
+                "vat_rate": vat_rate,
+                "profit_margin": profit_margin,
+                "purchase_price": round(purchase_price, 2),
+                "sale_price": round(sale_price, 2),
+                "stock_quantity": stock_quantity,
+                "unit": unit,
+                "images": [],
+                "datasheet_url": None,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.products.insert_one(product_dict.copy())
+            imported += 1
+            
+        except Exception as e:
+            errors.append(f"Satır {row_num}: {str(e)}")
+    
+    return {
+        "message": f"{imported} ürün başarıyla eklendi",
+        "imported": imported,
+        "errors": errors[:20] if errors else [],  # Limit errors to first 20
+        "total_errors": len(errors)
+    }
+
 # ==================== STOCK MOVEMENT ROUTES ====================
 
 @api_router.post("/stock-movements", response_model=dict)
