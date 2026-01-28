@@ -1132,95 +1132,34 @@ async def init_default_data():
         "password_hash": hash_password("admin123")
     })
     
-    # Create sample products (USD currency)
-    products = [
+    # Create default dealer groups
+    dealer_groups = [
         {
             "id": str(uuid.uuid4()),
-            "name": "Mono PERC 550W Panel",
-            "category": "panel",
-            "description": "Yüksek verimli monokristal güneş paneli",
-            "currency": "USD",
-            "purchase_price": 75,
-            "sale_price": 105,
-            "dealer_price": 90,
-            "stock_quantity": 100,
-            "unit": "adet",
+            "name": "Silver",
+            "description": "Standart bayi grubu",
+            "discount_rate": 5,
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         },
         {
             "id": str(uuid.uuid4()),
-            "name": "Half-Cut 450W Panel",
-            "category": "panel",
-            "description": "Half-cut hücre teknolojisi",
-            "currency": "USD",
-            "purchase_price": 60,
-            "sale_price": 85,
-            "dealer_price": 72,
-            "stock_quantity": 150,
-            "unit": "adet",
+            "name": "Gold",
+            "description": "Orta seviye bayi grubu",
+            "discount_rate": 10,
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         },
         {
             "id": str(uuid.uuid4()),
-            "name": "Hybrid Inverter 5kW",
-            "category": "inverter",
-            "description": "Akıllı hibrit inverter, batarya uyumlu",
-            "currency": "USD",
-            "purchase_price": 450,
-            "sale_price": 660,
-            "dealer_price": 555,
-            "stock_quantity": 25,
-            "unit": "adet",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "On-Grid Inverter 10kW",
-            "category": "inverter",
-            "description": "Şebeke bağlantılı inverter",
-            "currency": "USD",
-            "purchase_price": 600,
-            "sale_price": 840,
-            "dealer_price": 720,
-            "stock_quantity": 15,
-            "unit": "adet",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "Lityum Batarya 10kWh",
-            "category": "batarya",
-            "description": "LiFePO4 teknolojisi, uzun ömür",
-            "currency": "USD",
-            "purchase_price": 1350,
-            "sale_price": 1950,
-            "dealer_price": 1650,
-            "stock_quantity": 10,
-            "unit": "adet",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "Montaj Seti Çatı Tipi",
-            "category": "aksesuar",
-            "description": "Kiremit çatı montaj sistemi",
-            "currency": "USD",
-            "purchase_price": 15,
-            "sale_price": 24,
-            "dealer_price": 20,
-            "stock_quantity": 200,
-            "unit": "set",
+            "name": "Plus",
+            "description": "Premium bayi grubu",
+            "discount_rate": 15,
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
     ]
-    
-    await db.products.insert_many(products)
+    await db.dealer_groups.insert_many(dealer_groups)
     
     # Create default company settings
     default_settings = {
