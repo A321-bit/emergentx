@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
+import { Checkbox } from '../components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Plus, Pencil, Trash2, Search, Percent, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Percent, Users, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { formatDate, cn } from '../lib/utils';
@@ -46,7 +46,10 @@ const Dealers = () => {
     phone: '',
     email: '',
     address: '',
-    dealer_group_id: ''
+    dealer_group_id: '',
+    create_user: false,
+    user_email: '',
+    user_password: ''
   });
 
   useEffect(() => {
@@ -72,17 +75,33 @@ const Dealers = () => {
     e.preventDefault();
     
     const data = {
-      ...formData,
-      dealer_group_id: formData.dealer_group_id || null
+      name: formData.name,
+      contact_person: formData.contact_person,
+      phone: formData.phone,
+      email: formData.email || null,
+      address: formData.address || null,
+      dealer_group_id: formData.dealer_group_id || null,
+      create_user: formData.create_user,
+      user_email: formData.create_user ? formData.user_email : null,
+      user_password: formData.create_user ? formData.user_password : null
     };
 
     try {
       if (editingDealer) {
-        await axios.put(`${API_URL}/api/dealers/${editingDealer.id}`, data);
+        // For update, don't send user creation fields
+        const updateData = {
+          name: formData.name,
+          contact_person: formData.contact_person,
+          phone: formData.phone,
+          email: formData.email || null,
+          address: formData.address || null,
+          dealer_group_id: formData.dealer_group_id || null
+        };
+        await axios.put(`${API_URL}/api/dealers/${editingDealer.id}`, updateData);
         toast.success('Bayi güncellendi');
       } else {
         await axios.post(`${API_URL}/api/dealers`, data);
-        toast.success('Bayi eklendi');
+        toast.success(data.create_user ? 'Bayi ve kullanıcı hesabı oluşturuldu' : 'Bayi eklendi');
       }
       setIsModalOpen(false);
       resetForm();
@@ -112,7 +131,10 @@ const Dealers = () => {
       phone: dealer.phone,
       email: dealer.email || '',
       address: dealer.address || '',
-      dealer_group_id: dealer.dealer_group_id || ''
+      dealer_group_id: dealer.dealer_group_id || '',
+      create_user: false,
+      user_email: '',
+      user_password: ''
     });
     setIsModalOpen(true);
   };
@@ -125,7 +147,10 @@ const Dealers = () => {
       phone: '',
       email: '',
       address: '',
-      dealer_group_id: ''
+      dealer_group_id: '',
+      create_user: false,
+      user_email: '',
+      user_password: ''
     });
   };
 
@@ -205,6 +230,7 @@ const Dealers = () => {
                 <TableHead>Email</TableHead>
                 <TableHead className="text-center">Bayi Grubu</TableHead>
                 <TableHead className="text-center">İskonto</TableHead>
+                <TableHead className="text-center">Hesap</TableHead>
                 <TableHead>Kayıt Tarihi</TableHead>
                 <TableHead className="text-right">İşlemler</TableHead>
               </TableRow>
@@ -228,13 +254,23 @@ const Dealers = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      {group ? (
+                      {dealer.discount_rate ? (
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-sm font-bold">
                           <Percent className="h-3 w-3" />
-                          {group.discount_rate}
+                          {dealer.discount_rate}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {dealer.user_id ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                          <UserPlus className="h-3 w-3" />
+                          Var
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">Yok</span>
                       )}
                     </TableCell>
                     <TableCell>{formatDate(dealer.created_at)}</TableCell>
@@ -264,7 +300,7 @@ const Dealers = () => {
               })}
               {filteredDealers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Bayi bulunamadı
                   </TableCell>
                 </TableRow>
@@ -328,11 +364,12 @@ const Dealers = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="dealer_group_id">Bayi Grubu</Label>
-                <Select value={formData.dealer_group_id} onValueChange={(v) => setFormData({...formData, dealer_group_id: v})}>
+                <Select value={formData.dealer_group_id || 'none'} onValueChange={(v) => setFormData({...formData, dealer_group_id: v === 'none' ? '' : v})}>
                   <SelectTrigger data-testid="dealer-group-select">
                     <SelectValue placeholder="Grup seçin" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Seçilmedi</SelectItem>
                     {dealerGroups.map((group) => (
                       <SelectItem key={group.id} value={group.id}>
                         <span className="flex items-center gap-2">
@@ -343,11 +380,6 @@ const Dealers = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                {!formData.dealer_group_id && (
-                  <p className="text-xs text-muted-foreground">
-                    Grup seçmezseniz bayi iskonto alamaz
-                  </p>
-                )}
               </div>
 
               <div className="col-span-2 space-y-2">
@@ -360,6 +392,54 @@ const Dealers = () => {
                 />
               </div>
             </div>
+
+            {/* User Account Section - Only for new dealers */}
+            {!editingDealer && (
+              <Card className="bg-muted/30">
+                <CardContent className="p-4 space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="create_user"
+                      checked={formData.create_user}
+                      onCheckedChange={(checked) => setFormData({...formData, create_user: checked})}
+                      data-testid="create-user-checkbox"
+                    />
+                    <label htmlFor="create_user" className="text-sm font-medium cursor-pointer">
+                      Bayi için kullanıcı hesabı oluştur
+                    </label>
+                  </div>
+
+                  {formData.create_user && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="user_email">Kullanıcı Email</Label>
+                        <Input
+                          id="user_email"
+                          type="email"
+                          value={formData.user_email}
+                          onChange={(e) => setFormData({...formData, user_email: e.target.value})}
+                          required={formData.create_user}
+                          placeholder="bayi@email.com"
+                          data-testid="dealer-user-email"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="user_password">Şifre</Label>
+                        <Input
+                          id="user_password"
+                          type="password"
+                          value={formData.user_password}
+                          onChange={(e) => setFormData({...formData, user_password: e.target.value})}
+                          required={formData.create_user}
+                          placeholder="••••••••"
+                          data-testid="dealer-user-password"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>

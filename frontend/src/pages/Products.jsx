@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Plus, Pencil, Trash2, Search, Upload, Image, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload, Image, FileText, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { formatCurrency, cn } from '../lib/utils';
@@ -34,16 +34,19 @@ import { formatCurrency, cn } from '../lib/utils';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Products = () => {
-  const { isAdmin, isBayi } = useAuth();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const datasheetInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -57,11 +60,16 @@ const Products = () => {
     unit: 'adet'
   });
 
-  // Calculated preview values
   const [preview, setPreview] = useState({
     purchaseWithVat: 0,
-    salePrice: 0
+    salePrice: 0,
+    profitMargin: 30
   });
+
+  // Check permissions
+  const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('products_manage');
+  const canViewPrices = user?.permissions?.includes('all') || user?.permissions?.includes('products_prices_view');
+  const isDealer = !!user?.dealer_id;
 
   useEffect(() => {
     fetchData();
@@ -69,7 +77,7 @@ const Products = () => {
 
   useEffect(() => {
     calculatePreview();
-  }, [formData.purchase_price_without_vat, formData.vat_rate, formData.profit_margin, formData.category_id]);
+  }, [formData.purchase_price_without_vat, formData.vat_rate, formData.profit_margin, formData.category_id, categories]);
 
   const fetchData = async () => {
     try {
@@ -89,18 +97,14 @@ const Products = () => {
   const calculatePreview = () => {
     const purchaseWithoutVat = parseFloat(formData.purchase_price_without_vat) || 0;
     const vatRate = parseFloat(formData.vat_rate) || 20;
-    
-    // Calculate purchase price with VAT (maliyet)
     const purchaseWithVat = purchaseWithoutVat * (1 + vatRate / 100);
     
-    // Get profit margin (product-specific or category default)
     let profitMargin = parseFloat(formData.profit_margin);
     if (isNaN(profitMargin) || formData.profit_margin === '') {
       const selectedCategory = categories.find(c => c.id === formData.category_id);
       profitMargin = selectedCategory?.default_profit_margin || 30;
     }
     
-    // Calculate sale price
     const salePrice = purchaseWithVat * (1 + profitMargin / 100);
     
     setPreview({
@@ -135,8 +139,11 @@ const Products = () => {
         await axios.put(`${API_URL}/api/products/${editingProduct.id}`, data);
         toast.success('Ürün güncellendi');
       } else {
-        await axios.post(`${API_URL}/api/products`, data);
+        const response = await axios.post(`${API_URL}/api/products`, data);
         toast.success('Ürün eklendi');
+        // Open media modal for new product
+        setSelectedProduct(response.data);
+        setIsMediaModalOpen(true);
       }
       setIsModalOpen(false);
       resetForm();
@@ -146,12 +153,43 @@ const Products = () => {
     }
   };
 
-  const handleImageUpload = async (productId, file) => {
-    if (!file) return;
+  const handleImageUpload = async (files) => {
+    if (!files || files.length === 0 || !selectedProduct) return;
     
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Sadece JPEG, PNG, GIF veya WebP formatları desteklenir');
+    setUploading(true);
+    const formDataUpload = new FormData();
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`${file.name} desteklenmeyen format`);
+        continue;
+      }
+      formDataUpload.append('files', file);
+    }
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/products/${selectedProduct.id}/upload-images`,
+        formDataUpload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      toast.success('Fotoğraflar yüklendi');
+      setSelectedProduct({...selectedProduct, images: response.data.images});
+      fetchData();
+    } catch (error) {
+      toast.error('Fotoğraf yüklenemedi');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDatasheetUpload = async (file) => {
+    if (!file || !selectedProduct) return;
+    
+    if (file.type !== 'application/pdf') {
+      toast.error('Sadece PDF dosyası yüklenebilir');
       return;
     }
 
@@ -160,15 +198,31 @@ const Products = () => {
     formDataUpload.append('file', file);
 
     try {
-      await axios.post(`${API_URL}/api/products/${productId}/upload-image`, formDataUpload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      toast.success('Fotoğraf yüklendi');
+      const response = await axios.post(
+        `${API_URL}/api/products/${selectedProduct.id}/upload-datasheet`,
+        formDataUpload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      toast.success('Datasheet yüklendi');
+      setSelectedProduct({...selectedProduct, datasheet_url: response.data.datasheet_url});
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Fotoğraf yüklenemedi');
+      toast.error('Datasheet yüklenemedi');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageIndex) => {
+    if (!selectedProduct) return;
+    
+    try {
+      const response = await axios.delete(`${API_URL}/api/products/${selectedProduct.id}/images/${imageIndex}`);
+      toast.success('Fotoğraf silindi');
+      setSelectedProduct({...selectedProduct, images: response.data.images});
+      fetchData();
+    } catch (error) {
+      toast.error('Silme başarısız');
     }
   };
 
@@ -198,6 +252,11 @@ const Products = () => {
       unit: product.unit || 'adet'
     });
     setIsModalOpen(true);
+  };
+
+  const openMediaModal = (product) => {
+    setSelectedProduct(product);
+    setIsMediaModalOpen(true);
   };
 
   const resetForm = () => {
@@ -242,7 +301,7 @@ const Products = () => {
           <h1 className="page-title">Ürünler</h1>
           <p className="text-muted-foreground mt-1">{products.length} ürün listeleniyor</p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <Button onClick={() => { resetForm(); setIsModalOpen(true); }} data-testid="add-product-btn">
             <Plus className="h-4 w-4 mr-2" />
             Yeni Ürün
@@ -251,7 +310,7 @@ const Products = () => {
       </div>
 
       {/* Warning if no categories */}
-      {categories.length === 0 && isAdmin && (
+      {categories.length === 0 && canManage && (
         <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
           <CardContent className="p-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -292,35 +351,53 @@ const Products = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fotoğraf</TableHead>
+                <TableHead>Medya</TableHead>
                 <TableHead>Ürün Adı</TableHead>
                 <TableHead>Kategori</TableHead>
                 <TableHead className="text-center">Para Birimi</TableHead>
                 <TableHead className="text-right">Stok</TableHead>
-                {!isBayi && <TableHead className="text-right">Alış (KDV Hariç)</TableHead>}
-                {!isBayi && <TableHead className="text-right">Maliyet (KDV Dahil)</TableHead>}
+                {canViewPrices && <TableHead className="text-right">Alış (KDV Hariç)</TableHead>}
+                {canViewPrices && <TableHead className="text-right">Maliyet</TableHead>}
                 <TableHead className="text-right">Satış Fiyatı</TableHead>
-                {isBayi && <TableHead className="text-right">Bayi Fiyatı</TableHead>}
-                {isAdmin && <TableHead className="text-right">İşlemler</TableHead>}
+                {isDealer && <TableHead className="text-right">Bayi Fiyatı</TableHead>}
+                {canManage && <TableHead className="text-right">İşlemler</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredProducts.map((product) => (
                 <TableRow key={product.id} data-testid={`product-row-${product.id}`}>
                   <TableCell>
-                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                      {product.image_url ? (
+                    <button
+                      onClick={() => openMediaModal(product)}
+                      className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden hover:ring-2 ring-primary transition-all"
+                    >
+                      {product.images && product.images.length > 0 ? (
                         <img 
-                          src={`${API_URL}${product.image_url}`} 
+                          src={`${API_URL}${product.images[0]}`} 
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <Image className="h-5 w-5 text-muted-foreground" />
                       )}
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <span className="font-medium">{product.name}</span>
+                      {product.datasheet_url && (
+                        <a 
+                          href={`${API_URL}${product.datasheet_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 inline-flex items-center text-xs text-primary hover:underline"
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          PDF
+                        </a>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>
                     <span className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
                       {product.category_name || 'Bilinmiyor'}
@@ -334,42 +411,38 @@ const Products = () => {
                   <TableCell className="text-right tabular-nums">
                     {product.stock_quantity} {product.unit}
                   </TableCell>
-                  {!isBayi && (
+                  {canViewPrices && (
                     <TableCell className="text-right currency text-muted-foreground">
-                      {formatCurrency(product.purchase_price_without_vat || 0, product.currency || 'USD')}
+                      {product.purchase_price_without_vat != null 
+                        ? formatCurrency(product.purchase_price_without_vat, product.currency || 'USD')
+                        : '-'}
                     </TableCell>
                   )}
-                  {!isBayi && (
+                  {canViewPrices && (
                     <TableCell className="text-right currency">
-                      {formatCurrency(product.purchase_price || 0, product.currency || 'USD')}
+                      {product.purchase_price != null 
+                        ? formatCurrency(product.purchase_price, product.currency || 'USD')
+                        : '-'}
                     </TableCell>
                   )}
                   <TableCell className="text-right currency font-medium">
                     {formatCurrency(product.sale_price || 0, product.currency || 'USD')}
                   </TableCell>
-                  {isBayi && (
+                  {isDealer && (
                     <TableCell className="text-right currency text-primary font-medium">
                       {formatCurrency(product.dealer_price || 0, product.currency || 'USD')}
                     </TableCell>
                   )}
-                  {isAdmin && (
+                  {canManage && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/gif,image/webp"
-                          className="hidden"
-                          id={`upload-${product.id}`}
-                          onChange={(e) => handleImageUpload(product.id, e.target.files?.[0])}
-                        />
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => document.getElementById(`upload-${product.id}`).click()}
-                          disabled={uploading}
-                          data-testid={`upload-image-${product.id}`}
+                          onClick={() => openMediaModal(product)}
+                          data-testid={`media-product-${product.id}`}
                         >
-                          <Upload className="h-4 w-4" />
+                          <Image className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -395,7 +468,7 @@ const Products = () => {
               ))}
               {filteredProducts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                     {categories.length === 0 ? 'Önce kategori oluşturun' : 'Ürün bulunamadı'}
                   </TableCell>
                 </TableRow>
@@ -405,7 +478,7 @@ const Products = () => {
         </CardContent>
       </Card>
 
-      {/* Modal */}
+      {/* Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="product-modal">
           <DialogHeader>
@@ -413,7 +486,6 @@ const Products = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {/* Name */}
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="name">Ürün Adı</Label>
                 <Input
@@ -425,7 +497,6 @@ const Products = () => {
                 />
               </div>
 
-              {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category_id">Kategori</Label>
                 <Select value={formData.category_id} onValueChange={(v) => setFormData({...formData, category_id: v})}>
@@ -442,7 +513,6 @@ const Products = () => {
                 </Select>
               </div>
 
-              {/* Currency */}
               <div className="space-y-2">
                 <Label htmlFor="currency">Para Birimi</Label>
                 <Select value={formData.currency} onValueChange={(v) => setFormData({...formData, currency: v})}>
@@ -457,7 +527,6 @@ const Products = () => {
                 </Select>
               </div>
 
-              {/* Purchase Price (without VAT) */}
               <div className="space-y-2">
                 <Label htmlFor="purchase_price_without_vat">
                   Alış Fiyatı (KDV Hariç) {getCurrencySymbol(formData.currency)}
@@ -474,7 +543,6 @@ const Products = () => {
                 />
               </div>
 
-              {/* VAT Rate */}
               <div className="space-y-2">
                 <Label htmlFor="vat_rate">KDV Oranı (%)</Label>
                 <Select value={formData.vat_rate} onValueChange={(v) => setFormData({...formData, vat_rate: v})}>
@@ -492,14 +560,8 @@ const Products = () => {
                 </Select>
               </div>
 
-              {/* Profit Margin */}
               <div className="space-y-2">
-                <Label htmlFor="profit_margin">
-                  Kar Marjı (%) 
-                  <span className="text-muted-foreground text-xs ml-1">
-                    (Boş bırakılırsa kategori varsayılanı kullanılır)
-                  </span>
-                </Label>
+                <Label htmlFor="profit_margin">Kar Marjı (%)</Label>
                 <Input
                   id="profit_margin"
                   type="number"
@@ -508,12 +570,11 @@ const Products = () => {
                   max="200"
                   value={formData.profit_margin}
                   onChange={(e) => setFormData({...formData, profit_margin: e.target.value})}
-                  placeholder={`Kategori varsayılanı: %${categories.find(c => c.id === formData.category_id)?.default_profit_margin || 30}`}
+                  placeholder={`Kategori: %${categories.find(c => c.id === formData.category_id)?.default_profit_margin || 30}`}
                   data-testid="product-profit-margin-input"
                 />
               </div>
 
-              {/* Unit */}
               <div className="space-y-2">
                 <Label htmlFor="unit">Birim</Label>
                 <Select value={formData.unit} onValueChange={(v) => setFormData({...formData, unit: v})}>
@@ -529,7 +590,6 @@ const Products = () => {
                 </Select>
               </div>
 
-              {/* Stock */}
               <div className="space-y-2">
                 <Label htmlFor="stock_quantity">Stok Miktarı</Label>
                 <Input
@@ -542,9 +602,8 @@ const Products = () => {
                 />
               </div>
 
-              {/* Description */}
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
+                <Label htmlFor="description">Açıklama</Label>
                 <Input
                   id="description"
                   value={formData.description}
@@ -578,7 +637,7 @@ const Products = () => {
                       <p className="font-semibold text-primary text-lg">
                         {getCurrencySymbol(formData.currency)}{preview.salePrice}
                       </p>
-                      <p className="text-xs text-muted-foreground">Kar Marjı: %{preview.profitMargin}</p>
+                      <p className="text-xs text-muted-foreground">Kar: %{preview.profitMargin}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -594,6 +653,118 @@ const Products = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Media Modal */}
+      <Dialog open={isMediaModalOpen} onOpenChange={setIsMediaModalOpen}>
+        <DialogContent className="max-w-2xl" data-testid="media-modal">
+          <DialogHeader>
+            <DialogTitle>Ürün Medyası - {selectedProduct?.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Images Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Fotoğraflar</Label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e.target.files)}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploading}
+                  data-testid="upload-images-btn"
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                  Fotoğraf Ekle
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-3">
+                {selectedProduct?.images?.map((img, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={`${API_URL}${img}`}
+                      alt={`Ürün ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border"
+                    />
+                    <button
+                      onClick={() => handleDeleteImage(index)}
+                      className="absolute top-1 right-1 p-1 bg-destructive text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {(!selectedProduct?.images || selectedProduct.images.length === 0) && (
+                  <div className="col-span-4 text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                    Henüz fotoğraf yüklenmedi
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Datasheet Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">PDF Datasheet</Label>
+                <input
+                  ref={datasheetInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => handleDatasheetUpload(e.target.files?.[0])}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => datasheetInputRef.current?.click()}
+                  disabled={uploading}
+                  data-testid="upload-datasheet-btn"
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
+                  PDF Yükle
+                </Button>
+              </div>
+              
+              {selectedProduct?.datasheet_url ? (
+                <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                  <FileText className="h-8 w-8 text-red-500" />
+                  <div className="flex-1">
+                    <p className="font-medium">Datasheet.pdf</p>
+                    <a 
+                      href={`${API_URL}${selectedProduct.datasheet_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Görüntüle / İndir
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Henüz datasheet yüklenmedi</p>
+                  <p className="text-xs">Teklif PDF'inde ürün detaylarıyla birlikte gösterilecek</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMediaModalOpen(false)}>
+              Kapat
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
