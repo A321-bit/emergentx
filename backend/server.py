@@ -395,6 +395,14 @@ class CompanySettings(BaseModel):
     address: Optional[str] = None
     tax_id: Optional[str] = None
     warranty_text: Optional[str] = "2 yıl garanti kapsamındadır."
+    # New fields for quote PDF
+    quote_cover_image: Optional[str] = None  # Teklif kapak görseli
+    quote_terms: Optional[str] = None  # Teklif şartları
+    bank_name: Optional[str] = None  # Banka adı
+    bank_branch: Optional[str] = None  # Şube
+    bank_account_holder: Optional[str] = None  # Hesap sahibi
+    bank_iban: Optional[str] = None  # IBAN
+    bank_swift: Optional[str] = None  # SWIFT kodu
 
 # ==================== HELPER FUNCTIONS ====================
 
