@@ -178,8 +178,8 @@ const Dashboard = () => {
                 <p className="text-xs sm:text-sm text-muted-foreground">Toplam Ciro</p>
                 <p className="text-sm sm:text-lg font-bold mt-1 truncate">{formatCurrency(stats?.total_revenue || 0)}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-emerald-500" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 ml-2">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500" />
               </div>
             </div>
           </CardContent>
@@ -187,25 +187,25 @@ const Dashboard = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {/* Quote Status Chart */}
         <Card className="bento-card" data-testid="quote-status-chart">
-          <CardHeader>
+          <CardHeader className="p-4 sm:p-6">
             <CardTitle className="section-title">Teklif Durumları</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-64">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="h-48 sm:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={quoteStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={40}
+                    outerRadius={70}
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
+                    label={({ name, value }) => `${value}`}
                   >
                     {quoteStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -215,18 +215,18 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex justify-center gap-6 mt-4">
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm">Bekleyen: {stats?.pending_quotes || 0}</span>
+                <span className="text-xs sm:text-sm">Bekleyen: {stats?.pending_quotes || 0}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-blue-500" />
-                <span className="text-sm">Onaylanan: {stats?.approved_quotes || 0}</span>
+                <span className="text-xs sm:text-sm">Onaylanan: {stats?.approved_quotes || 0}</span>
               </div>
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Satış: {stats?.converted_quotes || 0}</span>
+                <span className="text-xs sm:text-sm">Satış: {stats?.converted_quotes || 0}</span>
               </div>
             </div>
           </CardContent>
@@ -235,16 +235,16 @@ const Dashboard = () => {
         {/* Sales by User (Admin only) */}
         {isAdmin && salesByUser.length > 0 && (
           <Card className="bento-card" data-testid="sales-by-user-chart">
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle className="section-title">Personel Satışları</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-64">
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+              <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesByUser}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip 
                       formatter={(value) => formatCurrency(value)}
                       contentStyle={{ 
