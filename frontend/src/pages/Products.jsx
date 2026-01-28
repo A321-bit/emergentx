@@ -564,20 +564,20 @@ const Products = () => {
                     {product.stock_quantity} {product.unit}
                   </TableCell>
                   {canViewPrices && (
-                    <TableCell className="text-right currency text-muted-foreground">
+                    <TableCell className="text-right currency text-muted-foreground hidden xl:table-cell">
                       {product.purchase_price_without_vat != null 
                         ? formatCurrency(product.purchase_price_without_vat, product.currency || 'USD')
                         : '-'}
                     </TableCell>
                   )}
                   {canViewPrices && (
-                    <TableCell className="text-right currency">
+                    <TableCell className="text-right currency hidden lg:table-cell">
                       {product.purchase_price != null 
                         ? formatCurrency(product.purchase_price, product.currency || 'USD')
                         : '-'}
                     </TableCell>
                   )}
-                  <TableCell className="text-right currency font-medium">
+                  <TableCell className="text-right currency font-medium text-sm">
                     {formatCurrency(product.sale_price || 0, product.currency || 'USD')}
                   </TableCell>
                   {isDealer && (
@@ -630,14 +630,69 @@ const Products = () => {
         </CardContent>
       </Card>
 
+      {/* Mobile Card View */}
+      <div className="sm:hidden space-y-3">
+        {filteredProducts.map((product) => (
+          <Card key={product.id} className="p-4" data-testid={`product-card-${product.id}`}>
+            <div className="flex gap-3">
+              <button
+                onClick={() => openMediaModal(product)}
+                className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0"
+              >
+                {product.images && product.images.length > 0 ? (
+                  <img 
+                    src={`${API_URL}${product.images[0]}`} 
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Image className="h-6 w-6 text-muted-foreground" />
+                )}
+              </button>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-sm truncate">{product.name}</h3>
+                <p className="text-xs text-muted-foreground">{product.category_name}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs bg-accent/10 text-accent px-1.5 py-0.5 rounded">{product.currency}</span>
+                  <span className="text-xs text-muted-foreground">Stok: {product.stock_quantity}</span>
+                </div>
+                <p className="text-sm font-bold text-primary mt-1">
+                  {formatCurrency(product.sale_price || 0, product.currency || 'USD')}
+                </p>
+              </div>
+            </div>
+            {canManage && (
+              <div className="flex justify-end gap-2 mt-3 pt-3 border-t">
+                <Button variant="outline" size="sm" onClick={() => openMediaModal(product)}>
+                  <Image className="h-4 w-4 mr-1" />
+                  Medya
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Düzenle
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDelete(product.id)} className="text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </Card>
+        ))}
+        {filteredProducts.length === 0 && (
+          <Card className="p-8 text-center text-muted-foreground">
+            {categories.length === 0 ? 'Önce kategori oluşturun' : 'Ürün bulunamadı'}
+          </Card>
+        )}
+      </div>
+
       {/* Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="product-modal">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="product-modal">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün Ekle'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="name">Ürün Adı</Label>
                 <Input
