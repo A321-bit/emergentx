@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-01-27T15:10:27.467574",
-  "total_tests": 25,
-  "passed_tests": 25,
-  "success_rate": 100.0,
+  "timestamp": "2026-01-28T17:47:11.163625",
+  "total_tests": 20,
+  "passed_tests": 16,
+  "success_rate": 80.0,
   "results": [
     {
       "test": "Init Default Data",
@@ -19,43 +19,37 @@
     {
       "test": "Dashboard Stats",
       "success": true,
-      "details": "Stats: 8 products, 1 customers",
+      "details": "Stats: 0 products, 0 customers",
       "response_data": null
     },
     {
       "test": "Get Products",
       "success": true,
-      "details": "Retrieved 8 products",
+      "details": "Retrieved 0 products",
       "response_data": null
     },
     {
       "test": "Product Count Check",
-      "success": true,
-      "details": "Has 8 products (≥6 required)",
+      "success": false,
+      "details": "Only 0 products, need ≥6",
       "response_data": null
     },
     {
       "test": "Create Product",
-      "success": true,
-      "details": "Created product ID: a87c1837-e5e3-4e5f-943d-92ae73786d10",
-      "response_data": null
-    },
-    {
-      "test": "Update Product",
-      "success": true,
-      "details": "Product updated successfully",
+      "success": false,
+      "details": "Creation failed: {'detail': [{'type': 'missing', 'loc': ['body', 'category_id'], 'msg': 'Field required', 'input': {'name': 'Test Solar Panel 600W', 'category': 'panel', 'description': 'Test product for API testing', 'purchase_price': 3000.0, 'sale_price': 4200.0, 'dealer_price': 3600.0, 'stock_quantity': 50, 'unit': 'adet'}, 'url': 'https://errors.pydantic.dev/2.12/v/missing'}, {'type': 'missing', 'loc': ['body', 'purchase_price_without_vat'], 'msg': 'Field required', 'input': {'name': 'Test Solar Panel 600W', 'category': 'panel', 'description': 'Test product for API testing', 'purchase_price': 3000.0, 'sale_price': 4200.0, 'dealer_price': 3600.0, 'stock_quantity': 50, 'unit': 'adet'}, 'url': 'https://errors.pydantic.dev/2.12/v/missing'}]}",
       "response_data": null
     },
     {
       "test": "Get Customers",
       "success": true,
-      "details": "Retrieved 1 customers",
+      "details": "Retrieved 0 customers",
       "response_data": null
     },
     {
       "test": "Create Customer",
       "success": true,
-      "details": "Created customer ID: 9af30c80-7823-44f0-8717-26a6cca23bd8",
+      "details": "Created customer ID: c9e28075-e64c-4f4b-a6fa-86761ea6dfa7",
       "response_data": null
     },
     {
@@ -72,20 +66,8 @@
     },
     {
       "test": "Create Quote",
-      "success": true,
-      "details": "Created quote ID: 19a1ae41-be40-40ba-a278-1d12f17af3ae",
-      "response_data": null
-    },
-    {
-      "test": "Update Quote Status",
-      "success": true,
-      "details": "Quote status updated to 'onaylandi'",
-      "response_data": null
-    },
-    {
-      "test": "Convert Quote to Sale",
-      "success": true,
-      "details": "Quote converted to sale",
+      "success": false,
+      "details": "No customer or product available for quote creation",
       "response_data": null
     },
     {
@@ -97,43 +79,31 @@
     {
       "test": "Create User",
       "success": true,
-      "details": "Created user ID: 1f20e91f-07b4-401d-8add-29c650b486b4",
+      "details": "Created user ID: e1154188-46fb-4569-9e4c-a8b14fe67843",
       "response_data": null
     },
     {
       "test": "Get Dealers",
       "success": true,
-      "details": "Retrieved 1 dealers",
+      "details": "Retrieved 0 dealers",
       "response_data": null
     },
     {
       "test": "Create Dealer",
       "success": true,
-      "details": "Created dealer ID: dab0a45c-3773-4039-bcf5-59bdc5cf2ade with 15% discount",
+      "details": "Created dealer ID: a0468b76-69fb-4c32-a0de-4aab5e0096f7 with 15% discount",
       "response_data": null
     },
     {
-      "test": "Stock Entry",
-      "success": true,
-      "details": "Stock entry created successfully",
-      "response_data": null
-    },
-    {
-      "test": "Stock Exit",
-      "success": true,
-      "details": "Stock exit created successfully",
-      "response_data": null
-    },
-    {
-      "test": "Get Stock Movements",
-      "success": true,
-      "details": "Retrieved 2 stock movements",
+      "test": "Stock Movement",
+      "success": false,
+      "details": "No product available for stock testing",
       "response_data": null
     },
     {
       "test": "Get Company Settings",
       "success": true,
-      "details": "Company: Solar Enerji Test A.Ş.",
+      "details": "Company: Solar Enerji A.Ş.",
       "response_data": null
     },
     {
@@ -145,7 +115,7 @@
     {
       "test": "Sales by User Report",
       "success": true,
-      "details": "Retrieved 1 user sales records",
+      "details": "Retrieved 0 user sales records",
       "response_data": null
     },
     {
