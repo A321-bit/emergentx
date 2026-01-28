@@ -138,3 +138,112 @@ code {
         display: contents !important;
     }
 }
+
+/* Sidebar nav items */
+.sidebar-nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200;
+}
+
+.sidebar-nav-item.active {
+    @apply bg-primary/10 text-primary;
+}
+
+/* Page title */
+.page-title {
+    @apply text-xl sm:text-2xl lg:text-3xl font-bold font-outfit tracking-tight;
+}
+
+/* Section title */
+.section-title {
+    @apply text-base sm:text-lg font-semibold font-outfit;
+}
+
+/* Mobile responsive table wrapper */
+.table-responsive {
+    @apply w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+}
+
+/* Card grid responsive */
+.card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+}
+
+/* Stats grid */
+.stats-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4;
+}
+
+/* Form grid */
+.form-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+
+/* Button group responsive */
+.btn-group {
+    @apply flex flex-col sm:flex-row gap-2 sm:gap-3;
+}
+
+/* Status badge */
+.status-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap;
+}
+
+.status-badge.teklif_gonderildi {
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+}
+
+.status-badge.teklif_onaylandi {
+    @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+}
+
+.status-badge.satisa_dondu {
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+}
+
+.status-badge.iptal {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+}
+
+/* Currency display */
+.currency {
+    @apply font-mono tabular-nums;
+}
+
+/* Spinner */
+.spinner {
+    @apply animate-spin rounded-full border-4 border-primary border-t-transparent;
+}
+
+/* Mobile dialog */
+@media (max-width: 640px) {
+    [role="dialog"] {
+        @apply !max-w-[95vw] !w-full;
+    }
+}
+
+/* Hide on mobile */
+.hide-mobile {
+    @apply hidden sm:block;
+}
+
+/* Show only on mobile */
+.show-mobile {
+    @apply block sm:hidden;
+}
+
+/* Mobile card view for tables */
+.mobile-card {
+    @apply block sm:hidden p-4 border rounded-lg space-y-2 bg-card;
+}
+
+.mobile-card-row {
+    @apply flex justify-between items-center text-sm;
+}
+
+.mobile-card-label {
+    @apply text-muted-foreground;
+}
+
+.mobile-card-value {
+    @apply font-medium;
+}
