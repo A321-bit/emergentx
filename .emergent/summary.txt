@@ -1,0 +1,228 @@
+<analysis>**original_problem_statement:**
+The user wants to build a comprehensive Solar Energy Sales Management System (CRM/ERP) with a phased development approach.
+
+**PRODUCT REQUIREMENTS:**
+
+**A) ADMIN PANEL:**
+-   Full system visibility and modification rights.
+-   Reporting capabilities.
+-   **Modules:**
+    -   **User Management:** Add/remove staff, define roles (Sales, Technical, Accounting, Dealer Manager), and manage role-based permissions.
+    -   **Product & Stock Management:** Add products (Panels, Inverters, Batteries, Accessories) with purchase, sale, and dealer prices. Manage stock entry/exit.
+    -   **Sales & Quote Management:** View all quotes and their statuses (Sent, Approved, Converted to Sale, Canceled). Track creator, customer, and pricing.
+    -   **Finance Panel:** View total stock value, sales revenue, and profitability. Filter sales by staff and dealer.
+    -   **Dealer Management:** Create dealers and define their specific discount rates. Dealers have their own users, customers, and quotes.
+
+**B) SALES STAFF PANEL:**
+-   Cannot change stock prices or dealer discounts.
+-   Can add customers, prepare quotes, and view their own sales.
+-   **Modules:**
+    -   **Customer Management:** Manage customer details (name, phone, address, type) and add notes.
+    -   **Quote Creation:** Select products to generate a quote with automatic pricing, create a PDF, and send it via WhatsApp/email.
+    -   **Sales Tracking:** Monitor quote status and confirmed sales.
+
+**C) DEALER PANEL:**
+-   Views products with their specific discounted prices.
+-   Can create quotes for their own customers.
+-   **Features:**
+    -   View product list with discounted prices and general stock status.
+    -   Quote creation and order placement.
+
+**D) CUSTOMER & QUOTE SYSTEM:**
+-   **PDF Quotes:** Must include company logo, product details, warranty info, and validity period.
+
+**Subsequent User Requests (Implemented or In-Progress):**
+1.  **Multi-Currency:** Product prices should support USD (default), EUR, and TL.
+2.  **Dynamic Categories:** Admins must be able to create and manage product categories with specific default profit margins.
+3.  **Product Image Upload:** Allow direct upload of multiple / images for each product.
+4.  **PDF Datasheet Upload:** Allow uploading a PDF datasheet for each product, to be included in quotes.
+5.  **Advanced Pricing Logic:**
+    -   Purchase price is entered VAT-exclusive.
+    -   The system automatically adds 20% VAT to calculate the cost.
+    -   Sales price is calculated using a profit margin (%) on top of the VAT-inclusive cost.
+6.  **Dealer Tiers:** Create dealer groups (e.g., Silver, Gold) with specific discount percentages instead of per-dealer discounts.
+7.  **Custom Roles & Permissions:** Admins must be able to create custom role names and assign permissions using a granular, checkbox-style UI.
+8.  **Dealer Credentials:** Admins must be able to create a username and password for dealers upon creation.
+9.  **Advanced Customer Management:**
+    -   Differentiate between 'Individual' and 'Corporate' customers.
+    -   Add new fields: TC Kimlik (for individuals), customer category (e.g., on-grid, off-grid), and acquisition source (e.g., referral, Instagram).
+    -   These categories and sources must be manageable from a separate settings page.
+
+**User's preferred language**: Turkish
+
+**what currently exists?**
+A functional full-stack application with a FastAPI backend and React frontend. It includes:
+- JWT-based authentication for different user roles (Admin, Staff, Dealer).
+- CRUD functionality for Users, Products, Customers, and Quotes.
+- A dynamic category management system where admins can create categories with default profit margins.
+- A dealer group system where admins can create tiers (e.g., Silver, Gold) with set discount percentages.
+- An advanced pricing system that calculates sales price based on purchase price, a fixed VAT rate, and a variable profit margin.
+- Multi-currency support for products.
+
+**Last working item**:
+The agent was performing a major overhaul to implement a large set of new features requested by the user. This involves custom roles with granular permissions, dealer-specific user accounts, multi-image and PDF uploads for products, and an advanced customer management system.
+
+- **Last item agent was working**: The agent was in the middle of a massive rewrite of both the backend and frontend to implement the latest, complex user requests. It had just overwritten  and the frontend pages for Users, Customers, Dealers, and Products.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: both
+- **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+-   **Issue 1:** (P0) The application is currently in a broken, non-functional state due to an incomplete major feature implementation.
+
+    **Issues Detail:**
+    -   **Issue 1:** Complete the major feature update.
+        -   **Attempted fixes:** The agent started a full rewrite by overwriting  and the frontend pages: , , , and . The implementation was interrupted before it could be completed and tested.
+        -   **Next debug checklist**:
+            1.  **Review :** Verify that the new file correctly implements all required models (Roles, Permissions, CustomerCategories, CustomerSources) and their associated API endpoints for CRUD operations. Ensure logic for permission checks, dealer credential creation, and media uploads is present.
+            2.  **Review Frontend Pages:** Check the overwritten files (, , , ) to ensure they correctly implement the new UI requirements (permission matrix, dealer login form, multi-file upload components, advanced customer fields).
+            3.  **Update Routing:** Modify  and  to add routes and navigation links for the new pages (, ).
+            4.  **Install Dependencies:** Check if new dependencies for file handling (e.g.,  on the backend) are needed and installed.
+            5.  **Restart & Test:** Restart both services (backend: stopped
+frontend: ERROR (not running)
+backend: started
+frontend: started) and perform comprehensive end-to-end testing using the testing agent.
+        -   **Why fix this issue and what will be achieved with the fix?** This is the highest priority task. Fixing it will implement the user's latest critical requirements and restore the application to a functional state.
+        -   **Status**: IN PROGRESS
+        -   **Is recurring issue?** N
+        -   **Should Test frontend/backend/both after fix?** both
+        -   **Blocked on other issue**: None
+
+**In progress Task List**:
+-   **Task 1:** (P0) Finalize the major feature implementation.
+    -   **Where to resume**: The agent has just overwritten several core backend and frontend files. The immediate next step is to ensure the new files are complete, update the application's routing in  and , restart the services, and then begin thorough testing.
+    -   **What will be achieved with this?** Implementation of custom roles/permissions, dealer accounts, product media uploads, and advanced customer fields.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something**: No
+
+**Upcoming and Future Tasks**
+**Upcoming Tasks:**
+-   **P1: Update PDF Quote Generation:** Modify the quote generation logic to include uploaded product PDF datasheets.
+-   **P1: Address User's Query:** After the system is stable, provide a simple, step-by-step guide on how to use the new features, as requested by the user (...anlat ben bir bilgisiz cahilim...).
+-   **P2: Implement Finance Reports:** Build out the Finans Paneli to show total stock value, sales revenue, and profitability reports as per the original requirements.
+
+**Future Tasks (Phase 3):**
+-   WhatsApp integration for sending quotes.
+-   Integration with ERP systems like LogoGo or Mikro.
+-   Enhanced mobile responsiveness.
+-   Develop a public API for third-party access.
+
+**Completed work in this session**
+-   Core application scaffolding (Backend + Frontend).
+-   JWT Authentication and basic role-based access.
+-   CRUD operations for Users, Products, Customers, and Quotes.
+-   **Feature:** Multi-currency support for products (USD, EUR, TL).
+-   **Feature:** Dynamic Product Category management with category-specific profit margins.
+-   **Feature:** Advanced pricing logic (Purchase Price + VAT -> Cost -> + Profit Margin -> Sale Price).
+-   **Feature:** Dealer Group management with tiered discounts.
+
+**Earlier issues found/mentioned but not fixed**
+None. The agent has been addressing issues as they arise.
+
+**Known issue recurrence from previous fork**
+None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **Backend:** FastAPI
+-   **Frontend:** React.js
+-   **Database:** MongoDB
+-   **Authentication:** JWT (JSON Web Tokens)
+-   **Styling:** Tailwind CSS, shadcn/ui
+-   **Deployment:** Docker container managed by Supervisor
+
+**key DB schema**
+-   : {email, password_hash, role_id, ...}
+-   : {name, permissions: {resource: [actions]}}
+-   : {name, category_id, purchase_price, vat_rate, profit_margin, image_urls: [], datasheet_url, ...}
+-   : {name, default_profit_margin}
+-   : {name, type: ('individual'/'corporate'), tc_kimlik, address, customer_category_id, acquisition_source_id, ...}
+-   : {name}
+-   : {name}
+-   : {name, dealer_group_id, username, password_hash, ...}
+-   : {name, discount_percentage}
+-   : {customer_id, products: [], status, ...}
+
+**changes in tech stack**
+None.
+
+**All files of reference**
+**Recently Overwritten/Created (In-Progress):**
+-   : Rewritten to support all new models and logic.
+-   : Rewritten for role assignment UI.
+-   : Rewritten for advanced customer fields.
+-   : Rewritten to include dealer credential creation.
+-   : Rewritten for multi-image and PDF upload UI.
+-   : New page for managing roles and permissions.
+-   : New page for managing customer categories and sources.
+
+**Other Key Files:**
+-   : Needs updates for new routes.
+-   : Needs updates for new navigation links.
+-   : Contains project requirements and progress.
+
+**Areas that need refactoring**:
+The agent opted for a full rewrite of  and several frontend pages. While necessary for the scope of changes, this approach is risky. The next agent must focus on stabilizing and verifying this new code before proceeding.
+
+**key api endpoints**
+-   
+-   , , 
+-   , 
+-   , 
+-   , 
+-   
+-    (for seeding database)
+-   (New) ,  for media.
+
+**Critical Info for New Agent**
+-   The previous agent was interrupted mid-way through a very large and complex feature update. It overwrote several critical files (, , , etc.).
+-   **The application is currently in a broken state.** Your first priority is to stabilize the system.
+-   You must complete the implementation based on the user's last request, update the routing (, ), and then conduct thorough testing before moving on. Do not assume the overwritten files are complete.
+-   After stabilizing, you need to address the user's request for a simple explanation of how to use the system.
+
+**documents and test reports created in this job**
+-   
+-   
+-   
+-   
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User:** Requests dynamic categories, product image uploads, advanced pricing (VAT + margin), and dealer groups. (Implemented)
+2.  **Agent:** Acknowledges and starts implementing.
+3.  ... (Agent implements and tests successfully) ...
+4.  **Agent:** Finishes the task, confirming features are ready.
+5.  **User:** Requests a major new set of features: custom roles with a permission matrix, dealer-specific logins, multi-image and PDF uploads for products, advanced customer fields with manageable categories/sources.
+6.  **Agent:** Acknowledges the large scope and starts work.
+7.  **Agent:** Decides to rewrite  and overwrites it.
+8.  **User:**  (continue).
+9.  **Agent:** Overwrites several frontend pages (, ).
+10. **User:**  (I saved it, what do I need to do, explain it to me like I'm a complete novice, I have no knowledge). This is a **pending human message** that needs to be addressed once the system is stable.
+11. **Agent:** Acknowledges the user's request for an explanation and states it needs to finish updating files first.
+
+**Project Health Check:**
+-   **Broken:** The main application logic is currently broken due to an in-progress major rewrite.
+
+**3rd Party Integrations**
+-   None explicitly integrated yet, but future plans include WhatsApp and ERPs.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES, used twice for previous feature updates. Not yet used for the current (incomplete) rewrite.
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None.
+-   **Known regressions:** The entire application is likely in a regressed state due to the incomplete rewrite.
+
+**Credentials to test flow:**
+The  endpoint creates a default admin user. After fixing the backend, run a  to this endpoint to get the credentials.
+-   **Email:** 
+-   **Password:** 
+
+**What agent forgot to execute**
+The agent was interrupted and did not complete its planned work. It needs to:
+1.  Finish writing/verifying the code in the overwritten files (, , etc.).
+2.  Update  and  to add routes and navigation for  and .
+3.  Restart services and run a full end-to-end test with .
+4.  Address the user's pending request for a simple explanation of how to use the platform.</analysis>

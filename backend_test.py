@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class SolarProAPITester:
-    def __init__(self, base_url: str = "https://power-manager-7.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://solar-crm-12.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
