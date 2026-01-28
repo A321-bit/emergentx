@@ -497,19 +497,19 @@ const Products = () => {
         </Select>
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
+      {/* Table - Desktop */}
+      <Card className="hidden sm:block">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Medya</TableHead>
                 <TableHead>Ürün Adı</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead className="text-center">Para Birimi</TableHead>
+                <TableHead className="hidden md:table-cell">Kategori</TableHead>
+                <TableHead className="text-center hidden lg:table-cell">Para Birimi</TableHead>
                 <TableHead className="text-right">Stok</TableHead>
-                {canViewPrices && <TableHead className="text-right">Alış (KDV Hariç)</TableHead>}
-                {canViewPrices && <TableHead className="text-right">Maliyet</TableHead>}
+                {canViewPrices && <TableHead className="text-right hidden xl:table-cell">Alış (KDV Hariç)</TableHead>}
+                {canViewPrices && <TableHead className="text-right hidden lg:table-cell">Maliyet</TableHead>}
                 <TableHead className="text-right">Satış Fiyatı</TableHead>
                 {isDealer && <TableHead className="text-right">Bayi Fiyatı</TableHead>}
                 {canManage && <TableHead className="text-right">İşlemler</TableHead>}
@@ -521,7 +521,7 @@ const Products = () => {
                   <TableCell>
                     <button
                       onClick={() => openMediaModal(product)}
-                      className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden hover:ring-2 ring-primary transition-all"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden hover:ring-2 ring-primary transition-all"
                     >
                       {product.images && product.images.length > 0 ? (
                         <img 
@@ -536,7 +536,7 @@ const Products = () => {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <span className="font-medium">{product.name}</span>
+                      <span className="font-medium text-sm">{product.name}</span>
                       {product.datasheet_url && (
                         <a 
                           href={`${API_URL}${product.datasheet_url}`}
@@ -550,12 +550,12 @@ const Products = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <span className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
                       {product.category_name || 'Bilinmiyor'}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center hidden lg:table-cell">
                     <span className="inline-flex items-center px-2 py-1 rounded-md bg-accent/10 text-accent text-xs font-bold">
                       {product.currency || 'USD'}
                     </span>
