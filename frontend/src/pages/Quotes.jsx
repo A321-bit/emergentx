@@ -365,33 +365,39 @@ const Quotes = () => {
       // Toplam kutusu
       const tblEnd = (doc.lastAutoTable?.finalY || 150) + 8;
       
+      // Para birimi sembolü
+      const currSymbol = quote.currency === 'TRY' ? 'TL' : (quote.currency === 'EUR' ? 'EUR' : 'USD');
+      
       doc.setFillColor(...lightGray);
-      doc.roundedRect(pw - m - 75, tblEnd, 75, 45, 2, 2, 'F');
+      doc.roundedRect(pw - m - 80, tblEnd, 80, 45, 2, 2, 'F');
       
       doc.setDrawColor(...orange);
       doc.setLineWidth(0.5);
-      doc.line(pw - m - 70, tblEnd + 32, pw - m - 5, tblEnd + 32);
+      doc.line(pw - m - 75, tblEnd + 32, pw - m - 5, tblEnd + 32);
       
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...black);
       
-      doc.text('Ara Toplam:', pw - m - 70, tblEnd + 12);
-      doc.text(formatCurrency(quote.subtotal, quote.currency), pw - m - 8, tblEnd + 12, { align: 'right' });
+      const subtotalStr = quote.subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + currSymbol;
+      doc.text('Ara Toplam:', pw - m - 75, tblEnd + 12);
+      doc.text(subtotalStr, pw - m - 8, tblEnd + 12, { align: 'right' });
       
       if (quote.discount_rate > 0) {
-        doc.text('Iskonto (%' + quote.discount_rate + '):', pw - m - 70, tblEnd + 20);
+        const discountStr = quote.discount_amount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + currSymbol;
+        doc.text('Iskonto (%' + quote.discount_rate + '):', pw - m - 75, tblEnd + 20);
         doc.setTextColor(200, 0, 0);
-        doc.text('-' + formatCurrency(quote.discount_amount, quote.currency), pw - m - 8, tblEnd + 20, { align: 'right' });
+        doc.text('-' + discountStr, pw - m - 8, tblEnd + 20, { align: 'right' });
         doc.setTextColor(...black);
       }
       
+      const totalStr = quote.total.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + currSymbol;
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...darkBlue);
-      doc.text('GENEL TOPLAM:', pw - m - 70, tblEnd + 40);
+      doc.text('GENEL TOPLAM:', pw - m - 75, tblEnd + 40);
       doc.setTextColor(...orange);
-      doc.text(formatCurrency(quote.total, quote.currency), pw - m - 8, tblEnd + 40, { align: 'right' });
+      doc.text(totalStr, pw - m - 8, tblEnd + 40, { align: 'right' });
       
       // Alt band
       doc.setFillColor(...orange);
