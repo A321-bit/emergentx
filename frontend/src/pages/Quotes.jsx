@@ -159,96 +159,326 @@ const Quotes = () => {
     }
   };
 
-  const generatePDF = (quote) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text(companySettings.company_name || 'Solar Enerji A.Ş.', 20, 25);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    if (companySettings.phone) doc.text(`Tel: ${companySettings.phone}`, 20, 32);
-    if (companySettings.email) doc.text(`Email: ${companySettings.email}`, 20, 38);
-    if (companySettings.address) doc.text(`Adres: ${companySettings.address}`, 20, 44);
-    
-    // Quote info
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TEKLİF', pageWidth - 20, 25, { align: 'right' });
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Teklif No: ${quote.quote_number}`, pageWidth - 20, 32, { align: 'right' });
-    doc.text(`Tarih: ${formatDate(quote.created_at)}`, pageWidth - 20, 38, { align: 'right' });
-    doc.text(`Geçerlilik: ${formatDate(quote.valid_until)}`, pageWidth - 20, 44, { align: 'right' });
-    
-    // Divider
-    doc.setDrawColor(200);
-    doc.line(20, 52, pageWidth - 20, 52);
-    
-    // Customer info
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Müşteri Bilgileri', 20, 62);
-    doc.setFont('helvetica', 'normal');
-    doc.text(quote.customer_name, 20, 69);
-    
-    // Items table
-    const tableData = quote.items.map(item => [
-      item.product_name,
-      item.quantity.toString(),
-      formatCurrency(item.unit_price, quote.currency),
-      formatCurrency(item.total_price, quote.currency)
-    ]);
-    
-    doc.autoTable({
-      startY: 80,
-      head: [['Ürün', 'Miktar', 'Birim Fiyat', 'Toplam']],
-      body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [245, 158, 11] },
-      styles: { fontSize: 10 },
-      columnStyles: {
-        0: { cellWidth: 80 },
-        1: { cellWidth: 25, halign: 'center' },
-        2: { cellWidth: 35, halign: 'right' },
-        3: { cellWidth: 35, halign: 'right' }
+  const generatePDF = async (quote) => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      
+      // Colors
+      const primaryColor = [245, 158, 11]; // Amber
+      const darkColor = [31, 41, 55]; // Gray-800
+      const lightGray = [249, 250, 251]; // Gray-50
+
+      // ============= PAGE 1: COVER PAGE =============
+      if (companySettings.quote_cover_image) {
+        try {
+          const imgUrl = `${API_URL}${companySettings.quote_cover_image}`;
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = imgUrl;
+          });
+          
+          // Add cover image full page
+          doc.addImage(img, 'JPEG', 0, 0, pageWidth, pageHeight);
+          doc.addPage();
+        } catch (imgError) {
+          console.warn('Cover image could not be loaded:', imgError);
+        }
       }
-    });
-    
-    // Totals
-    const finalY = doc.lastAutoTable.finalY + 10;
-    
-    doc.setFontSize(10);
-    doc.text(`Ara Toplam: ${formatCurrency(quote.subtotal, quote.currency)}`, pageWidth - 20, finalY, { align: 'right' });
-    
-    if (quote.discount_rate > 0) {
-      doc.text(`İskonto (%${quote.discount_rate}): -${formatCurrency(quote.discount_amount, quote.currency)}`, pageWidth - 20, finalY + 7, { align: 'right' });
-    }
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`GENEL TOPLAM: ${formatCurrency(quote.total, quote.currency)}`, pageWidth - 20, finalY + 17, { align: 'right' });
-    
-    // Notes and warranty
-    if (quote.notes) {
-      doc.setFontSize(10);
+
+      // ============= PAGE 2: QUOTE DETAILS =============
+      let yPos = margin;
+      
+      // Header background
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Company Logo
+      if (companySettings.logo_url) {
+        try {
+          const logoUrl = `${API_URL}${companySettings.logo_url}`;
+          const logoImg = new Image();
+          logoImg.crossOrigin = 'anonymous';
+          
+          await new Promise((resolve, reject) => {
+            logoImg.onload = resolve;
+            logoImg.onerror = reject;
+            logoImg.src = logoUrl;
+          });
+          
+          doc.addImage(logoImg, 'PNG', margin, 8, 30, 30);
+          yPos = 12;
+        } catch (logoError) {
+          console.warn('Logo could not be loaded');
+          yPos = 12;
+        }
+      }
+      
+      // Company Name & Contact (white text on amber background)
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(companySettings.company_name || 'Solar Enerji', 55, yPos + 5);
+      
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('Notlar:', 20, finalY + 30);
-      doc.text(quote.notes, 20, finalY + 37);
+      let contactY = yPos + 12;
+      if (companySettings.phone) {
+        doc.text(`Tel: ${companySettings.phone}`, 55, contactY);
+        contactY += 5;
+      }
+      if (companySettings.email) {
+        doc.text(`Email: ${companySettings.email}`, 55, contactY);
+        contactY += 5;
+      }
+      
+      // Quote Number Box (right side)
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(pageWidth - 70, 8, 55, 30, 3, 3, 'F');
+      doc.setTextColor(...darkColor);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TEKLİF', pageWidth - 42.5, 16, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text(quote.quote_number, pageWidth - 42.5, 24, { align: 'center' });
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formatDate(quote.created_at), pageWidth - 42.5, 32, { align: 'center' });
+      
+      // Customer Info Section
+      yPos = 55;
+      doc.setFillColor(...lightGray);
+      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'F');
+      
+      doc.setTextColor(...darkColor);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('MÜŞTERİ BİLGİLERİ', margin + 5, yPos + 8);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.text(quote.customer_name || '-', margin + 5, yPos + 17);
+      
+      // Customer details in columns
+      const customer = customers.find(c => c.id === quote.customer_id);
+      doc.setFontSize(9);
+      if (customer) {
+        let detailX = margin + 5;
+        let detailY = yPos + 25;
+        
+        if (customer.phone) {
+          doc.text(`Tel: ${customer.phone}`, detailX, detailY);
+          detailX += 50;
+        }
+        if (customer.city) {
+          doc.text(`İl: ${customer.city}`, detailX, detailY);
+          detailX += 40;
+        }
+        if (customer.district) {
+          doc.text(`İlçe: ${customer.district}`, detailX, detailY);
+        }
+        if (customer.address) {
+          doc.text(`Adres: ${customer.address.substring(0, 60)}${customer.address.length > 60 ? '...' : ''}`, margin + 5, detailY + 6);
+        }
+      }
+      
+      // Quote validity info
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Geçerlilik: ${formatDate(quote.valid_until)}`, pageWidth - margin - 5, yPos + 8, { align: 'right' });
+      
+      // Products Table
+      yPos = 100;
+      doc.setTextColor(...darkColor);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ÜRÜNLER', margin, yPos);
+      
+      // Build table data with product info
+      const tableData = quote.items.map(item => {
+        const product = products.find(p => p.id === item.product_id);
+        return [
+          item.product_name || '-',
+          item.quantity.toString(),
+          product?.unit || 'adet',
+          formatCurrency(item.unit_price, quote.currency),
+          formatCurrency(item.total_price, quote.currency)
+        ];
+      });
+      
+      doc.autoTable({
+        startY: yPos + 5,
+        head: [['Ürün Adı', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: primaryColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9,
+          cellPadding: 4
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 4
+        },
+        alternateRowStyles: {
+          fillColor: lightGray
+        },
+        columnStyles: {
+          0: { cellWidth: 70 },
+          1: { cellWidth: 20, halign: 'center' },
+          2: { cellWidth: 20, halign: 'center' },
+          3: { cellWidth: 35, halign: 'right' },
+          4: { cellWidth: 35, halign: 'right' }
+        },
+        margin: { left: margin, right: margin }
+      });
+      
+      // Totals Section
+      let finalY = doc.lastAutoTable.finalY + 10;
+      
+      // Totals box
+      const totalsX = pageWidth - margin - 80;
+      doc.setFillColor(...lightGray);
+      doc.roundedRect(totalsX, finalY, 80, 40, 3, 3, 'F');
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...darkColor);
+      
+      doc.text('Ara Toplam:', totalsX + 5, finalY + 10);
+      doc.text(formatCurrency(quote.subtotal, quote.currency), totalsX + 75, finalY + 10, { align: 'right' });
+      
+      if (quote.discount_rate > 0) {
+        doc.text(`İskonto (%${quote.discount_rate}):`, totalsX + 5, finalY + 18);
+        doc.setTextColor(220, 38, 38); // Red
+        doc.text(`-${formatCurrency(quote.discount_amount, quote.currency)}`, totalsX + 75, finalY + 18, { align: 'right' });
+      }
+      
+      // Total with border
+      doc.setDrawColor(...primaryColor);
+      doc.setLineWidth(0.5);
+      doc.line(totalsX + 5, finalY + 25, totalsX + 75, finalY + 25);
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...darkColor);
+      doc.text('TOPLAM:', totalsX + 5, finalY + 34);
+      doc.setTextColor(...primaryColor);
+      doc.text(formatCurrency(quote.total, quote.currency), totalsX + 75, finalY + 34, { align: 'right' });
+      
+      // Notes
+      if (quote.notes) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...darkColor);
+        doc.text('Notlar:', margin, finalY + 10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(quote.notes, margin, finalY + 17);
+      }
+      
+      // ============= PAGE 3: TERMS & BANK INFO =============
+      const hasTerms = companySettings.quote_terms;
+      const hasBank = companySettings.bank_iban;
+      
+      if (hasTerms || hasBank) {
+        doc.addPage();
+        yPos = margin;
+        
+        // Header
+        doc.setFillColor(...primaryColor);
+        doc.rect(0, 0, pageWidth, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('ŞARTLAR VE ÖDEME BİLGİLERİ', pageWidth / 2, 16, { align: 'center' });
+        
+        yPos = 40;
+        
+        // Terms Section
+        if (hasTerms) {
+          doc.setTextColor(...darkColor);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Teklif Şartları', margin, yPos);
+          
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          
+          const terms = companySettings.quote_terms.split('\n');
+          yPos += 8;
+          terms.forEach(line => {
+            if (yPos > pageHeight - 40) {
+              doc.addPage();
+              yPos = margin;
+            }
+            doc.text(line, margin, yPos);
+            yPos += 5;
+          });
+          
+          yPos += 10;
+        }
+        
+        // Bank Info Section
+        if (hasBank) {
+          doc.setFillColor(...lightGray);
+          doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 50, 3, 3, 'F');
+          
+          doc.setTextColor(...darkColor);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Banka Hesap Bilgileri', margin + 5, yPos + 10);
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          let bankY = yPos + 20;
+          
+          if (companySettings.bank_name) {
+            doc.text(`Banka: ${companySettings.bank_name}`, margin + 5, bankY);
+            if (companySettings.bank_branch) {
+              doc.text(`Şube: ${companySettings.bank_branch}`, margin + 100, bankY);
+            }
+            bankY += 7;
+          }
+          
+          if (companySettings.bank_account_holder) {
+            doc.text(`Hesap Sahibi: ${companySettings.bank_account_holder}`, margin + 5, bankY);
+            bankY += 7;
+          }
+          
+          if (companySettings.bank_iban) {
+            doc.setFont('helvetica', 'bold');
+            doc.text(`IBAN: ${companySettings.bank_iban}`, margin + 5, bankY);
+            doc.setFont('helvetica', 'normal');
+            if (companySettings.bank_swift) {
+              doc.text(`SWIFT: ${companySettings.bank_swift}`, margin + 130, bankY);
+            }
+          }
+        }
+        
+        // Warranty footer
+        if (companySettings.warranty_text) {
+          doc.setFontSize(8);
+          doc.setTextColor(100, 100, 100);
+          doc.text(companySettings.warranty_text, pageWidth / 2, pageHeight - 15, { align: 'center' });
+        }
+      }
+      
+      // Save PDF
+      doc.save(`Teklif_${quote.quote_number}.pdf`);
+      toast.success('PDF indirildi');
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('PDF oluşturulamadı: ' + error.message);
     }
-    
-    // Warranty
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(companySettings.warranty_text || 'Tüm ürünlerimiz 2 yıl garanti kapsamındadır.', 20, doc.internal.pageSize.getHeight() - 20);
-    
-    // Save
-    doc.save(`Teklif_${quote.quote_number}.pdf`);
-    toast.success('PDF indirildi');
   };
 
   const resetForm = () => {
