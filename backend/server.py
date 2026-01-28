@@ -93,6 +93,7 @@ class ProductBase(BaseModel):
     name: str
     category: str = Field(description="panel, inverter, batarya, aksesuar")
     description: Optional[str] = None
+    currency: str = Field(default="USD", description="USD, EUR, TRY")
     purchase_price: float
     sale_price: float
     dealer_price: float
@@ -108,6 +109,7 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = None
     category: Optional[str] = None
     description: Optional[str] = None
+    currency: Optional[str] = None
     purchase_price: Optional[float] = None
     sale_price: Optional[float] = None
     dealer_price: Optional[float] = None
