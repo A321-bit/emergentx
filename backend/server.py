@@ -131,36 +131,46 @@ class TokenResponse(BaseModel):
 # Product Models
 class ProductBase(BaseModel):
     name: str
-    category: str = Field(description="panel, inverter, batarya, aksesuar")
+    category_id: str  # Reference to category
     description: Optional[str] = None
     currency: str = Field(default="USD", description="USD, EUR, TRY")
-    purchase_price: float
-    sale_price: float
-    dealer_price: float
+    purchase_price_without_vat: float  # KDV hariç alış fiyatı
+    vat_rate: float = 20  # KDV oranı %
+    profit_margin: Optional[float] = None  # Ürün bazlı kar marjı (kategori varsayılanı kullanılabilir)
     stock_quantity: int = 0
     unit: str = "adet"
     specifications: Optional[dict] = None
     image_url: Optional[str] = None
 
-class ProductCreate(ProductBase):
-    pass
+class ProductCreate(BaseModel):
+    name: str
+    category_id: str
+    description: Optional[str] = None
+    currency: str = "USD"
+    purchase_price_without_vat: float
+    vat_rate: float = 20
+    profit_margin: Optional[float] = None
+    stock_quantity: int = 0
+    unit: str = "adet"
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
-    category: Optional[str] = None
+    category_id: Optional[str] = None
     description: Optional[str] = None
     currency: Optional[str] = None
-    purchase_price: Optional[float] = None
-    sale_price: Optional[float] = None
-    dealer_price: Optional[float] = None
+    purchase_price_without_vat: Optional[float] = None
+    vat_rate: Optional[float] = None
+    profit_margin: Optional[float] = None
     stock_quantity: Optional[int] = None
     unit: Optional[str] = None
-    specifications: Optional[dict] = None
     image_url: Optional[str] = None
 
 class Product(ProductBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    # Calculated fields
+    purchase_price: float = 0  # KDV dahil alış (maliyet)
+    sale_price: float = 0  # Satış fiyatı (kar marjlı)
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
