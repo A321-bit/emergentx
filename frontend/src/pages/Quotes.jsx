@@ -322,43 +322,44 @@ const Quotes = () => {
       
       const tableBody = quote.items.map((item, idx) => {
         const prod = products.find(p => p.id === item.product_id);
+        // Fiyatları sayı olarak formatla (para birimi sembolü olmadan)
+        const unitPrice = item.unit_price.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+        const totalPrice = item.total_price.toLocaleString('tr-TR', {minimumFractionDigits: 2});
         return [
           String(idx + 1),
+          (item.product_name || '-').substring(0, 35),
           String(item.quantity),
-          prod?.unit || 'Adet',
-          (item.product_name || '-').substring(0, 45),
-          formatCurrency(item.unit_price, quote.currency),
-          formatCurrency(item.total_price, quote.currency)
+          unitPrice,
+          totalPrice
         ];
       });
       
       autoTable(doc, {
         startY: tableY + 5,
-        head: [['#', 'Adet', 'Birim', 'Urun', 'B.Fiyat', 'Toplam']],
+        head: [['No', 'Urun Adi', 'Adet', 'Birim Fiyat', 'Toplam']],
         body: tableBody,
-        theme: 'striped',
+        theme: 'grid',
         styles: { 
-          fontSize: 8, 
-          cellPadding: 2,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1
+          fontSize: 9, 
+          cellPadding: 4,
+          overflow: 'linebreak',
+          halign: 'left'
         },
         headStyles: { 
           fillColor: darkBlue,
           textColor: 255,
           fontStyle: 'bold',
-          halign: 'center'
+          halign: 'center',
+          fontSize: 9
         },
         columnStyles: {
-          0: { cellWidth: 8, halign: 'center' },
-          1: { cellWidth: 15, halign: 'center' },
-          2: { cellWidth: 15, halign: 'center' },
-          3: { cellWidth: 72 },
-          4: { cellWidth: 30, halign: 'right' },
-          5: { cellWidth: 30, halign: 'right' }
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 20, halign: 'center' },
+          3: { cellWidth: 35, halign: 'right' },
+          4: { cellWidth: 35, halign: 'right' }
         },
-        margin: { left: m, right: m },
-        tableWidth: 170
+        margin: { left: m, right: m }
       });
       
       // Toplam kutusu
