@@ -275,15 +275,14 @@ const Quotes = () => {
       doc.setFillColor(...orange);
       doc.rect(0, 0, pw, 8, 'F');
       
-      // Logo sol üst
+      // Logo sol üst (önceden yüklenen logoyu kullan)
       let headerY = 20;
-      if (companySettings.logo_url) {
+      if (logoBase64) {
         try {
-          const logoBase64 = await loadImageAsBase64(`${API_URL}${companySettings.logo_url}`);
-          if (logoBase64) {
-            doc.addImage(logoBase64, 'JPEG', m, 12, 25, 25);
-          }
-        } catch (e) {}
+          doc.addImage(logoBase64, 'JPEG', m, 12, 25, 25);
+        } catch (e) {
+          console.error('Logo page2 error:', e);
+        }
       }
       
       // Şirket adı
