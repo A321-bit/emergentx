@@ -269,7 +269,7 @@ class DealerBase(BaseModel):
     phone: str
     email: Optional[str] = None
     address: Optional[str] = None
-    discount_rate: float = 0  # Percentage discount for this dealer
+    dealer_group_id: Optional[str] = None  # Reference to dealer group
 
 class DealerCreate(DealerBase):
     pass
@@ -280,7 +280,7 @@ class DealerUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
-    discount_rate: Optional[float] = None
+    dealer_group_id: Optional[str] = None
     is_active: Optional[bool] = None
 
 class Dealer(DealerBase):
