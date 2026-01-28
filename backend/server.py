@@ -45,6 +45,46 @@ security = HTTPBearer()
 
 # ==================== MODELS ====================
 
+# Category Models
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    default_profit_margin: float = 30  # Default profit margin percentage
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    default_profit_margin: Optional[float] = None
+
+class Category(CategoryBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Dealer Group Models
+class DealerGroupBase(BaseModel):
+    name: str  # Silver, Gold, Plus etc.
+    description: Optional[str] = None
+    discount_rate: float = 0  # Percentage discount for this group
+
+class DealerGroupCreate(DealerGroupBase):
+    pass
+
+class DealerGroupUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    discount_rate: Optional[float] = None
+
+class DealerGroup(DealerGroupBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # User Models
 class UserBase(BaseModel):
     email: EmailStr
