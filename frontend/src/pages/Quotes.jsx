@@ -334,12 +334,12 @@ const Quotes = () => {
       
       autoTable(doc, {
         startY: tableY + 5,
-        head: [['#', 'Miktar', 'Birim', 'Urun', 'Birim Fiyat', 'Toplam']],
+        head: [['#', 'Adet', 'Birim', 'Urun', 'B.Fiyat', 'Toplam']],
         body: tableBody,
         theme: 'striped',
         styles: { 
           fontSize: 8, 
-          cellPadding: 3,
+          cellPadding: 2,
           lineColor: [200, 200, 200],
           lineWidth: 0.1
         },
@@ -350,14 +350,15 @@ const Quotes = () => {
           halign: 'center'
         },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center' },
-          1: { cellWidth: 18, halign: 'center' },
-          2: { cellWidth: 18, halign: 'center' },
-          3: { cellWidth: 70 },
-          4: { cellWidth: 28, halign: 'right' },
-          5: { cellWidth: 28, halign: 'right' }
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 15, halign: 'center' },
+          2: { cellWidth: 15, halign: 'center' },
+          3: { cellWidth: 72 },
+          4: { cellWidth: 30, halign: 'right' },
+          5: { cellWidth: 30, halign: 'right' }
         },
-        margin: { left: m, right: m }
+        margin: { left: m, right: m },
+        tableWidth: 170
       });
       
       // Toplam kutusu
