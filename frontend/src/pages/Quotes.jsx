@@ -363,8 +363,8 @@ const Quotes = () => {
         body: tableBody,
         theme: 'grid',
         styles: { 
-          fontSize: 9, 
-          cellPadding: 4,
+          fontSize: 8, 
+          cellPadding: 3,
           overflow: 'linebreak',
           halign: 'left'
         },
@@ -373,14 +373,14 @@ const Quotes = () => {
           textColor: 255,
           fontStyle: 'bold',
           halign: 'center',
-          fontSize: 9
+          fontSize: 8
         },
         columnStyles: {
-          0: { cellWidth: 12, halign: 'center' },
-          1: { cellWidth: 80 },
-          2: { cellWidth: 20, halign: 'center' },
-          3: { cellWidth: 35, halign: 'right' },
-          4: { cellWidth: 35, halign: 'right' }
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 75 },
+          2: { cellWidth: 18, halign: 'center' },
+          3: { cellWidth: 33, halign: 'right' },
+          4: { cellWidth: 33, halign: 'right' }
         },
         margin: { left: m, right: m }
       });
