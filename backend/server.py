@@ -448,30 +448,215 @@ async def delete_user(user_id: str, current_user: dict = Depends(require_role("a
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     return {"message": "Kullanıcı silindi"}
 
+# ==================== CATEGORY ROUTES ====================
+
+@api_router.post("/categories", response_model=dict)
+async def create_category(category_data: CategoryCreate, current_user: dict = Depends(require_role("admin"))):
+    # Check if category name exists
+    existing = await db.categories.find_one({"name": category_data.name, "is_active": True}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu isimde kategori zaten var")
+    
+    category = Category(**category_data.model_dump())
+    category_dict = category.model_dump()
+    category_dict["created_at"] = category_dict["created_at"].isoformat()
+    
+    insert_dict = category_dict.copy()
+    await db.categories.insert_one(insert_dict)
+    return category_dict
+
+@api_router.get("/categories", response_model=List[dict])
+async def get_categories(current_user: dict = Depends(get_current_user)):
+    categories = await db.categories.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    return categories
+
+@api_router.get("/categories/{category_id}", response_model=dict)
+async def get_category(category_id: str, current_user: dict = Depends(get_current_user)):
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    return category
+
+@api_router.put("/categories/{category_id}", response_model=dict)
+async def update_category(category_id: str, category_data: CategoryUpdate, current_user: dict = Depends(require_role("admin"))):
+    update_dict = {k: v for k, v in category_data.model_dump().items() if v is not None}
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="Güncellenecek veri yok")
+    
+    result = await db.categories.update_one({"id": category_id}, {"$set": update_dict})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    return category
+
+@api_router.delete("/categories/{category_id}")
+async def delete_category(category_id: str, current_user: dict = Depends(require_role("admin"))):
+    # Check if category has products
+    product_count = await db.products.count_documents({"category_id": category_id, "is_active": True})
+    if product_count > 0:
+        raise HTTPException(status_code=400, detail=f"Bu kategoride {product_count} ürün var, önce ürünleri silin veya taşıyın")
+    
+    result = await db.categories.update_one({"id": category_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    return {"message": "Kategori silindi"}
+
+# ==================== DEALER GROUP ROUTES ====================
+
+@api_router.post("/dealer-groups", response_model=dict)
+async def create_dealer_group(group_data: DealerGroupCreate, current_user: dict = Depends(require_role("admin"))):
+    existing = await db.dealer_groups.find_one({"name": group_data.name, "is_active": True}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu isimde bayi grubu zaten var")
+    
+    group = DealerGroup(**group_data.model_dump())
+    group_dict = group.model_dump()
+    group_dict["created_at"] = group_dict["created_at"].isoformat()
+    
+    insert_dict = group_dict.copy()
+    await db.dealer_groups.insert_one(insert_dict)
+    return group_dict
+
+@api_router.get("/dealer-groups", response_model=List[dict])
+async def get_dealer_groups(current_user: dict = Depends(get_current_user)):
+    groups = await db.dealer_groups.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    return groups
+
+@api_router.get("/dealer-groups/{group_id}", response_model=dict)
+async def get_dealer_group(group_id: str, current_user: dict = Depends(get_current_user)):
+    group = await db.dealer_groups.find_one({"id": group_id}, {"_id": 0})
+    if not group:
+        raise HTTPException(status_code=404, detail="Bayi grubu bulunamadı")
+    return group
+
+@api_router.put("/dealer-groups/{group_id}", response_model=dict)
+async def update_dealer_group(group_id: str, group_data: DealerGroupUpdate, current_user: dict = Depends(require_role("admin"))):
+    update_dict = {k: v for k, v in group_data.model_dump().items() if v is not None}
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="Güncellenecek veri yok")
+    
+    result = await db.dealer_groups.update_one({"id": group_id}, {"$set": update_dict})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Bayi grubu bulunamadı")
+    
+    group = await db.dealer_groups.find_one({"id": group_id}, {"_id": 0})
+    return group
+
+@api_router.delete("/dealer-groups/{group_id}")
+async def delete_dealer_group(group_id: str, current_user: dict = Depends(require_role("admin"))):
+    # Check if group has dealers
+    dealer_count = await db.dealers.count_documents({"dealer_group_id": group_id, "is_active": True})
+    if dealer_count > 0:
+        raise HTTPException(status_code=400, detail=f"Bu grupta {dealer_count} bayi var, önce bayileri başka gruba taşıyın")
+    
+    result = await db.dealer_groups.update_one({"id": group_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Bayi grubu bulunamadı")
+    return {"message": "Bayi grubu silindi"}
+
 # ==================== PRODUCT ROUTES ====================
+
+async def calculate_product_prices(product_data: dict, category: dict = None):
+    """Calculate purchase price (with VAT) and sale price based on margins"""
+    purchase_without_vat = product_data.get("purchase_price_without_vat", 0)
+    vat_rate = product_data.get("vat_rate", 20)
+    
+    # Calculate purchase price with VAT (maliyet)
+    purchase_price = purchase_without_vat * (1 + vat_rate / 100)
+    
+    # Get profit margin (product-specific or category default)
+    profit_margin = product_data.get("profit_margin")
+    if profit_margin is None and category:
+        profit_margin = category.get("default_profit_margin", 30)
+    elif profit_margin is None:
+        profit_margin = 30
+    
+    # Calculate sale price with profit margin
+    sale_price = purchase_price * (1 + profit_margin / 100)
+    
+    return {
+        "purchase_price": round(purchase_price, 2),
+        "sale_price": round(sale_price, 2),
+        "profit_margin": profit_margin
+    }
 
 @api_router.post("/products", response_model=dict)
 async def create_product(product_data: ProductCreate, current_user: dict = Depends(require_role("admin"))):
-    product = Product(**product_data.model_dump())
-    product_dict = product.model_dump()
-    product_dict["created_at"] = product_dict["created_at"].isoformat()
+    # Verify category exists
+    category = await db.categories.find_one({"id": product_data.category_id, "is_active": True}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
     
-    # Create a copy for insertion to avoid ObjectId contamination
+    product_dict = product_data.model_dump()
+    
+    # Calculate prices
+    prices = await calculate_product_prices(product_dict, category)
+    product_dict.update(prices)
+    
+    # Add other fields
+    product_dict["id"] = str(uuid.uuid4())
+    product_dict["is_active"] = True
+    product_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    product_dict["category_name"] = category["name"]
+    
     insert_dict = product_dict.copy()
     await db.products.insert_one(insert_dict)
     return product_dict
+
+@api_router.post("/products/{product_id}/upload-image")
+async def upload_product_image(product_id: str, file: UploadFile = File(...), current_user: dict = Depends(require_role("admin"))):
+    # Verify product exists
+    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Sadece JPEG, PNG, GIF veya WebP formatları desteklenir")
+    
+    # Save file
+    file_ext = file.filename.split(".")[-1].lower()
+    filename = f"product_{product_id}_{uuid.uuid4()}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    image_url = f"/uploads/{filename}"
+    
+    # Update product
+    await db.products.update_one({"id": product_id}, {"$set": {"image_url": image_url}})
+    
+    return {"image_url": image_url}
 
 @api_router.get("/products", response_model=List[dict])
 async def get_products(current_user: dict = Depends(get_current_user)):
     products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(1000)
     
-    # If dealer, apply dealer discount
+    # Add category names and calculate dealer prices
+    categories = {c["id"]: c for c in await db.categories.find({"is_active": True}, {"_id": 0}).to_list(100)}
+    
+    # Get dealer group discount if user is dealer
+    dealer_discount = 0
     if current_user["role"] == "bayi" and current_user.get("dealer_id"):
         dealer = await db.dealers.find_one({"id": current_user["dealer_id"]}, {"_id": 0})
-        if dealer:
-            discount_rate = dealer.get("discount_rate", 0) / 100
-            for p in products:
-                p["dealer_price"] = p["sale_price"] * (1 - discount_rate)
+        if dealer and dealer.get("dealer_group_id"):
+            group = await db.dealer_groups.find_one({"id": dealer["dealer_group_id"]}, {"_id": 0})
+            if group:
+                dealer_discount = group.get("discount_rate", 0)
+    
+    for p in products:
+        # Add category name
+        cat = categories.get(p.get("category_id"))
+        p["category_name"] = cat["name"] if cat else "Bilinmiyor"
+        
+        # Calculate dealer price based on purchase_price (maliyet) + group discount
+        # Dealer price = purchase_price * (1 + dealer_discount/100)
+        purchase_price = p.get("purchase_price", 0)
+        p["dealer_price"] = round(purchase_price * (1 + dealer_discount / 100), 2)
     
     return products
 
@@ -480,6 +665,12 @@ async def get_product(product_id: str, current_user: dict = Depends(get_current_
     product = await db.products.find_one({"id": product_id}, {"_id": 0})
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+    
+    # Add category name
+    if product.get("category_id"):
+        category = await db.categories.find_one({"id": product["category_id"]}, {"_id": 0})
+        product["category_name"] = category["name"] if category else "Bilinmiyor"
+    
     return product
 
 @api_router.put("/products/{product_id}", response_model=dict)
@@ -487,6 +678,27 @@ async def update_product(product_id: str, product_data: ProductUpdate, current_u
     update_dict = {k: v for k, v in product_data.model_dump().items() if v is not None}
     if not update_dict:
         raise HTTPException(status_code=400, detail="Güncellenecek veri yok")
+    
+    # If price-related fields are updated, recalculate
+    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+    
+    # Merge with existing data for recalculation
+    merged = {**product, **update_dict}
+    
+    # Get category for profit margin
+    category = None
+    category_id = update_dict.get("category_id", product.get("category_id"))
+    if category_id:
+        category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+        if category:
+            update_dict["category_name"] = category["name"]
+    
+    # Recalculate prices if needed
+    if any(k in update_dict for k in ["purchase_price_without_vat", "vat_rate", "profit_margin", "category_id"]):
+        prices = await calculate_product_prices(merged, category)
+        update_dict.update(prices)
     
     result = await db.products.update_one({"id": product_id}, {"$set": update_dict})
     if result.matched_count == 0:
