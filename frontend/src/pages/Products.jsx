@@ -26,7 +26,14 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Plus, Pencil, Trash2, Search, Upload, Image, FileText, X, Loader2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../components/ui/dropdown-menu';
+import { Plus, Pencil, Trash2, Search, Upload, Image, FileText, X, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { formatCurrency, cn } from '../lib/utils';
