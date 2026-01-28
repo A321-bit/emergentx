@@ -312,7 +312,7 @@ const Quotes = () => {
         ];
       });
       
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos + 5,
         head: [['Ürün Adı', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam']],
         body: tableData,
