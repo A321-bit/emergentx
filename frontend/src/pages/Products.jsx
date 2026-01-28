@@ -326,8 +326,22 @@ const Products = () => {
                 </Select>
               </div>
 
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="currency">Para Birimi</Label>
+                <Select value={formData.currency} onValueChange={(v) => setFormData({...formData, currency: v})}>
+                  <SelectTrigger data-testid="product-currency-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">Dolar ($)</SelectItem>
+                    <SelectItem value="EUR">Euro (€)</SelectItem>
+                    <SelectItem value="TRY">Türk Lirası (₺)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="purchase_price">Alış Fiyatı (₺)</Label>
+                <Label htmlFor="purchase_price">Alış Fiyatı ({formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'})</Label>
                 <Input
                   id="purchase_price"
                   type="number"
@@ -340,7 +354,7 @@ const Products = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sale_price">Satış Fiyatı (₺)</Label>
+                <Label htmlFor="sale_price">Satış Fiyatı ({formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'})</Label>
                 <Input
                   id="sale_price"
                   type="number"
@@ -353,7 +367,7 @@ const Products = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dealer_price">Bayi Fiyatı (₺)</Label>
+                <Label htmlFor="dealer_price">Bayi Fiyatı ({formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'})</Label>
                 <Input
                   id="dealer_price"
                   type="number"
