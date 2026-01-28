@@ -1587,6 +1587,30 @@ async def upload_logo(file: UploadFile = File(...), current_user: dict = Depends
     
     return {"logo_url": logo_url}
 
+@api_router.post("/settings/upload-quote-cover")
+async def upload_quote_cover(file: UploadFile = File(...), current_user: dict = Depends(require_permission("settings_manage"))):
+    """Upload cover image for quote PDF (A4 size recommended: 2480x3508 px)"""
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Sadece resim dosyası yüklenebilir")
+    
+    file_ext = file.filename.split(".")[-1]
+    filename = f"quote_cover_{uuid.uuid4()}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    cover_url = f"/uploads/{filename}"
+    
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$set": {"quote_cover_image": cover_url}},
+        upsert=True
+    )
+    
+    return {"quote_cover_image": cover_url}
+
 # ==================== DASHBOARD STATS ROUTES ====================
 
 @api_router.get("/stats/dashboard")
