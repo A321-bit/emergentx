@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -29,14 +29,14 @@ import {
 import { Plus, Pencil, Trash2, Search, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { formatDate, getRoleLabel, cn } from '../lib/utils';
+import { formatDate, cn } from '../lib/utils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Users = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
-  const [dealers, setDealers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -47,8 +47,7 @@ const Users = () => {
     email: '',
     password: '',
     phone: '',
-    role: 'personel',
-    dealer_id: ''
+    role_id: ''
   });
 
   useEffect(() => {
@@ -57,12 +56,12 @@ const Users = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, dealersRes] = await Promise.all([
+      const [usersRes, rolesRes] = await Promise.all([
         axios.get(`${API_URL}/api/users`),
-        axios.get(`${API_URL}/api/dealers`)
+        axios.get(`${API_URL}/api/roles`)
       ]);
       setUsers(usersRes.data);
-      setDealers(dealersRes.data);
+      setRoles(rolesRes.data);
     } catch (error) {
       toast.error('Veriler yüklenemedi');
     } finally {
@@ -74,7 +73,6 @@ const Users = () => {
     e.preventDefault();
     
     const data = { ...formData };
-    if (!data.dealer_id) delete data.dealer_id;
     if (editingUser) delete data.password;
 
     try {
@@ -116,8 +114,7 @@ const Users = () => {
       email: user.email,
       password: '',
       phone: user.phone || '',
-      role: user.role,
-      dealer_id: user.dealer_id || ''
+      role_id: user.role_id || ''
     });
     setIsModalOpen(true);
   };
@@ -129,8 +126,7 @@ const Users = () => {
       email: '',
       password: '',
       phone: '',
-      role: 'personel',
-      dealer_id: ''
+      role_id: ''
     });
   };
 
@@ -138,7 +134,7 @@ const Users = () => {
     const matchesSearch = 
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const matchesRole = roleFilter === 'all' || user.role_id === roleFilter;
     return matchesSearch && matchesRole;
   });
 
@@ -182,9 +178,9 @@ const Users = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tüm Roller</SelectItem>
-            <SelectItem value="admin">Yönetici</SelectItem>
-            <SelectItem value="personel">Personel</SelectItem>
-            <SelectItem value="bayi">Bayi</SelectItem>
+            {roles.map((role) => (
+              <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -211,8 +207,9 @@ const Users = () => {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>
-                    <span className={cn("role-badge", user.role)}>
-                      {getRoleLabel(user.role)}
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                      <Shield className="h-3 w-3" />
+                      {user.role_name || 'Bilinmiyor'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -320,36 +317,18 @@ const Users = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Rol</Label>
-                <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
+                <Label htmlFor="role_id">Rol</Label>
+                <Select value={formData.role_id} onValueChange={(v) => setFormData({...formData, role_id: v})}>
                   <SelectTrigger data-testid="user-role-select">
-                    <SelectValue />
+                    <SelectValue placeholder="Rol seçin" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Yönetici</SelectItem>
-                    <SelectItem value="personel">Personel</SelectItem>
-                    <SelectItem value="bayi">Bayi</SelectItem>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              {formData.role === 'bayi' && (
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="dealer_id">Bağlı Bayi</Label>
-                  <Select value={formData.dealer_id} onValueChange={(v) => setFormData({...formData, dealer_id: v})}>
-                    <SelectTrigger data-testid="user-dealer-select">
-                      <SelectValue placeholder="Bayi seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dealers.map((dealer) => (
-                        <SelectItem key={dealer.id} value={dealer.id}>
-                          {dealer.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
 
             <DialogFooter>

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -27,40 +27,56 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Pencil, Trash2, Search, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, User, Building2, Tags, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { formatDate, getCustomerTypeLabel, cn } from '../lib/utils';
+import { formatDate, cn } from '../lib/utils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Customers = () => {
-  const { isAdmin } = useAuth();
+  const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({
+    customer_type: 'bireysel',
     name: '',
     phone: '',
     email: '',
+    tc_kimlik: '',
+    company_name: '',
+    tax_number: '',
+    tax_office: '',
+    city: '',
+    district: '',
     address: '',
-    customer_type: 'villa',
+    customer_category_id: '',
+    customer_source_id: '',
     notes: ''
   });
 
   useEffect(() => {
-    fetchCustomers();
+    fetchData();
   }, []);
 
-  const fetchCustomers = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/customers`);
-      setCustomers(response.data);
+      const [customersRes, catRes, srcRes] = await Promise.all([
+        axios.get(`${API_URL}/api/customers`),
+        axios.get(`${API_URL}/api/customer-categories`),
+        axios.get(`${API_URL}/api/customer-sources`)
+      ]);
+      setCustomers(customersRes.data);
+      setCategories(catRes.data);
+      setSources(srcRes.data);
     } catch (error) {
-      toast.error('Müşteriler yüklenemedi');
+      toast.error('Veriler yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -69,17 +85,23 @@ const Customers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    const data = { ...formData };
+    // Clean empty strings
+    Object.keys(data).forEach(key => {
+      if (data[key] === '') data[key] = null;
+    });
+
     try {
       if (editingCustomer) {
-        await axios.put(`${API_URL}/api/customers/${editingCustomer.id}`, formData);
+        await axios.put(`${API_URL}/api/customers/${editingCustomer.id}`, data);
         toast.success('Müşteri güncellendi');
       } else {
-        await axios.post(`${API_URL}/api/customers`, formData);
+        await axios.post(`${API_URL}/api/customers`, data);
         toast.success('Müşteri eklendi');
       }
       setIsModalOpen(false);
       resetForm();
-      fetchCustomers();
+      fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Hata oluştu');
     }
@@ -91,7 +113,7 @@ const Customers = () => {
     try {
       await axios.delete(`${API_URL}/api/customers/${id}`);
       toast.success('Müşteri silindi');
-      fetchCustomers();
+      fetchData();
     } catch (error) {
       toast.error('Silme başarısız');
     }
@@ -100,11 +122,19 @@ const Customers = () => {
   const handleEdit = (customer) => {
     setEditingCustomer(customer);
     setFormData({
-      name: customer.name,
-      phone: customer.phone,
+      customer_type: customer.customer_type || 'bireysel',
+      name: customer.name || '',
+      phone: customer.phone || '',
       email: customer.email || '',
+      tc_kimlik: customer.tc_kimlik || '',
+      company_name: customer.company_name || '',
+      tax_number: customer.tax_number || '',
+      tax_office: customer.tax_office || '',
+      city: customer.city || '',
+      district: customer.district || '',
       address: customer.address || '',
-      customer_type: customer.customer_type,
+      customer_category_id: customer.customer_category_id || '',
+      customer_source_id: customer.customer_source_id || '',
       notes: customer.notes || ''
     });
     setIsModalOpen(true);
@@ -113,19 +143,27 @@ const Customers = () => {
   const resetForm = () => {
     setEditingCustomer(null);
     setFormData({
+      customer_type: 'bireysel',
       name: '',
       phone: '',
       email: '',
+      tc_kimlik: '',
+      company_name: '',
+      tax_number: '',
+      tax_office: '',
+      city: '',
+      district: '',
       address: '',
-      customer_type: 'villa',
+      customer_category_id: '',
+      customer_source_id: '',
       notes: ''
     });
   };
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm);
+      customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.includes(searchTerm);
     const matchesType = typeFilter === 'all' || customer.customer_type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -170,9 +208,8 @@ const Customers = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tüm Tipler</SelectItem>
-            <SelectItem value="villa">Villa</SelectItem>
-            <SelectItem value="isletme">İşletme</SelectItem>
-            <SelectItem value="fabrika">Fabrika</SelectItem>
+            <SelectItem value="bireysel">Bireysel</SelectItem>
+            <SelectItem value="kurumsal">Kurumsal</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -183,41 +220,58 @@ const Customers = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Müşteri Adı</TableHead>
-                <TableHead>Telefon</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Tip</TableHead>
-                <TableHead>Kayıt Tarihi</TableHead>
+                <TableHead>Ad / Firma</TableHead>
+                <TableHead>Telefon</TableHead>
+                <TableHead>İl / İlçe</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead>Kaynak</TableHead>
+                <TableHead>Kayıt</TableHead>
                 <TableHead className="text-right">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCustomers.map((customer) => (
                 <TableRow key={customer.id} data-testid={`customer-row-${customer.id}`}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Phone className="h-3 w-3 text-muted-foreground" />
-                      {customer.phone}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {customer.email && (
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        {customer.email}
-                      </div>
+                    {customer.customer_type === 'bireysel' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-medium">
+                        <User className="h-3 w-3" />
+                        Bireysel
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 text-xs font-medium">
+                        <Building2 className="h-3 w-3" />
+                        Kurumsal
+                      </span>
                     )}
                   </TableCell>
+                  <TableCell className="font-medium">
+                    {customer.customer_type === 'kurumsal' && customer.company_name 
+                      ? customer.company_name 
+                      : customer.name}
+                  </TableCell>
+                  <TableCell>{customer.phone}</TableCell>
                   <TableCell>
-                    <span className={cn(
-                      "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
-                      customer.customer_type === 'villa' && "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-                      customer.customer_type === 'isletme' && "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-                      customer.customer_type === 'fabrika' && "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400"
-                    )}>
-                      {getCustomerTypeLabel(customer.customer_type)}
-                    </span>
+                    {customer.city && customer.district 
+                      ? `${customer.city} / ${customer.district}`
+                      : customer.city || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {customer.category_name ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Tags className="h-3 w-3" />
+                        {customer.category_name}
+                      </span>
+                    ) : '-'}
+                  </TableCell>
+                  <TableCell>
+                    {customer.source_name ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        {customer.source_name}
+                      </span>
+                    ) : '-'}
                   </TableCell>
                   <TableCell>{formatDate(customer.created_at)}</TableCell>
                   <TableCell className="text-right">
@@ -245,7 +299,7 @@ const Customers = () => {
               ))}
               {filteredCustomers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Müşteri bulunamadı
                   </TableCell>
                 </TableRow>
@@ -257,14 +311,42 @@ const Customers = () => {
 
       {/* Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-lg" data-testid="customer-modal">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="customer-modal">
           <DialogHeader>
             <DialogTitle>{editingCustomer ? 'Müşteri Düzenle' : 'Yeni Müşteri Ekle'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Customer Type */}
+            <div className="space-y-2">
+              <Label>Müşteri Tipi</Label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant={formData.customer_type === 'bireysel' ? 'default' : 'outline'}
+                  onClick={() => setFormData({...formData, customer_type: 'bireysel'})}
+                  className="flex-1"
+                  data-testid="type-bireysel"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Bireysel
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.customer_type === 'kurumsal' ? 'default' : 'outline'}
+                  onClick={() => setFormData({...formData, customer_type: 'kurumsal'})}
+                  className="flex-1"
+                  data-testid="type-kurumsal"
+                >
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Kurumsal
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="name">Ad Soyad / Firma Adı</Label>
+              {/* Common Fields */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Ad Soyad</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -296,22 +378,78 @@ const Customers = () => {
                 />
               </div>
 
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="customer_type">Müşteri Tipi</Label>
-                <Select value={formData.customer_type} onValueChange={(v) => setFormData({...formData, customer_type: v})}>
-                  <SelectTrigger data-testid="customer-type-select">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="villa">Villa</SelectItem>
-                    <SelectItem value="isletme">İşletme</SelectItem>
-                    <SelectItem value="fabrika">Fabrika</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Bireysel Fields */}
+              {formData.customer_type === 'bireysel' && (
+                <div className="space-y-2">
+                  <Label htmlFor="tc_kimlik">T.C. Kimlik No</Label>
+                  <Input
+                    id="tc_kimlik"
+                    value={formData.tc_kimlik}
+                    onChange={(e) => setFormData({...formData, tc_kimlik: e.target.value})}
+                    maxLength={11}
+                    data-testid="customer-tc-input"
+                  />
+                </div>
+              )}
+
+              {/* Kurumsal Fields */}
+              {formData.customer_type === 'kurumsal' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="company_name">Firma Adı</Label>
+                    <Input
+                      id="company_name"
+                      value={formData.company_name}
+                      onChange={(e) => setFormData({...formData, company_name: e.target.value})}
+                      data-testid="customer-company-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tax_number">Vergi No</Label>
+                    <Input
+                      id="tax_number"
+                      value={formData.tax_number}
+                      onChange={(e) => setFormData({...formData, tax_number: e.target.value})}
+                      data-testid="customer-taxno-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tax_office">Vergi Dairesi</Label>
+                    <Input
+                      id="tax_office"
+                      value={formData.tax_office}
+                      onChange={(e) => setFormData({...formData, tax_office: e.target.value})}
+                      data-testid="customer-taxoffice-input"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Address Fields */}
+              <div className="space-y-2">
+                <Label htmlFor="city">İl</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  placeholder="İstanbul"
+                  data-testid="customer-city-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="district">İlçe</Label>
+                <Input
+                  id="district"
+                  value={formData.district}
+                  onChange={(e) => setFormData({...formData, district: e.target.value})}
+                  placeholder="Kadıköy"
+                  data-testid="customer-district-input"
+                />
               </div>
 
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="address">Adres</Label>
+                <Label htmlFor="address">Açık Adres</Label>
                 <Textarea
                   id="address"
                   value={formData.address}
@@ -319,6 +457,37 @@ const Customers = () => {
                   rows={2}
                   data-testid="customer-address-input"
                 />
+              </div>
+
+              {/* Category & Source */}
+              <div className="space-y-2">
+                <Label htmlFor="customer_category_id">Müşteri Kategorisi</Label>
+                <Select value={formData.customer_category_id || 'none'} onValueChange={(v) => setFormData({...formData, customer_category_id: v === 'none' ? '' : v})}>
+                  <SelectTrigger data-testid="customer-category-select">
+                    <SelectValue placeholder="Kategori seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Seçilmedi</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customer_source_id">Edinme Kaynağı</Label>
+                <Select value={formData.customer_source_id || 'none'} onValueChange={(v) => setFormData({...formData, customer_source_id: v === 'none' ? '' : v})}>
+                  <SelectTrigger data-testid="customer-source-select">
+                    <SelectValue placeholder="Kaynak seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Seçilmedi</SelectItem>
+                    {sources.map((src) => (
+                      <SelectItem key={src.id} value={src.id}>{src.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="col-span-2 space-y-2">
