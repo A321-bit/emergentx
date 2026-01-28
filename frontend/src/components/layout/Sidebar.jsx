@@ -17,44 +17,80 @@ import {
   UserCircle,
   Boxes,
   Folder,
-  UsersRound
+  UsersRound,
+  Shield,
+  Tags
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
 const Sidebar = () => {
-  const { user, logout, isAdmin, isPersonel, isBayi } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
-  const adminNavItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Panel' },
-    { path: '/users', icon: Users, label: 'Kullanıcılar' },
-    { path: '/categories', icon: Folder, label: 'Kategoriler' },
-    { path: '/products', icon: Package, label: 'Ürünler' },
-    { path: '/stock', icon: Boxes, label: 'Stok' },
-    { path: '/customers', icon: UserCircle, label: 'Müşteriler' },
-    { path: '/quotes', icon: FileText, label: 'Teklifler' },
-    { path: '/dealer-groups', icon: UsersRound, label: 'Bayi Grupları' },
-    { path: '/dealers', icon: Building2, label: 'Bayiler' },
-    { path: '/finance', icon: TrendingUp, label: 'Finans' },
-    { path: '/settings', icon: Settings, label: 'Ayarlar' },
-  ];
+  // Check permissions
+  const hasPermission = (perm) => {
+    const perms = user?.permissions || [];
+    return perms.includes('all') || perms.includes(perm);
+  };
 
-  const personelNavItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Panel' },
-    { path: '/customers', icon: UserCircle, label: 'Müşteriler' },
-    { path: '/quotes', icon: FileText, label: 'Teklifler' },
-    { path: '/products', icon: Package, label: 'Ürünler' },
-  ];
+  // Build nav items based on permissions
+  const navItems = [];
 
-  const bayiNavItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Panel' },
-    { path: '/products', icon: Package, label: 'Ürünler' },
-    { path: '/customers', icon: UserCircle, label: 'Müşteriler' },
-    { path: '/quotes', icon: FileText, label: 'Teklifler' },
-  ];
+  // Dashboard - everyone can see
+  if (hasPermission('dashboard_view')) {
+    navItems.push({ path: '/dashboard', icon: LayoutDashboard, label: 'Panel' });
+  }
 
-  const navItems = isAdmin ? adminNavItems : isPersonel ? personelNavItems : bayiNavItems;
+  // User Management
+  if (hasPermission('users_view') || hasPermission('users_manage')) {
+    navItems.push({ path: '/users', icon: Users, label: 'Kullanıcılar' });
+  }
+  if (hasPermission('roles_manage')) {
+    navItems.push({ path: '/roles', icon: Shield, label: 'Roller & Yetkiler' });
+  }
+
+  // Product Management
+  if (hasPermission('categories_view') || hasPermission('categories_manage')) {
+    navItems.push({ path: '/categories', icon: Folder, label: 'Kategoriler' });
+  }
+  if (hasPermission('products_view') || hasPermission('products_manage')) {
+    navItems.push({ path: '/products', icon: Package, label: 'Ürünler' });
+  }
+  if (hasPermission('stock_view') || hasPermission('stock_manage')) {
+    navItems.push({ path: '/stock', icon: Boxes, label: 'Stok' });
+  }
+
+  // Customer Management
+  if (hasPermission('customers_view') || hasPermission('customers_manage')) {
+    navItems.push({ path: '/customers', icon: UserCircle, label: 'Müşteriler' });
+  }
+  if (hasPermission('customer_categories_manage') || hasPermission('customer_sources_manage')) {
+    navItems.push({ path: '/customer-settings', icon: Tags, label: 'Müşteri Ayarları' });
+  }
+
+  // Quotes
+  if (hasPermission('quotes_view') || hasPermission('quotes_manage')) {
+    navItems.push({ path: '/quotes', icon: FileText, label: 'Teklifler' });
+  }
+
+  // Dealer Management
+  if (hasPermission('dealer_groups_manage')) {
+    navItems.push({ path: '/dealer-groups', icon: UsersRound, label: 'Bayi Grupları' });
+  }
+  if (hasPermission('dealers_view') || hasPermission('dealers_manage')) {
+    navItems.push({ path: '/dealers', icon: Building2, label: 'Bayiler' });
+  }
+
+  // Finance
+  if (hasPermission('finance_view')) {
+    navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
+  }
+
+  // Settings
+  if (hasPermission('settings_manage')) {
+    navItems.push({ path: '/settings', icon: Settings, label: 'Ayarlar' });
+  }
 
   return (
     <aside className="w-64 border-r border-border bg-card/50 backdrop-blur-xl h-screen sticky top-0 flex flex-col">
@@ -116,8 +152,9 @@ const Sidebar = () => {
         <div className="px-3 py-2">
           <p className="text-sm font-medium truncate">{user?.name}</p>
           <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-          <span className={cn("role-badge mt-1", user?.role)}>
-            {user?.role === 'admin' ? 'Yönetici' : user?.role === 'personel' ? 'Personel' : 'Bayi'}
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
+            <Shield className="h-3 w-3" />
+            {user?.role_name || 'Kullanıcı'}
           </span>
         </div>
 

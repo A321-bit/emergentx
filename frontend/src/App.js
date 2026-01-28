@@ -11,10 +11,12 @@ import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
+import Roles from "./pages/Roles";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Stock from "./pages/Stock";
 import Customers from "./pages/Customers";
+import CustomerSettings from "./pages/CustomerSettings";
 import Quotes from "./pages/Quotes";
 import Dealers from "./pages/Dealers";
 import DealerGroups from "./pages/DealerGroups";
@@ -31,10 +33,12 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/users" element={<Users />} />
+              <Route path="/roles" element={<Roles />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/products" element={<Products />} />
               <Route path="/stock" element={<Stock />} />
               <Route path="/customers" element={<Customers />} />
+              <Route path="/customer-settings" element={<CustomerSettings />} />
               <Route path="/quotes" element={<Quotes />} />
               <Route path="/dealer-groups" element={<DealerGroups />} />
               <Route path="/dealers" element={<Dealers />} />

@@ -50,16 +50,22 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // Check if user has a specific permission
+  const hasPermission = (permission) => {
+    if (!user) return false;
+    const perms = user.permissions || [];
+    return perms.includes('all') || perms.includes(permission);
+  };
+
   const value = {
     user,
     token,
     loading,
     login,
     logout,
+    hasPermission,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin',
-    isPersonel: user?.role === 'personel',
-    isBayi: user?.role === 'bayi'
+    isAdmin: user?.permissions?.includes('all'),
   };
 
   return (
