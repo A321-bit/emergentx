@@ -69,6 +69,7 @@ Güneş enerjisi (panel, inverter, batarya) satışı için kapsamlı B2B/B2C y�
 - Roles: `/api/roles` (CRUD), `/api/permissions` (list)
 - Products: `/api/products` (CRUD)
 - Product Media: `/api/products/{id}/upload-images`, `/api/products/{id}/upload-datasheet`
+- Product Excel: `/api/products/export/excel`, `/api/products/export/template`, `/api/products/import/excel`
 - Categories: `/api/categories` (CRUD)
 - Customer Categories: `/api/customer-categories` (CRUD)
 - Customer Sources: `/api/customer-sources` (CRUD)
