@@ -342,7 +342,7 @@ const Quotes = () => {
       });
       
       // Totals Section
-      let finalY = doc.lastAutoTable.finalY + 10;
+      let finalY = (doc.lastAutoTable?.finalY || yPos + 50) + 10;
       
       // Totals box
       const totalsX = pageWidth - margin - 80;
