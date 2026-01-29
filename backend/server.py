@@ -416,6 +416,24 @@ class ExchangeRateSettings(BaseModel):
 
 # ==================== SALES & ACCOUNTING MODELS ====================
 
+# Payment Method Options
+PAYMENT_METHODS = {
+    "nakit": "Nakit",
+    "kart": "Kredi/Banka Kartı",
+    "havale": "Havale/EFT",
+    "cek": "Çek",
+    "vadeli": "Vadeli",
+    "diger": "Diğer"
+}
+
+# Payment Status
+PAYMENT_STATUS = {
+    "odendi": "Ödendi",
+    "bekliyor": "Ödeme Bekliyor",
+    "kismi": "Kısmi Ödeme",
+    "gecikti": "Gecikmiş"
+}
+
 # Sales Model (Manuel Satış Girişi)
 class SaleBase(BaseModel):
     customer_id: Optional[str] = None
@@ -428,6 +446,10 @@ class SaleBase(BaseModel):
     currency: str = "TRY"  # Ana para birimi
     sale_date: datetime
     notes: Optional[str] = None
+    # Payment fields
+    payment_method: str = "nakit"  # nakit, kart, havale, cek, vadeli
+    paid_amount_tl: float = 0  # Ödenen tutar (TL)
+    due_date: Optional[datetime] = None  # Vade tarihi (vadeli satışlar için)
 
 class SaleCreate(SaleBase):
     pass
@@ -437,6 +459,26 @@ class Sale(SaleBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     profit_usd: float = 0
     profit_tl: float = 0
+    remaining_amount_tl: float = 0  # Kalan tutar (TL)
+    payment_status: str = "bekliyor"  # odendi, bekliyor, kismi, gecikti
+    created_by: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Payment/Collection Model (Tahsilat Kayıtları)
+class PaymentBase(BaseModel):
+    sale_id: str
+    amount_tl: float
+    payment_method: str = "nakit"
+    payment_date: datetime
+    notes: Optional[str] = None
+
+class PaymentCreate(PaymentBase):
+    pass
+
+class Payment(PaymentBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_by: str = ""
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
