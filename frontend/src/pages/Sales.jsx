@@ -662,7 +662,9 @@ const Sales = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Kalan</p>
-                  <p className="font-mono text-red-600">{formatCurrency(sale.remaining_amount_tl || sale.sale_amount_tl)}</p>
+                  <p className="font-mono text-red-600">
+                    {formatCurrency(sale.remaining_amount_tl !== undefined && sale.remaining_amount_tl !== null ? sale.remaining_amount_tl : sale.sale_amount_tl)}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
