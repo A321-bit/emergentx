@@ -1790,7 +1790,7 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
     
     await db.sales.insert_one(sale_dict.copy())
-    del sale_dict["_id"] if "_id" in sale_dict else None
+    sale_dict.pop("_id", None)
     return sale_dict
 
 @api_router.put("/sales/{sale_id}")
