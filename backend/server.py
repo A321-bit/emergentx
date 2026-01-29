@@ -2932,16 +2932,30 @@ async def get_expense_stats(current_user: dict = Depends(require_permission("fin
     by_category = {}
     
     for exp in expenses:
-        exp_date = datetime.fromisoformat(exp["expense_date"].replace("Z", "+00:00")) if isinstance(exp["expense_date"], str) else exp["expense_date"]
-        amount_tl = exp.get("amount_tl", exp.get("amount", 0))
-        
-        if exp_date >= year_start:
-            yearly_total += amount_tl
-        
-        if exp_date >= month_start:
-            monthly_total += amount_tl
-            cat_name = exp.get("category_name", "Diğer")
-            by_category[cat_name] = by_category.get(cat_name, 0) + amount_tl
+        try:
+            exp_date_raw = exp.get("expense_date")
+            if isinstance(exp_date_raw, str):
+                exp_date = datetime.fromisoformat(exp_date_raw.replace("Z", "+00:00"))
+            elif isinstance(exp_date_raw, datetime):
+                exp_date = exp_date_raw if exp_date_raw.tzinfo else exp_date_raw.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            
+            # Ensure timezone aware
+            if exp_date.tzinfo is None:
+                exp_date = exp_date.replace(tzinfo=timezone.utc)
+                
+            amount_tl = exp.get("amount_tl", exp.get("amount", 0))
+            
+            if exp_date >= year_start:
+                yearly_total += amount_tl
+            
+            if exp_date >= month_start:
+                monthly_total += amount_tl
+                cat_name = exp.get("category_name", "Diğer")
+                by_category[cat_name] = by_category.get(cat_name, 0) + amount_tl
+        except Exception:
+            continue
     
     return {
         "monthly_total": monthly_total,
@@ -2960,19 +2974,41 @@ async def get_accounting_summary(current_user: dict = Depends(require_permission
     monthly_profit_tl = 0
     
     for sale in sales:
-        sale_date = datetime.fromisoformat(sale["sale_date"].replace("Z", "+00:00")) if isinstance(sale["sale_date"], str) else sale["sale_date"]
-        if sale_date >= month_start:
-            monthly_sales_tl += sale.get("sale_amount_tl", 0)
-            monthly_profit_tl += sale.get("profit_tl", 0)
+        try:
+            sale_date_raw = sale.get("sale_date")
+            if isinstance(sale_date_raw, str):
+                sale_date = datetime.fromisoformat(sale_date_raw.replace("Z", "+00:00"))
+            elif isinstance(sale_date_raw, datetime):
+                sale_date = sale_date_raw if sale_date_raw.tzinfo else sale_date_raw.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            if sale_date.tzinfo is None:
+                sale_date = sale_date.replace(tzinfo=timezone.utc)
+            if sale_date >= month_start:
+                monthly_sales_tl += sale.get("sale_amount_tl", 0)
+                monthly_profit_tl += sale.get("profit_tl", 0)
+        except Exception:
+            continue
     
     # Get expenses
     expenses = await db.expenses.find({"is_active": True}, {"_id": 0}).to_list(10000)
     monthly_expenses_tl = 0
     
     for exp in expenses:
-        exp_date = datetime.fromisoformat(exp["expense_date"].replace("Z", "+00:00")) if isinstance(exp["expense_date"], str) else exp["expense_date"]
-        if exp_date >= month_start:
-            monthly_expenses_tl += exp.get("amount_tl", exp.get("amount", 0))
+        try:
+            exp_date_raw = exp.get("expense_date")
+            if isinstance(exp_date_raw, str):
+                exp_date = datetime.fromisoformat(exp_date_raw.replace("Z", "+00:00"))
+            elif isinstance(exp_date_raw, datetime):
+                exp_date = exp_date_raw if exp_date_raw.tzinfo else exp_date_raw.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            if exp_date.tzinfo is None:
+                exp_date = exp_date.replace(tzinfo=timezone.utc)
+            if exp_date >= month_start:
+                monthly_expenses_tl += exp.get("amount_tl", exp.get("amount", 0))
+        except Exception:
+            continue
     
     # Calculate net profit
     net_profit = monthly_sales_tl - monthly_expenses_tl
