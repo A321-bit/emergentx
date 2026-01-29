@@ -55,6 +55,8 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/packages" element={<Packages />} />
               <Route path="/employees" element={<Employees />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/payroll" element={<Payroll />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
