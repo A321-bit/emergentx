@@ -412,22 +412,22 @@ const Packages = () => {
                   onChange={(e) => {
                     setProductSearchTerm(e.target.value);
                     setSelectedProduct('');
+                    setShowSearchResults(true);
                   }}
+                  onFocus={() => setShowSearchResults(true)}
                   className="pl-10"
                   data-testid="product-search-input"
                 />
-                {productSearchTerm && filteredProductsForSelect.length > 0 && (
+                {showSearchResults && productSearchTerm && filteredProductsForSelect.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {filteredProductsForSelect.map((product) => (
                       <div
                         key={product.id}
-                        className={cn(
-                          "px-3 py-2 cursor-pointer hover:bg-accent text-sm",
-                          selectedProduct === product.id && "bg-accent"
-                        )}
+                        className="px-3 py-2 cursor-pointer hover:bg-accent text-sm"
                         onClick={() => {
                           setSelectedProduct(product.id);
                           setProductSearchTerm(product.name);
+                          setShowSearchResults(false);
                         }}
                       >
                         <div className="font-medium">{product.name}</div>
@@ -438,7 +438,7 @@ const Packages = () => {
                     ))}
                   </div>
                 )}
-                {productSearchTerm && filteredProductsForSelect.length === 0 && (
+                {showSearchResults && productSearchTerm && filteredProductsForSelect.length === 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
                     Ürün bulunamadı
                   </div>
