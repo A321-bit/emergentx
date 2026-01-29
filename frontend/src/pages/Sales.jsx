@@ -184,13 +184,16 @@ const Sales = () => {
     }
     
     const data = {
-      ...formData,
+      customer_id: formData.customer_id || null,
+      customer_name: formData.customer_name,
+      currency: formData.input_currency,
       sale_amount_usd: parseFloat(formData.sale_amount_usd) || 0,
       sale_amount_tl: parseFloat(formData.sale_amount_tl) || 0,
       purchase_amount_usd: parseFloat(formData.purchase_amount_usd) || 0,
       purchase_amount_tl: parseFloat(formData.purchase_amount_tl) || 0,
       exchange_rate: parseFloat(formData.exchange_rate) || 1,
-      sale_date: new Date(formData.sale_date).toISOString()
+      sale_date: new Date(formData.sale_date).toISOString(),
+      notes: formData.notes
     };
     
     try {
@@ -214,12 +217,12 @@ const Sales = () => {
     setFormData({
       customer_id: sale.customer_id || '',
       customer_name: sale.customer_name,
-      currency: sale.currency || 'USD',
+      input_currency: sale.currency || 'USD',
       sale_amount_usd: sale.sale_amount_usd?.toString() || '',
       sale_amount_tl: sale.sale_amount_tl?.toString() || '',
       purchase_amount_usd: sale.purchase_amount_usd?.toString() || '',
       purchase_amount_tl: sale.purchase_amount_tl?.toString() || '',
-      exchange_rate: sale.exchange_rate?.toString() || '1',
+      exchange_rate: sale.exchange_rate?.toString() || systemExchangeRate.toString(),
       sale_date: sale.sale_date?.split('T')[0] || '',
       notes: sale.notes || ''
     });
@@ -243,12 +246,12 @@ const Sales = () => {
     setFormData({
       customer_id: '',
       customer_name: '',
-      currency: 'USD',
+      input_currency: 'USD',
       sale_amount_usd: '',
       sale_amount_tl: '',
       purchase_amount_usd: '',
       purchase_amount_tl: '',
-      exchange_rate: '34.50',
+      exchange_rate: systemExchangeRate.toString(),
       sale_date: new Date().toISOString().split('T')[0],
       notes: ''
     });
