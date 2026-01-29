@@ -2899,6 +2899,498 @@ async def delete_package(package_id: str, current_user: dict = Depends(require_p
         raise HTTPException(status_code=404, detail="Paket bulunamadı")
     return {"message": "Paket silindi"}
 
+# ==================== HR / EMPLOYEES API ====================
+
+@api_router.get("/employees")
+async def get_employees(current_user: dict = Depends(require_permission("hr_view"))):
+    employees = await db.employees.find({"is_active": True}, {"_id": 0}).sort("name", 1).to_list(1000)
+    return employees
+
+@api_router.get("/employees/{employee_id}")
+async def get_employee(employee_id: str, current_user: dict = Depends(require_permission("hr_view"))):
+    employee = await db.employees.find_one({"id": employee_id, "is_active": True}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Personel bulunamadı")
+    return employee
+
+@api_router.post("/employees")
+async def create_employee(employee: EmployeeCreate, current_user: dict = Depends(require_permission("hr_manage"))):
+    # Check if employee_no already exists
+    existing = await db.employees.find_one({"employee_no": employee.employee_no, "is_active": True})
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu personel numarası zaten kullanımda")
+    
+    employee_dict = employee.model_dump()
+    employee_dict["id"] = str(uuid.uuid4())
+    employee_dict["is_active"] = True
+    employee_dict["created_by"] = current_user["id"]
+    employee_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Calculate daily wage from monthly salary if monthly type
+    if employee.employment_type == "monthly" and employee.monthly_salary > 0:
+        employee_dict["daily_wage"] = round(employee.monthly_salary / 30, 2)
+    
+    await db.employees.insert_one(employee_dict.copy())
+    if "_id" in employee_dict:
+        del employee_dict["_id"]
+    return employee_dict
+
+@api_router.put("/employees/{employee_id}")
+async def update_employee(employee_id: str, employee: EmployeeCreate, current_user: dict = Depends(require_permission("hr_manage"))):
+    existing = await db.employees.find_one({"id": employee_id, "is_active": True})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Personel bulunamadı")
+    
+    # Check if employee_no already exists for another employee
+    duplicate = await db.employees.find_one({"employee_no": employee.employee_no, "is_active": True, "id": {"$ne": employee_id}})
+    if duplicate:
+        raise HTTPException(status_code=400, detail="Bu personel numarası zaten kullanımda")
+    
+    update_data = employee.model_dump()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Calculate daily wage from monthly salary if monthly type
+    if employee.employment_type == "monthly" and employee.monthly_salary > 0:
+        update_data["daily_wage"] = round(employee.monthly_salary / 30, 2)
+    
+    await db.employees.update_one({"id": employee_id}, {"$set": update_data})
+    updated = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/employees/{employee_id}")
+async def delete_employee(employee_id: str, current_user: dict = Depends(require_permission("hr_manage"))):
+    result = await db.employees.update_one({"id": employee_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Personel bulunamadı")
+    return {"message": "Personel silindi"}
+
+# ==================== ATTENDANCE API ====================
+
+@api_router.get("/attendance")
+async def get_attendance(
+    employee_id: Optional[str] = None,
+    month: Optional[str] = None,  # YYYY-MM
+    current_user: dict = Depends(require_permission("hr_view"))
+):
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if month:
+        query["date"] = {"$regex": f"^{month}"}
+    
+    attendance = await db.attendance.find(query, {"_id": 0}).sort("date", -1).to_list(10000)
+    return attendance
+
+@api_router.post("/attendance")
+async def create_or_update_attendance(attendance: AttendanceCreate, current_user: dict = Depends(require_permission("hr_manage"))):
+    # Check if attendance for this date already exists
+    existing = await db.attendance.find_one({
+        "employee_id": attendance.employee_id,
+        "date": attendance.date
+    })
+    
+    if existing:
+        # Update existing
+        await db.attendance.update_one(
+            {"id": existing["id"]},
+            {"$set": {"status": attendance.status, "notes": attendance.notes}}
+        )
+        updated = await db.attendance.find_one({"id": existing["id"]}, {"_id": 0})
+        return updated
+    else:
+        # Create new
+        attendance_dict = attendance.model_dump()
+        attendance_dict["id"] = str(uuid.uuid4())
+        attendance_dict["created_by"] = current_user["id"]
+        attendance_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.attendance.insert_one(attendance_dict.copy())
+        if "_id" in attendance_dict:
+            del attendance_dict["_id"]
+        return attendance_dict
+
+@api_router.post("/attendance/bulk")
+async def bulk_update_attendance(
+    attendances: List[AttendanceCreate],
+    current_user: dict = Depends(require_permission("hr_manage"))
+):
+    results = []
+    for att in attendances:
+        existing = await db.attendance.find_one({
+            "employee_id": att.employee_id,
+            "date": att.date
+        })
+        
+        if existing:
+            await db.attendance.update_one(
+                {"id": existing["id"]},
+                {"$set": {"status": att.status, "notes": att.notes}}
+            )
+            updated = await db.attendance.find_one({"id": existing["id"]}, {"_id": 0})
+            results.append(updated)
+        else:
+            att_dict = att.model_dump()
+            att_dict["id"] = str(uuid.uuid4())
+            att_dict["created_by"] = current_user["id"]
+            att_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+            await db.attendance.insert_one(att_dict.copy())
+            if "_id" in att_dict:
+                del att_dict["_id"]
+            results.append(att_dict)
+    
+    return results
+
+# ==================== ADVANCES API ====================
+
+@api_router.get("/advances")
+async def get_advances(
+    employee_id: Optional[str] = None,
+    is_deducted: Optional[bool] = None,
+    current_user: dict = Depends(require_permission("payroll_view"))
+):
+    query = {"is_active": True}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if is_deducted is not None:
+        query["is_deducted"] = is_deducted
+    
+    advances = await db.advances.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    return advances
+
+@api_router.post("/advances")
+async def create_advance(advance: AdvanceCreate, current_user: dict = Depends(require_permission("payroll_manage"))):
+    advance_dict = advance.model_dump()
+    advance_dict["id"] = str(uuid.uuid4())
+    advance_dict["is_active"] = True
+    advance_dict["created_by"] = current_user["id"]
+    advance_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.advances.insert_one(advance_dict.copy())
+    if "_id" in advance_dict:
+        del advance_dict["_id"]
+    return advance_dict
+
+@api_router.put("/advances/{advance_id}")
+async def update_advance(advance_id: str, advance: AdvanceCreate, current_user: dict = Depends(require_permission("payroll_manage"))):
+    existing = await db.advances.find_one({"id": advance_id, "is_active": True})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Avans bulunamadı")
+    
+    update_data = advance.model_dump()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.advances.update_one({"id": advance_id}, {"$set": update_data})
+    updated = await db.advances.find_one({"id": advance_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/advances/{advance_id}")
+async def delete_advance(advance_id: str, current_user: dict = Depends(require_permission("payroll_manage"))):
+    result = await db.advances.update_one({"id": advance_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Avans bulunamadı")
+    return {"message": "Avans silindi"}
+
+# ==================== BONUSES API ====================
+
+@api_router.get("/bonuses")
+async def get_bonuses(
+    employee_id: Optional[str] = None,
+    month: Optional[str] = None,
+    current_user: dict = Depends(require_permission("payroll_view"))
+):
+    query = {"is_active": True}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if month:
+        query["month"] = month
+    
+    bonuses = await db.bonuses.find(query, {"_id": 0}).sort("month", -1).to_list(1000)
+    return bonuses
+
+@api_router.post("/bonuses")
+async def create_bonus(bonus: BonusCreate, current_user: dict = Depends(require_permission("payroll_manage"))):
+    bonus_dict = bonus.model_dump()
+    bonus_dict["id"] = str(uuid.uuid4())
+    bonus_dict["is_active"] = True
+    bonus_dict["created_by"] = current_user["id"]
+    bonus_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.bonuses.insert_one(bonus_dict.copy())
+    if "_id" in bonus_dict:
+        del bonus_dict["_id"]
+    return bonus_dict
+
+@api_router.delete("/bonuses/{bonus_id}")
+async def delete_bonus(bonus_id: str, current_user: dict = Depends(require_permission("payroll_manage"))):
+    result = await db.bonuses.update_one({"id": bonus_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Prim bulunamadı")
+    return {"message": "Prim silindi"}
+
+# ==================== EMPLOYEE EXPENSES API ====================
+
+@api_router.get("/employee-expenses")
+async def get_employee_expenses(
+    employee_id: Optional[str] = None,
+    month: Optional[str] = None,
+    current_user: dict = Depends(require_permission("payroll_view"))
+):
+    query = {"is_active": True}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if month:
+        query["month"] = month
+    
+    expenses = await db.employee_expenses.find(query, {"_id": 0}).sort("month", -1).to_list(1000)
+    return expenses
+
+@api_router.post("/employee-expenses")
+async def create_employee_expense(expense: EmployeeExpenseCreate, current_user: dict = Depends(require_permission("payroll_manage"))):
+    expense_dict = expense.model_dump()
+    expense_dict["id"] = str(uuid.uuid4())
+    expense_dict["is_active"] = True
+    expense_dict["created_by"] = current_user["id"]
+    expense_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.employee_expenses.insert_one(expense_dict.copy())
+    if "_id" in expense_dict:
+        del expense_dict["_id"]
+    return expense_dict
+
+@api_router.delete("/employee-expenses/{expense_id}")
+async def delete_employee_expense(expense_id: str, current_user: dict = Depends(require_permission("payroll_manage"))):
+    result = await db.employee_expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Gider bulunamadı")
+    return {"message": "Gider silindi"}
+
+# ==================== SALARY/PAYROLL API ====================
+
+@api_router.get("/salaries")
+async def get_salaries(
+    employee_id: Optional[str] = None,
+    month: Optional[str] = None,
+    current_user: dict = Depends(require_permission("payroll_view"))
+):
+    query = {"is_active": True}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if month:
+        query["month"] = month
+    
+    salaries = await db.salaries.find(query, {"_id": 0}).sort("month", -1).to_list(1000)
+    return salaries
+
+@api_router.get("/salaries/calculate/{employee_id}/{month}")
+async def calculate_salary(
+    employee_id: str,
+    month: str,  # YYYY-MM
+    current_user: dict = Depends(require_permission("payroll_view"))
+):
+    """Belirli bir personel için aylık bordro hesapla"""
+    
+    # Get employee
+    employee = await db.employees.find_one({"id": employee_id, "is_active": True}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Personel bulunamadı")
+    
+    # Get attendance for the month
+    attendance_records = await db.attendance.find({
+        "employee_id": employee_id,
+        "date": {"$regex": f"^{month}"}
+    }, {"_id": 0}).to_list(100)
+    
+    # Calculate days
+    present_days = 0
+    absent_days = 0
+    half_days = 0
+    leave_days = 0
+    sick_days = 0
+    
+    for record in attendance_records:
+        status = record.get("status", "present")
+        if status == "present":
+            present_days += 1
+        elif status == "absent":
+            absent_days += 1
+        elif status == "half_day":
+            half_days += 1
+            present_days += 0.5
+        elif status == "leave":
+            leave_days += 1
+        elif status == "sick":
+            sick_days += 1
+    
+    # Calculate salary
+    gross_salary = employee.get("monthly_salary", 0)
+    daily_wage = employee.get("daily_wage", 0)
+    
+    if employee.get("employment_type") == "monthly":
+        daily_wage = gross_salary / 30 if gross_salary > 0 else 0
+    
+    # Absence deduction (absent days + half of half_days)
+    absence_deduction = (absent_days + (half_days * 0.5)) * daily_wage
+    
+    # Get advances for this month (not yet deducted)
+    advances = await db.advances.find({
+        "employee_id": employee_id,
+        "is_deducted": False,
+        "is_active": True
+    }, {"_id": 0}).to_list(100)
+    advance_deduction = sum(a.get("amount", 0) for a in advances)
+    
+    # Get bonuses for this month
+    bonuses = await db.bonuses.find({
+        "employee_id": employee_id,
+        "month": month,
+        "is_active": True
+    }, {"_id": 0}).to_list(100)
+    total_bonus = sum(b.get("amount", 0) for b in bonuses)
+    
+    # Calculate net salary
+    net_salary = gross_salary - absence_deduction - advance_deduction + total_bonus
+    
+    return {
+        "employee_id": employee_id,
+        "employee_name": employee.get("name", ""),
+        "employee_no": employee.get("employee_no", ""),
+        "position": employee.get("position", ""),
+        "employment_type": employee.get("employment_type", "monthly"),
+        "month": month,
+        "gross_salary": round(gross_salary, 2),
+        "daily_wage": round(daily_wage, 2),
+        "working_days": 30,
+        "present_days": present_days,
+        "absent_days": absent_days,
+        "half_days": half_days,
+        "leave_days": leave_days,
+        "sick_days": sick_days,
+        "absence_deduction": round(absence_deduction, 2),
+        "advance_deduction": round(advance_deduction, 2),
+        "advances": advances,
+        "total_bonus": round(total_bonus, 2),
+        "bonuses": bonuses,
+        "other_deductions": 0,
+        "net_salary": round(net_salary, 2)
+    }
+
+@api_router.post("/salaries")
+async def create_or_update_salary(salary: SalaryCreate, current_user: dict = Depends(require_permission("payroll_manage"))):
+    # Check if salary for this employee/month already exists
+    existing = await db.salaries.find_one({
+        "employee_id": salary.employee_id,
+        "month": salary.month,
+        "is_active": True
+    })
+    
+    if existing:
+        if existing.get("is_locked"):
+            raise HTTPException(status_code=400, detail="Bu bordro kilitli ve değiştirilemez")
+        
+        update_data = salary.model_dump()
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.salaries.update_one({"id": existing["id"]}, {"$set": update_data})
+        updated = await db.salaries.find_one({"id": existing["id"]}, {"_id": 0})
+        return updated
+    else:
+        salary_dict = salary.model_dump()
+        salary_dict["id"] = str(uuid.uuid4())
+        salary_dict["is_active"] = True
+        salary_dict["created_by"] = current_user["id"]
+        salary_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.salaries.insert_one(salary_dict.copy())
+        if "_id" in salary_dict:
+            del salary_dict["_id"]
+        
+        # Mark advances as deducted
+        if salary.advance_deduction > 0:
+            await db.advances.update_many(
+                {"employee_id": salary.employee_id, "is_deducted": False, "is_active": True},
+                {"$set": {"is_deducted": True, "deducted_month": salary.month}}
+            )
+        
+        return salary_dict
+
+@api_router.put("/salaries/{salary_id}/pay")
+async def mark_salary_paid(salary_id: str, current_user: dict = Depends(require_permission("payroll_manage"))):
+    existing = await db.salaries.find_one({"id": salary_id, "is_active": True})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bordro bulunamadı")
+    
+    await db.salaries.update_one(
+        {"id": salary_id},
+        {"$set": {"is_paid": True, "paid_date": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    updated = await db.salaries.find_one({"id": salary_id}, {"_id": 0})
+    return updated
+
+@api_router.put("/salaries/{salary_id}/lock")
+async def lock_salary(salary_id: str, current_user: dict = Depends(require_permission("payroll_manage"))):
+    existing = await db.salaries.find_one({"id": salary_id, "is_active": True})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bordro bulunamadı")
+    
+    await db.salaries.update_one({"id": salary_id}, {"$set": {"is_locked": True}})
+    updated = await db.salaries.find_one({"id": salary_id}, {"_id": 0})
+    return updated
+
+# ==================== HR STATS API ====================
+
+@api_router.get("/hr/stats")
+async def get_hr_stats(
+    month: Optional[str] = None,
+    current_user: dict = Depends(require_permission("hr_view"))
+):
+    """HR özet istatistikleri"""
+    now = datetime.now(timezone.utc)
+    current_month = month or now.strftime("%Y-%m")
+    
+    # Total active employees
+    total_employees = await db.employees.count_documents({"is_active": True})
+    
+    # Get all employees
+    employees = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    # Total monthly salary
+    total_monthly_salary = sum(e.get("monthly_salary", 0) for e in employees)
+    
+    # Total advances (not deducted)
+    advances = await db.advances.find({"is_active": True, "is_deducted": False}, {"_id": 0}).to_list(1000)
+    total_pending_advances = sum(a.get("amount", 0) for a in advances)
+    
+    # Total bonuses for current month
+    bonuses = await db.bonuses.find({"is_active": True, "month": current_month}, {"_id": 0}).to_list(1000)
+    total_bonuses = sum(b.get("amount", 0) for b in bonuses)
+    
+    # Total employee expenses for current month
+    expenses = await db.employee_expenses.find({"is_active": True, "month": current_month}, {"_id": 0}).to_list(1000)
+    total_expenses = sum(e.get("amount", 0) for e in expenses)
+    
+    # Per employee average cost
+    avg_cost_per_employee = (total_monthly_salary + total_expenses) / total_employees if total_employees > 0 else 0
+    
+    # Salaries for current month
+    salaries = await db.salaries.find({"is_active": True, "month": current_month}, {"_id": 0}).to_list(1000)
+    total_net_salaries = sum(s.get("net_salary", 0) for s in salaries)
+    paid_salaries = sum(1 for s in salaries if s.get("is_paid"))
+    unpaid_salaries = len(salaries) - paid_salaries
+    
+    return {
+        "month": current_month,
+        "total_employees": total_employees,
+        "total_monthly_salary": round(total_monthly_salary, 2),
+        "total_pending_advances": round(total_pending_advances, 2),
+        "total_bonuses": round(total_bonuses, 2),
+        "total_expenses": round(total_expenses, 2),
+        "avg_cost_per_employee": round(avg_cost_per_employee, 2),
+        "total_net_salaries": round(total_net_salaries, 2),
+        "paid_salaries_count": paid_salaries,
+        "unpaid_salaries_count": unpaid_salaries
+    }
+
 # ==================== REPORTS API ====================
 
 @api_router.get("/reports/comprehensive")
