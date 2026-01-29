@@ -1921,6 +1921,22 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
     if sale_dict.get("due_date"):
         sale_dict["due_date"] = sale_dict["due_date"].isoformat() if isinstance(sale_dict["due_date"], datetime) else sale_dict["due_date"]
     
+    # Process checks if payment method is "cek"
+    if sale_dict.get("checks"):
+        processed_checks = []
+        for check in sale_dict["checks"]:
+            check_data = {
+                "id": str(uuid.uuid4()),
+                "check_no": check.get("check_no"),
+                "bank_name": check.get("bank_name"),
+                "amount_tl": check.get("amount_tl", 0),
+                "due_date": check["due_date"].isoformat() if isinstance(check.get("due_date"), datetime) else check.get("due_date"),
+                "is_collected": check.get("is_collected", False),
+                "collected_date": check["collected_date"].isoformat() if isinstance(check.get("collected_date"), datetime) else check.get("collected_date") if check.get("collected_date") else None
+            }
+            processed_checks.append(check_data)
+        sale_dict["checks"] = processed_checks
+    
     # Calculate profits
     sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
@@ -1947,6 +1963,22 @@ async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depen
     sale_dict["sale_date"] = sale_dict["sale_date"].isoformat() if isinstance(sale_dict["sale_date"], datetime) else sale_dict["sale_date"]
     if sale_dict.get("due_date"):
         sale_dict["due_date"] = sale_dict["due_date"].isoformat() if isinstance(sale_dict["due_date"], datetime) else sale_dict["due_date"]
+    
+    # Process checks if payment method is "cek"
+    if sale_dict.get("checks"):
+        processed_checks = []
+        for check in sale_dict["checks"]:
+            check_data = {
+                "id": check.get("id") or str(uuid.uuid4()),
+                "check_no": check.get("check_no"),
+                "bank_name": check.get("bank_name"),
+                "amount_tl": check.get("amount_tl", 0),
+                "due_date": check["due_date"].isoformat() if isinstance(check.get("due_date"), datetime) else check.get("due_date"),
+                "is_collected": check.get("is_collected", False),
+                "collected_date": check["collected_date"].isoformat() if isinstance(check.get("collected_date"), datetime) else check.get("collected_date") if check.get("collected_date") else None
+            }
+            processed_checks.append(check_data)
+        sale_dict["checks"] = processed_checks
     
     sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
