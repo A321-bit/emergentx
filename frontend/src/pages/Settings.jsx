@@ -184,7 +184,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             Şirket Bilgileri
@@ -196,6 +196,10 @@ const Settings = () => {
           <TabsTrigger value="bank" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Banka Bilgileri
+          </TabsTrigger>
+          <TabsTrigger value="currency" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Kur Ayarları
           </TabsTrigger>
         </TabsList>
 
