@@ -50,6 +50,7 @@ function App() {
               <Route path="/accounting" element={<Accounting />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/packages" element={<Packages />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
