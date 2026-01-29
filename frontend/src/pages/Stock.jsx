@@ -241,25 +241,28 @@ const Stock = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id} data-testid={`stock-row-${product.id}`}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>
-                    <span className={cn("category-badge", product.category)}>
-                      {getCategoryLabel(product.category)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">
-                    {product.stock_quantity} {product.unit}
-                  </TableCell>
-                  <TableCell className="text-right currency">
-                    {formatCurrency(product.purchase_price)}
-                  </TableCell>
-                  <TableCell className="text-right currency font-medium">
-                    {formatCurrency(product.purchase_price * product.stock_quantity)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredProducts.map((product) => {
+                const category = categories.find(c => c.id === product.category_id);
+                return (
+                  <TableRow key={product.id} data-testid={`stock-row-${product.id}`}>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        {category?.name || 'Kategori Yok'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">
+                      {product.stock_quantity} {product.unit}
+                    </TableCell>
+                    <TableCell className="text-right currency">
+                      {formatCurrency(product.purchase_price)}
+                    </TableCell>
+                    <TableCell className="text-right currency font-medium">
+                      {formatCurrency(product.purchase_price * product.stock_quantity)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
