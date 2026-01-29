@@ -20,6 +20,8 @@ import CustomerSettings from "./pages/CustomerSettings";
 import Quotes from "./pages/Quotes";
 import Dealers from "./pages/Dealers";
 import DealerGroups from "./pages/DealerGroups";
+import Sales from "./pages/Sales";
+import Accounting from "./pages/Accounting";
 import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
 
@@ -42,6 +44,8 @@ function App() {
               <Route path="/quotes" element={<Quotes />} />
               <Route path="/dealer-groups" element={<DealerGroups />} />
               <Route path="/dealers" element={<Dealers />} />
+              <Route path="/sales" element={<Sales />} />
+              <Route path="/accounting" element={<Accounting />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
