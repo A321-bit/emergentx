@@ -2027,6 +2027,156 @@ async def get_sales_stats(current_user: dict = Depends(require_permission("finan
     
     return stats
 
+# ==================== PAYMENT/COLLECTION ROUTES ====================
+
+@api_router.get("/sales/{sale_id}/payments")
+async def get_sale_payments(sale_id: str, current_user: dict = Depends(require_permission("finance_view"))):
+    payments = await db.payments.find({"sale_id": sale_id, "is_active": True}, {"_id": 0}).sort("payment_date", -1).to_list(100)
+    return payments
+
+@api_router.post("/sales/{sale_id}/payments")
+async def add_payment(sale_id: str, payment: PaymentCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    # Get sale
+    sale = await db.sales.find_one({"id": sale_id, "is_active": True}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Satış bulunamadı")
+    
+    # Create payment
+    payment_dict = payment.model_dump()
+    payment_dict["id"] = str(uuid.uuid4())
+    payment_dict["sale_id"] = sale_id
+    payment_dict["created_by"] = current_user.get("id", current_user.get("email", ""))
+    payment_dict["is_active"] = True
+    payment_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    payment_dict["payment_date"] = payment_dict["payment_date"].isoformat() if isinstance(payment_dict["payment_date"], datetime) else payment_dict["payment_date"]
+    
+    await db.payments.insert_one(payment_dict.copy())
+    
+    # Update sale's paid amount
+    all_payments = await db.payments.find({"sale_id": sale_id, "is_active": True}, {"_id": 0}).to_list(100)
+    total_paid = sum(p.get("amount_tl", 0) for p in all_payments)
+    total_sale = sale.get("sale_amount_tl", 0)
+    remaining = total_sale - total_paid
+    
+    if total_paid >= total_sale:
+        status = "odendi"
+    elif total_paid > 0:
+        status = "kismi"
+    else:
+        status = "bekliyor"
+    
+    await db.sales.update_one(
+        {"id": sale_id},
+        {"$set": {"paid_amount_tl": total_paid, "remaining_amount_tl": remaining, "payment_status": status}}
+    )
+    
+    payment_dict.pop("_id", None)
+    return payment_dict
+
+@api_router.delete("/payments/{payment_id}")
+async def delete_payment(payment_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    # Get payment to find sale_id
+    payment = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Tahsilat bulunamadı")
+    
+    sale_id = payment.get("sale_id")
+    
+    # Soft delete payment
+    await db.payments.update_one({"id": payment_id}, {"$set": {"is_active": False}})
+    
+    # Recalculate sale totals
+    if sale_id:
+        sale = await db.sales.find_one({"id": sale_id}, {"_id": 0})
+        if sale:
+            all_payments = await db.payments.find({"sale_id": sale_id, "is_active": True}, {"_id": 0}).to_list(100)
+            total_paid = sum(p.get("amount_tl", 0) for p in all_payments)
+            total_sale = sale.get("sale_amount_tl", 0)
+            remaining = total_sale - total_paid
+            
+            if total_paid >= total_sale:
+                status = "odendi"
+            elif total_paid > 0:
+                status = "kismi"
+            else:
+                status = "bekliyor"
+            
+            await db.sales.update_one(
+                {"id": sale_id},
+                {"$set": {"paid_amount_tl": total_paid, "remaining_amount_tl": remaining, "payment_status": status}}
+            )
+    
+    return {"message": "Tahsilat silindi"}
+
+@api_router.get("/sales/upcoming-payments")
+async def get_upcoming_payments(current_user: dict = Depends(require_permission("finance_view"))):
+    """Get sales with upcoming due dates or overdue payments"""
+    now = datetime.now(timezone.utc)
+    
+    # Get all sales with remaining amount > 0
+    sales = await db.sales.find({
+        "is_active": True,
+        "remaining_amount_tl": {"$gt": 0}
+    }, {"_id": 0}).to_list(1000)
+    
+    upcoming = []
+    overdue = []
+    
+    for sale in sales:
+        due_date_str = sale.get("due_date")
+        if due_date_str:
+            try:
+                due_date = datetime.fromisoformat(due_date_str.replace("Z", "+00:00")) if isinstance(due_date_str, str) else due_date_str
+                days_until_due = (due_date - now).days
+                
+                sale_info = {
+                    "id": sale["id"],
+                    "customer_name": sale.get("customer_name", ""),
+                    "sale_amount_tl": sale.get("sale_amount_tl", 0),
+                    "remaining_amount_tl": sale.get("remaining_amount_tl", 0),
+                    "due_date": due_date_str,
+                    "days_until_due": days_until_due,
+                    "payment_status": sale.get("payment_status", "bekliyor")
+                }
+                
+                if days_until_due < 0:
+                    sale_info["is_overdue"] = True
+                    overdue.append(sale_info)
+                elif days_until_due <= 7:  # Due within 7 days
+                    sale_info["is_overdue"] = False
+                    upcoming.append(sale_info)
+            except:
+                pass
+        else:
+            # No due date but has remaining - add to upcoming
+            if sale.get("remaining_amount_tl", 0) > 0:
+                upcoming.append({
+                    "id": sale["id"],
+                    "customer_name": sale.get("customer_name", ""),
+                    "sale_amount_tl": sale.get("sale_amount_tl", 0),
+                    "remaining_amount_tl": sale.get("remaining_amount_tl", 0),
+                    "due_date": None,
+                    "days_until_due": None,
+                    "is_overdue": False,
+                    "payment_status": sale.get("payment_status", "bekliyor")
+                })
+    
+    # Sort by days until due
+    overdue.sort(key=lambda x: x["days_until_due"])
+    upcoming.sort(key=lambda x: x["days_until_due"] if x["days_until_due"] is not None else 999)
+    
+    return {
+        "overdue": overdue,
+        "upcoming": upcoming[:10],  # Top 10 upcoming
+        "total_overdue_amount": sum(s["remaining_amount_tl"] for s in overdue),
+        "total_upcoming_amount": sum(s["remaining_amount_tl"] for s in upcoming)
+    }
+
+@api_router.get("/payment-methods")
+async def get_payment_methods():
+    """Get available payment methods"""
+    return PAYMENT_METHODS
+
 # ==================== EXPENSE CATEGORIES ROUTES ====================
 
 @api_router.get("/expense-categories")
