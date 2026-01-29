@@ -28,7 +28,9 @@ import {
   ShoppingBag,
   UserCog,
   Calendar,
-  Banknote
+  Banknote,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -36,11 +38,27 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const [expandedMenus, setExpandedMenus] = useState(['hr']); // HR menu expanded by default
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
     if (onClose) onClose();
   }, [location.pathname]);
+
+  // Auto-expand menu if current path is in submenu
+  useEffect(() => {
+    if (['/employees', '/attendance', '/payroll'].includes(location.pathname)) {
+      setExpandedMenus(prev => prev.includes('hr') ? prev : [...prev, 'hr']);
+    }
+  }, [location.pathname]);
+
+  const toggleMenu = (menuId) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    );
+  };
 
   // Check permissions
   const hasPermission = (perm) => {
@@ -93,15 +111,10 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('finance_view') || hasPermission('finance_manage')) {
     navItems.push({ path: '/accounting', icon: Calculator, label: 'Muhasebe' });
   }
-  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
-    navItems.push({ path: '/employees', icon: UserCog, label: 'Personel' });
-  }
-  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
-    navItems.push({ path: '/attendance', icon: Calendar, label: 'Puantaj' });
-  }
-  if (hasPermission('payroll_view') || hasPermission('payroll_manage')) {
-    navItems.push({ path: '/payroll', icon: Banknote, label: 'Bordro' });
-  }
+  
+  // HR Menu with submenus
+  const hasHrAccess = hasPermission('hr_view') || hasPermission('hr_manage') || hasPermission('payroll_view') || hasPermission('payroll_manage');
+  
   if (hasPermission('finance_view')) {
     navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
   }
@@ -111,6 +124,20 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('settings_manage')) {
     navItems.push({ path: '/settings', icon: Settings, label: 'Ayarlar' });
   }
+
+  // HR submenu items
+  const hrSubItems = [];
+  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
+    hrSubItems.push({ path: '/employees', icon: UserCog, label: 'Personel Listesi' });
+  }
+  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
+    hrSubItems.push({ path: '/attendance', icon: Calendar, label: 'Puantaj' });
+  }
+  if (hasPermission('payroll_view') || hasPermission('payroll_manage')) {
+    hrSubItems.push({ path: '/payroll', icon: Banknote, label: 'Bordro' });
+  }
+
+  const isHrActive = ['/employees', '/attendance', '/payroll'].includes(location.pathname);
 
   return (
     <>
@@ -149,6 +176,73 @@ const Sidebar = ({ isOpen, onClose }) => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
+            
+            // Insert HR menu before Finans
+            if (item.path === '/finance' && hasHrAccess) {
+              return (
+                <React.Fragment key="hr-menu">
+                  {/* HR Expandable Menu */}
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => toggleMenu('hr')}
+                      className={cn(
+                        "sidebar-nav-item w-full justify-between",
+                        isHrActive && "active"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <UserCog className="h-5 w-5" />
+                        <span>Personel</span>
+                      </div>
+                      {expandedMenus.includes('hr') ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                    
+                    {/* Submenu */}
+                    {expandedMenus.includes('hr') && (
+                      <div className="ml-4 pl-3 border-l-2 border-border space-y-1">
+                        {hrSubItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = location.pathname === subItem.path;
+                          
+                          return (
+                            <Link
+                              key={subItem.path}
+                              to={subItem.path}
+                              data-testid={`nav-${subItem.path.slice(1)}`}
+                              className={cn(
+                                "sidebar-nav-item text-sm py-2",
+                                isSubActive && "active"
+                              )}
+                            >
+                              <SubIcon className="h-4 w-4" />
+                              <span>{subItem.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Original Finance item */}
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    data-testid={`nav-${item.path.slice(1)}`}
+                    className={cn(
+                      "sidebar-nav-item",
+                      isActive && "active"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                </React.Fragment>
+              );
+            }
             
             return (
               <Link
