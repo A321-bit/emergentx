@@ -223,6 +223,7 @@ const Packages = () => {
     });
     setSelectedProduct('');
     setSelectedQuantity(1);
+    setProductSearchTerm('');
   };
 
   const filteredPackages = packages.filter(pkg =>
