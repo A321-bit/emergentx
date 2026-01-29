@@ -1693,7 +1693,14 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         if not product:
             raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
         
-        unit_price = product["sale_price"]
+        # Stock check
+        if product.get("stock_quantity", 0) < item["quantity"]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Yetersiz stok: {product['name']} (Mevcut: {product.get('stock_quantity', 0)}, İstenen: {item['quantity']})"
+            )
+        
+        unit_price = item.get("unit_price") or product["sale_price"]
         if dealer_discount > 0:
             unit_price = product["purchase_price"] * (1 + dealer_discount / 100)
         
@@ -1705,12 +1712,21 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
             quantity=item["quantity"],
             unit_price=unit_price,
             total_price=total_price,
+            unit=product.get("unit", "adet"),
             datasheet_url=product.get("datasheet_url")
         ))
         subtotal += total_price
     
-    discount_amount = subtotal * (quote_data.discount_rate / 100)
-    total = subtotal - discount_amount
+    # Calculate discount
+    if quote_data.discount_type == "percent":
+        discount_amount = subtotal * (quote_data.discount_rate / 100)
+    else:
+        discount_amount = quote_data.discount_amount
+    
+    # Calculate VAT
+    subtotal_after_discount = subtotal - discount_amount
+    vat_amount = subtotal_after_discount * (quote_data.vat_rate / 100)
+    total = subtotal_after_discount + vat_amount
     
     quote_number = await generate_quote_number()
     
@@ -1720,14 +1736,20 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         "customer_id": quote_data.customer_id,
         "customer_name": customer["name"],
         "items": [item.model_dump() for item in items],
-        "subtotal": subtotal,
+        "subtotal": round(subtotal, 2),
+        "discount_type": quote_data.discount_type,
         "discount_rate": quote_data.discount_rate,
-        "discount_amount": discount_amount,
-        "total": total,
+        "discount_amount": round(discount_amount, 2),
+        "vat_rate": quote_data.vat_rate,
+        "vat_amount": round(vat_amount, 2),
+        "total": round(total, 2),
         "currency": quote_data.currency,
         "validity_days": quote_data.validity_days,
         "notes": quote_data.notes,
-        "status": "teklif_gonderildi",
+        "delivery_time": quote_data.delivery_time,
+        "payment_terms": quote_data.payment_terms,
+        "warranty_info": quote_data.warranty_info,
+        "status": quote_data.status or "taslak",
         "created_by": current_user["id"],
         "created_by_name": current_user["name"],
         "dealer_id": current_user.get("dealer_id"),
@@ -1737,6 +1759,8 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
     }
     
     await db.quotes.insert_one(quote_dict.copy())
+    if "_id" in quote_dict:
+        del quote_dict["_id"]
     return quote_dict
 
 @api_router.get("/quotes", response_model=List[dict])
