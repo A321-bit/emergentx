@@ -1846,58 +1846,87 @@ async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dic
     if not existing:
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     
-    # Check if quote can be edited (only draft or sent quotes)
-    if existing.get("status") in ["onaylandi", "satisa_dondu"]:
-        raise HTTPException(status_code=400, detail="Onaylanmış veya satışa dönmüş teklifler düzenlenemez")
+    # Check if quote can be edited (sadece satışa dönmüş teklifler düzenlenemez)
+    if existing.get("status") == "satisa_dondu":
+        raise HTTPException(status_code=400, detail="Satışa dönmüş teklifler düzenlenemez")
+    
+    # Döviz kurunu al
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
     
     customer = await db.customers.find_one({"id": quote_data.customer_id}, {"_id": 0})
     if not customer:
         raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
     
     items = []
-    subtotal = 0
+    subtotal_usd = 0
+    subtotal_tl = 0
     
     for item in quote_data.items:
         product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
         if not product:
             raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
         
-        unit_price = item.get("unit_price") or product["sale_price"]
-        total_price = unit_price * item["quantity"]
+        # Fiyatları item'dan al veya hesapla
+        unit_price_tl = item.get("unit_price_tl") or item.get("unit_price") or product["sale_price"]
+        unit_price_usd = item.get("unit_price_usd") or (unit_price_tl / usd_rate)
+        
+        total_price_usd = unit_price_usd * item["quantity"]
+        total_price_tl = unit_price_tl * item["quantity"]
         
         items.append({
             "product_id": product["id"],
             "product_name": product["name"],
             "quantity": item["quantity"],
-            "unit_price": unit_price,
-            "total_price": total_price,
+            "unit_price_usd": round(unit_price_usd, 2),
+            "unit_price_tl": round(unit_price_tl, 2),
+            "unit_price": round(unit_price_tl, 2),
+            "total_price_usd": round(total_price_usd, 2),
+            "total_price_tl": round(total_price_tl, 2),
+            "total_price": round(total_price_tl, 2),
             "unit": product.get("unit", "adet"),
-            "datasheet_url": product.get("datasheet_url")
+            "datasheet_url": product.get("datasheet_url"),
+            "currency": item.get("currency") or product.get("currency", "USD")
         })
-        subtotal += total_price
+        subtotal_usd += total_price_usd
+        subtotal_tl += total_price_tl
     
     # Calculate discount
     if quote_data.discount_type == "percent":
-        discount_amount = subtotal * (quote_data.discount_rate / 100)
+        discount_amount_tl = subtotal_tl * (quote_data.discount_rate / 100)
+        discount_amount_usd = subtotal_usd * (quote_data.discount_rate / 100)
     else:
-        discount_amount = quote_data.discount_amount
+        discount_amount_tl = quote_data.discount_amount
+        discount_amount_usd = quote_data.discount_amount / usd_rate
     
     # Calculate VAT
-    subtotal_after_discount = subtotal - discount_amount
-    vat_amount = subtotal_after_discount * (quote_data.vat_rate / 100)
-    total = subtotal_after_discount + vat_amount
+    subtotal_after_discount_tl = subtotal_tl - discount_amount_tl
+    subtotal_after_discount_usd = subtotal_usd - discount_amount_usd
+    vat_amount_tl = subtotal_after_discount_tl * (quote_data.vat_rate / 100)
+    vat_amount_usd = subtotal_after_discount_usd * (quote_data.vat_rate / 100)
+    total_tl = subtotal_after_discount_tl + vat_amount_tl
+    total_usd = subtotal_after_discount_usd + vat_amount_usd
     
     update_data = {
         "customer_id": quote_data.customer_id,
         "customer_name": customer["name"],
         "items": items,
-        "subtotal": round(subtotal, 2),
+        "subtotal_usd": round(subtotal_usd, 2),
+        "subtotal_tl": round(subtotal_tl, 2),
+        "subtotal": round(subtotal_tl, 2),
         "discount_type": quote_data.discount_type,
         "discount_rate": quote_data.discount_rate,
-        "discount_amount": round(discount_amount, 2),
+        "discount_amount_usd": round(discount_amount_usd, 2),
+        "discount_amount_tl": round(discount_amount_tl, 2),
+        "discount_amount": round(discount_amount_tl, 2),
         "vat_rate": quote_data.vat_rate,
-        "vat_amount": round(vat_amount, 2),
-        "total": round(total, 2),
+        "vat_amount_usd": round(vat_amount_usd, 2),
+        "vat_amount_tl": round(vat_amount_tl, 2),
+        "vat_amount": round(vat_amount_tl, 2),
+        "total_usd": round(total_usd, 2),
+        "total_tl": round(total_tl, 2),
+        "total": round(total_tl, 2),
+        "exchange_rate": usd_rate,
         "currency": quote_data.currency,
         "validity_days": quote_data.validity_days,
         "notes": quote_data.notes,
