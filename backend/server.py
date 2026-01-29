@@ -2161,6 +2161,20 @@ async def init_default_data():
     ]
     await db.customer_sources.insert_many(customer_sources)
     
+    # Create default expense categories
+    expense_categories = [
+        {"id": str(uuid.uuid4()), "name": "Personel Maaşları", "description": "Çalışan maaşları", "is_recurring": True, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Dükkan Kirası", "description": "Aylık kira ödemesi", "is_recurring": True, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Elektrik", "description": "Elektrik faturası", "is_recurring": True, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Su", "description": "Su faturası", "is_recurring": True, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Doğalgaz", "description": "Doğalgaz faturası", "is_recurring": True, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Mazot/Akaryakıt", "description": "Araç yakıt giderleri", "is_recurring": False, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "İnternet/Telefon", "description": "İletişim giderleri", "is_recurring": True, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Ofis Malzemeleri", "description": "Kırtasiye ve ofis malzemeleri", "is_recurring": False, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Diğer", "description": "Diğer giderler", "is_recurring": False, "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()},
+    ]
+    await db.expense_categories.insert_many(expense_categories)
+    
     # Create default company settings
     default_settings = {
         "id": "company_settings",
