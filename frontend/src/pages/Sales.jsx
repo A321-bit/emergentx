@@ -151,6 +151,58 @@ const Sales = () => {
     }
   };
 
+  const fetchUpcomingChecks = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/checks/upcoming`);
+      setUpcomingChecks(response.data);
+    } catch (error) {
+      console.error('Yaklaşan çekler alınamadı');
+    }
+  };
+
+  // Çek ekleme
+  const addCheck = () => {
+    setFormData(prev => ({
+      ...prev,
+      checks: [...prev.checks, { ...emptyCheck }]
+    }));
+  };
+
+  // Çek silme
+  const removeCheck = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      checks: prev.checks.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Çek güncelleme
+  const updateCheck = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      checks: prev.checks.map((check, i) => 
+        i === index ? { ...check, [field]: value } : check
+      )
+    }));
+  };
+
+  // Çek tahsil etme
+  const handleCollectCheck = async (saleId, checkId) => {
+    try {
+      await axios.put(`${API_URL}/api/sales/${saleId}/checks/${checkId}/collect`);
+      toast.success('Çek tahsil edildi');
+      fetchData();
+      fetchUpcomingChecks();
+    } catch (error) {
+      toast.error('Çek tahsil edilemedi');
+    }
+  };
+
+  // Toplam çek tutarını hesapla
+  const getTotalChecksAmount = () => {
+    return formData.checks.reduce((sum, check) => sum + (parseFloat(check.amount_tl) || 0), 0);
+  };
+
   const handleInputCurrencyChange = (currency) => {
     setFormData(prev => ({ 
       ...prev, 
