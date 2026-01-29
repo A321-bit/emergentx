@@ -61,6 +61,34 @@ const Settings = () => {
     }
   };
 
+  const fetchExchangeRates = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/exchange-rates`);
+      setExchangeRates(response.data);
+    } catch (error) {
+      console.error('Kur ayarları yüklenemedi');
+    }
+  };
+
+  const handleSaveExchangeRates = async (e) => {
+    e.preventDefault();
+    setSavingRates(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('usd_to_try', exchangeRates.usd_to_try);
+      formData.append('eur_to_try', exchangeRates.eur_to_try);
+      
+      const response = await axios.put(`${API_URL}/api/settings/exchange-rates`, formData);
+      setExchangeRates(response.data);
+      toast.success('Kur ayarları kaydedildi');
+    } catch (error) {
+      toast.error('Kur ayarları kaydedilemedi');
+    } finally {
+      setSavingRates(false);
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
