@@ -500,80 +500,178 @@ const Sales = () => {
               />
             </div>
 
-            {/* Currency & Exchange Rate */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Para Birimi</Label>
-                <Select value={formData.currency} onValueChange={handleCurrencyChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="TRY">TRY (₺)</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Currency Selection & Exchange Rate */}
+            <div className="space-y-3">
+              <Label>Giriş Para Birimi</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={formData.input_currency === 'USD' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => handleInputCurrencyChange('USD')}
+                >
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  USD ($)
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.input_currency === 'TRY' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => handleInputCurrencyChange('TRY')}
+                >
+                  ₺ TL
+                </Button>
               </div>
-              {formData.currency === 'USD' && (
+              <p className="text-xs text-muted-foreground">
+                {formData.input_currency === 'USD' 
+                  ? 'USD cinsinden girin, TL otomatik hesaplanır' 
+                  : 'TL cinsinden girin, USD otomatik hesaplanır'}
+              </p>
+            </div>
+
+            {/* Exchange Rate */}
+            <div className="space-y-2">
+              <Label>Döviz Kuru (1 USD = ? TL)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.exchange_rate}
+                  onChange={(e) => handleRateChange(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="button" variant="outline" onClick={useSystemRate} title="Güncel kuru kullan">
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  {systemExchangeRate}
+                </Button>
+              </div>
+            </div>
+
+            {/* Sale Amount - USD input mode */}
+            {formData.input_currency === 'USD' ? (
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Döviz Kuru (USD/TL)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.exchange_rate}
-                    onChange={(e) => handleRateChange(e.target.value)}
-                  />
+                  <Label>Satış Tutarı (USD) *</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.sale_amount_usd}
+                      onChange={(e) => handleUsdInput('sale_amount_usd', e.target.value)}
+                      className="pl-7"
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
+                <div className="space-y-2">
+                  <Label>Satış Tutarı (TL)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.sale_amount_tl}
+                      readOnly
+                      className="pl-7 bg-muted"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Satış Tutarı (TL) *</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.sale_amount_tl}
+                      onChange={(e) => handleTlInput('sale_amount_tl', e.target.value)}
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Satış Tutarı (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.sale_amount_usd}
+                      readOnly
+                      className="pl-7 bg-muted"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {/* Sale Amount */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Satış Tutarı (USD)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.sale_amount_usd}
-                  onChange={(e) => handleAmountChange('sale_amount_usd', e.target.value)}
-                />
+            {/* Purchase/Cost Amount */}
+            {formData.input_currency === 'USD' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Alış/Maliyet (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.purchase_amount_usd}
+                      onChange={(e) => handleUsdInput('purchase_amount_usd', e.target.value)}
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Alış/Maliyet (TL)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.purchase_amount_tl}
+                      readOnly
+                      className="pl-7 bg-muted"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Satış Tutarı (TL)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.sale_amount_tl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sale_amount_tl: e.target.value }))}
-                  className={formData.currency === 'USD' ? 'bg-muted' : ''}
-                  readOnly={formData.currency === 'USD'}
-                />
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Alış/Maliyet (TL)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.purchase_amount_tl}
+                      onChange={(e) => handleTlInput('purchase_amount_tl', e.target.value)}
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Alış/Maliyet (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.purchase_amount_usd}
+                      readOnly
+                      className="pl-7 bg-muted"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* Purchase Amount */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Alış Tutarı (USD)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.purchase_amount_usd}
-                  onChange={(e) => handleAmountChange('purchase_amount_usd', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Alış Tutarı (TL)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.purchase_amount_tl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, purchase_amount_tl: e.target.value }))}
-                  className={formData.currency === 'USD' ? 'bg-muted' : ''}
-                  readOnly={formData.currency === 'USD'}
-                />
-              </div>
-            </div>
+            )}
 
             {/* Date */}
             <div className="space-y-2">
