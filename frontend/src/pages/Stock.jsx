@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Plus, ArrowUp, ArrowDown, Search, Package } from 'lucide-react';
+import { Plus, ArrowUp, ArrowDown, Search, Package, Boxes, X } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { formatDateTime, formatCurrency, getCategoryLabel, cn } from '../lib/utils';
