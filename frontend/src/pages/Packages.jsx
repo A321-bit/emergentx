@@ -138,6 +138,7 @@ const Packages = () => {
     
     setSelectedProduct('');
     setSelectedQuantity(1);
+    setProductSearchTerm('');
   };
 
   const handleRemoveItem = (index) => {
