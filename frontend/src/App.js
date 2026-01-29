@@ -23,6 +23,7 @@ import DealerGroups from "./pages/DealerGroups";
 import Sales from "./pages/Sales";
 import Accounting from "./pages/Accounting";
 import Finance from "./pages/Finance";
+import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
               <Route path="/sales" element={<Sales />} />
               <Route path="/accounting" element={<Accounting />} />
               <Route path="/finance" element={<Finance />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
