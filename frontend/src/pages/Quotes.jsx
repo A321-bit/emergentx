@@ -131,18 +131,20 @@ const Quotes = () => {
 
   const fetchData = async () => {
     try {
-      const [quotesRes, customersRes, productsRes, packagesRes, settingsRes] = await Promise.all([
+      const [quotesRes, customersRes, productsRes, packagesRes, settingsRes, exchangeRes] = await Promise.all([
         axios.get(`${API_URL}/api/quotes`),
         axios.get(`${API_URL}/api/customers`),
         axios.get(`${API_URL}/api/products`),
         axios.get(`${API_URL}/api/packages`).catch(() => ({ data: [] })),
-        axios.get(`${API_URL}/api/settings/company`).catch(() => ({ data: {} }))
+        axios.get(`${API_URL}/api/settings/company`).catch(() => ({ data: {} })),
+        axios.get(`${API_URL}/api/settings/exchange-rates`).catch(() => ({ data: { usd_to_try: 34.0 } }))
       ]);
       setQuotes(quotesRes.data);
       setCustomers(customersRes.data);
       setProducts(productsRes.data);
       setPackages(packagesRes.data);
       setCompanySettings(settingsRes.data || {});
+      setExchangeRate(exchangeRes.data?.usd_to_try || 34.0);
     } catch (error) {
       toast.error('Veriler yüklenemedi');
     } finally {
