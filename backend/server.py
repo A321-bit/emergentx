@@ -443,6 +443,13 @@ class CheckItem(BaseModel):
     is_collected: bool = False  # Tahsil edildi mi?
     collected_date: Optional[datetime] = None  # Tahsil tarihi
 
+# Çoklu Ödeme Detayları
+class PaymentDetail(BaseModel):
+    nakit_tl: float = 0  # Nakit ödeme
+    kart_tl: float = 0  # Kart ile ödeme
+    havale_tl: float = 0  # Havale/EFT ile ödeme
+    checks: Optional[List[CheckItem]] = None  # Çekler
+
 # Sales Model (Manuel Satış Girişi)
 class SaleBase(BaseModel):
     customer_id: Optional[str] = None
@@ -455,11 +462,12 @@ class SaleBase(BaseModel):
     currency: str = "TRY"  # Ana para birimi
     sale_date: datetime
     notes: Optional[str] = None
-    # Payment fields
-    payment_method: str = "nakit"  # nakit, kart, havale, cek, vadeli
-    paid_amount_tl: float = 0  # Ödenen tutar (TL)
-    due_date: Optional[datetime] = None  # Vade tarihi (vadeli satışlar için)
-    checks: Optional[List[CheckItem]] = None  # Çekler (çek ödemesi için)
+    # Çoklu ödeme alanları
+    nakit_tl: float = 0  # Nakit ödeme
+    kart_tl: float = 0  # Kart ile ödeme
+    havale_tl: float = 0  # Havale/EFT ile ödeme
+    checks: Optional[List[CheckItem]] = None  # Çekler
+    due_date: Optional[datetime] = None  # Genel vade tarihi (vadeli satışlar için)
 
 class SaleCreate(SaleBase):
     pass
@@ -469,6 +477,8 @@ class Sale(SaleBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     profit_usd: float = 0
     profit_tl: float = 0
+    paid_amount_tl: float = 0  # Toplam ödenen (nakit + kart + havale + tahsil edilen çekler)
+    check_total_tl: float = 0  # Toplam çek tutarı
     remaining_amount_tl: float = 0  # Kalan tutar (TL)
     payment_status: str = "bekliyor"  # odendi, bekliyor, kismi, gecikti
     created_by: str = ""
