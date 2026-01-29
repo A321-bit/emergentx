@@ -190,20 +190,44 @@ const Quotes = () => {
     
     const existingIndex = formData.items.findIndex(item => item.product_id === selectedProduct);
     
+    // Ürün fiyatını USD ve TL olarak hesapla
+    const productCurrency = product.currency || 'USD';
+    let unit_price_usd = 0;
+    let unit_price_tl = 0;
+    
+    if (productCurrency === 'USD') {
+      unit_price_usd = product.sale_price || 0;
+      unit_price_tl = unit_price_usd * exchangeRate;
+    } else if (productCurrency === 'EUR') {
+      const eurRate = exchangeRate * 1.09; // Yaklaşık EUR/USD oranı
+      unit_price_usd = (product.sale_price || 0) / 1.09;
+      unit_price_tl = (product.sale_price || 0) * eurRate / exchangeRate;
+    } else { // TRY
+      unit_price_tl = product.sale_price || 0;
+      unit_price_usd = unit_price_tl / exchangeRate;
+    }
+    
     if (existingIndex >= 0) {
       const updatedItems = [...formData.items];
       updatedItems[existingIndex].quantity += selectedQuantity;
-      updatedItems[existingIndex].total_price = updatedItems[existingIndex].unit_price * updatedItems[existingIndex].quantity;
+      updatedItems[existingIndex].total_price_usd = updatedItems[existingIndex].unit_price_usd * updatedItems[existingIndex].quantity;
+      updatedItems[existingIndex].total_price_tl = updatedItems[existingIndex].unit_price_tl * updatedItems[existingIndex].quantity;
+      updatedItems[existingIndex].total_price = updatedItems[existingIndex].total_price_tl;
       setFormData({ ...formData, items: updatedItems });
     } else {
       const newItem = {
         product_id: product.id,
         product_name: product.name,
         quantity: selectedQuantity,
-        unit_price: product.sale_price || 0,
-        total_price: (product.sale_price || 0) * selectedQuantity,
+        unit_price_usd: unit_price_usd,
+        unit_price_tl: unit_price_tl,
+        unit_price: unit_price_tl, // Legacy - TL
+        total_price_usd: unit_price_usd * selectedQuantity,
+        total_price_tl: unit_price_tl * selectedQuantity,
+        total_price: unit_price_tl * selectedQuantity, // Legacy - TL
         unit: product.unit || 'adet',
-        stock: product.stock_quantity
+        stock: product.stock_quantity,
+        currency: productCurrency
       };
       setFormData({ ...formData, items: [...formData.items, newItem] });
     }
