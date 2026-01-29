@@ -246,25 +246,43 @@ const Quotes = () => {
     if (newQuantity < 1) return;
     const updatedItems = [...formData.items];
     updatedItems[index].quantity = newQuantity;
-    updatedItems[index].total_price = updatedItems[index].unit_price * newQuantity;
+    updatedItems[index].total_price_usd = (updatedItems[index].unit_price_usd || 0) * newQuantity;
+    updatedItems[index].total_price_tl = (updatedItems[index].unit_price_tl || 0) * newQuantity;
+    updatedItems[index].total_price = updatedItems[index].total_price_tl;
     setFormData({ ...formData, items: updatedItems });
   };
 
-  const handleUpdateItemPrice = (index, newPrice) => {
+  const handleUpdateItemPrice = (index, newPriceTL) => {
     const updatedItems = [...formData.items];
-    updatedItems[index].unit_price = parseFloat(newPrice) || 0;
-    updatedItems[index].total_price = updatedItems[index].unit_price * updatedItems[index].quantity;
+    const priceTL = parseFloat(newPriceTL) || 0;
+    updatedItems[index].unit_price_tl = priceTL;
+    updatedItems[index].unit_price_usd = priceTL / exchangeRate;
+    updatedItems[index].unit_price = priceTL;
+    updatedItems[index].total_price_usd = updatedItems[index].unit_price_usd * updatedItems[index].quantity;
+    updatedItems[index].total_price_tl = priceTL * updatedItems[index].quantity;
+    updatedItems[index].total_price = updatedItems[index].total_price_tl;
     setFormData({ ...formData, items: updatedItems });
   };
 
-  // Calculate totals
-  const subtotal = formData.items.reduce((sum, item) => sum + item.total_price, 0);
-  const discountAmount = formData.discount_type === 'percent' 
-    ? subtotal * (formData.discount_rate / 100)
+  // Calculate totals - hem USD hem TL
+  const subtotalTL = formData.items.reduce((sum, item) => sum + (item.total_price_tl || item.total_price || 0), 0);
+  const subtotalUSD = formData.items.reduce((sum, item) => sum + (item.total_price_usd || (item.total_price / exchangeRate) || 0), 0);
+  const discountAmountTL = formData.discount_type === 'percent' 
+    ? subtotalTL * (formData.discount_rate / 100)
     : formData.discount_amount;
-  const subtotalAfterDiscount = subtotal - discountAmount;
-  const vatAmount = subtotalAfterDiscount * (formData.vat_rate / 100);
-  const grandTotal = subtotalAfterDiscount + vatAmount;
+  const discountAmountUSD = discountAmountTL / exchangeRate;
+  const subtotalAfterDiscountTL = subtotalTL - discountAmountTL;
+  const subtotalAfterDiscountUSD = subtotalUSD - discountAmountUSD;
+  const vatAmountTL = subtotalAfterDiscountTL * (formData.vat_rate / 100);
+  const vatAmountUSD = subtotalAfterDiscountUSD * (formData.vat_rate / 100);
+  const grandTotalTL = subtotalAfterDiscountTL + vatAmountTL;
+  const grandTotalUSD = subtotalAfterDiscountUSD + vatAmountUSD;
+  
+  // Legacy support
+  const subtotal = subtotalTL;
+  const discountAmount = discountAmountTL;
+  const vatAmount = vatAmountTL;
+  const grandTotal = grandTotalTL;
 
   const handleSubmit = async (status = 'taslak') => {
     if (!formData.customer_id) {
