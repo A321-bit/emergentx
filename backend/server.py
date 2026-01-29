@@ -2652,6 +2652,116 @@ async def get_accounting_summary(current_user: dict = Depends(require_permission
         "net_profit": net_profit
     }
 
+# ==================== PACKAGES API ====================
+
+@api_router.get("/packages")
+async def get_packages(current_user: dict = Depends(require_permission("products_view"))):
+    packages = await db.packages.find({"is_active": True}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return packages
+
+@api_router.get("/packages/{package_id}")
+async def get_package(package_id: str, current_user: dict = Depends(require_permission("products_view"))):
+    package = await db.packages.find_one({"id": package_id, "is_active": True}, {"_id": 0})
+    if not package:
+        raise HTTPException(status_code=404, detail="Paket bulunamadı")
+    return package
+
+@api_router.post("/packages")
+async def create_package(package: PackageCreate, current_user: dict = Depends(require_permission("products_manage"))):
+    # Get exchange rate
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
+    
+    # Calculate total prices
+    total_price_usd = 0
+    items_with_totals = []
+    
+    for item in package.items:
+        item_dict = item.model_dump()
+        item_total = item.unit_price * item.quantity
+        item_dict["total_price"] = item_total
+        
+        # Convert to USD if needed
+        currency = item.currency.upper()
+        if currency == "USD":
+            total_price_usd += item_total
+        elif currency == "EUR":
+            total_price_usd += item_total * eur_rate / usd_rate
+        else:  # TRY
+            total_price_usd += item_total / usd_rate
+        
+        items_with_totals.append(item_dict)
+    
+    total_price_tl = total_price_usd * usd_rate
+    
+    package_dict = package.model_dump()
+    package_dict["id"] = str(uuid.uuid4())
+    package_dict["items"] = items_with_totals
+    package_dict["total_price_usd"] = round(total_price_usd, 2)
+    package_dict["total_price_tl"] = round(total_price_tl, 2)
+    package_dict["exchange_rate"] = usd_rate
+    package_dict["created_by"] = current_user["id"]
+    package_dict["created_by_name"] = current_user.get("name", current_user.get("email", ""))
+    package_dict["is_active"] = True
+    package_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.packages.insert_one(package_dict.copy())
+    del package_dict["_id"] if "_id" in package_dict else None
+    
+    return package_dict
+
+@api_router.put("/packages/{package_id}")
+async def update_package(package_id: str, package: PackageCreate, current_user: dict = Depends(require_permission("products_manage"))):
+    existing = await db.packages.find_one({"id": package_id, "is_active": True}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Paket bulunamadı")
+    
+    # Get exchange rate
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
+    
+    # Calculate total prices
+    total_price_usd = 0
+    items_with_totals = []
+    
+    for item in package.items:
+        item_dict = item.model_dump()
+        item_total = item.unit_price * item.quantity
+        item_dict["total_price"] = item_total
+        
+        currency = item.currency.upper()
+        if currency == "USD":
+            total_price_usd += item_total
+        elif currency == "EUR":
+            total_price_usd += item_total * eur_rate / usd_rate
+        else:
+            total_price_usd += item_total / usd_rate
+        
+        items_with_totals.append(item_dict)
+    
+    total_price_tl = total_price_usd * usd_rate
+    
+    update_data = package.model_dump()
+    update_data["items"] = items_with_totals
+    update_data["total_price_usd"] = round(total_price_usd, 2)
+    update_data["total_price_tl"] = round(total_price_tl, 2)
+    update_data["exchange_rate"] = usd_rate
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.packages.update_one({"id": package_id}, {"$set": update_data})
+    
+    updated = await db.packages.find_one({"id": package_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/packages/{package_id}")
+async def delete_package(package_id: str, current_user: dict = Depends(require_permission("products_manage"))):
+    result = await db.packages.update_one({"id": package_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Paket bulunamadı")
+    return {"message": "Paket silindi"}
+
 # ==================== REPORTS API ====================
 
 @api_router.get("/reports/comprehensive")
