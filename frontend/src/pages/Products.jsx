@@ -485,6 +485,55 @@ const Products = () => {
         </Card>
       )}
 
+      {/* Category Statistics */}
+      {categoryStats.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {categoryStats.map((stat) => (
+            <Card 
+              key={stat.id}
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                categoryFilter === stat.id ? "border-primary bg-primary/5" : ""
+              )}
+              onClick={() => setCategoryFilter(stat.id)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-4 w-4 text-primary" />
+                      <p className="text-xs font-medium text-muted-foreground truncate">
+                        {stat.name}
+                      </p>
+                    </div>
+                    <p className="text-2xl font-bold">{stat.productCount}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Boxes className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">
+                        {stat.totalQuantity} adet stok
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {categoryFilter !== 'all' && (
+            <Card 
+              className="cursor-pointer transition-all hover:shadow-md border-dashed"
+              onClick={() => setCategoryFilter('all')}
+            >
+              <CardContent className="p-4 flex items-center justify-center h-full">
+                <div className="text-center">
+                  <X className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Filtreyi Temizle</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
