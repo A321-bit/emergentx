@@ -1692,6 +1692,10 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
     if not customer:
         raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
     
+    # Döviz kurunu al
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    
     dealer_discount = 0
     if current_user.get("dealer_id"):
         dealer = await db.dealers.find_one({"id": current_user["dealer_id"]}, {"_id": 0})
@@ -1701,7 +1705,8 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
                 dealer_discount = group.get("discount_rate", 0)
     
     items = []
-    subtotal = 0
+    subtotal_usd = 0
+    subtotal_tl = 0
     
     for item in quote_data.items:
         product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
@@ -1715,33 +1720,59 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
                 detail=f"Yetersiz stok: {product['name']} (Mevcut: {product.get('stock_quantity', 0)}, İstenen: {item['quantity']})"
             )
         
-        unit_price = item.get("unit_price") or product["sale_price"]
+        product_currency = product.get("currency", "USD")
+        base_price = item.get("unit_price") or product["sale_price"]
+        
         if dealer_discount > 0:
-            unit_price = product["purchase_price"] * (1 + dealer_discount / 100)
+            base_price = product["purchase_price"] * (1 + dealer_discount / 100)
         
-        total_price = unit_price * item["quantity"]
+        # Fiyatları USD ve TL olarak hesapla
+        if product_currency == "USD":
+            unit_price_usd = base_price
+            unit_price_tl = base_price * usd_rate
+        elif product_currency == "EUR":
+            eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
+            unit_price_usd = base_price * (eur_rate / usd_rate)
+            unit_price_tl = base_price * eur_rate
+        else:  # TRY
+            unit_price_tl = base_price
+            unit_price_usd = base_price / usd_rate
         
-        items.append(QuoteItem(
-            product_id=product["id"],
-            product_name=product["name"],
-            quantity=item["quantity"],
-            unit_price=unit_price,
-            total_price=total_price,
-            unit=product.get("unit", "adet"),
-            datasheet_url=product.get("datasheet_url")
-        ))
-        subtotal += total_price
+        total_price_usd = unit_price_usd * item["quantity"]
+        total_price_tl = unit_price_tl * item["quantity"]
+        
+        items.append({
+            "product_id": product["id"],
+            "product_name": product["name"],
+            "quantity": item["quantity"],
+            "unit_price_usd": round(unit_price_usd, 2),
+            "unit_price_tl": round(unit_price_tl, 2),
+            "total_price_usd": round(total_price_usd, 2),
+            "total_price_tl": round(total_price_tl, 2),
+            "unit_price": round(unit_price_tl, 2),  # Legacy (TL)
+            "total_price": round(total_price_tl, 2),  # Legacy (TL)
+            "unit": product.get("unit", "adet"),
+            "datasheet_url": product.get("datasheet_url"),
+            "currency": product_currency
+        })
+        subtotal_usd += total_price_usd
+        subtotal_tl += total_price_tl
     
-    # Calculate discount
+    # Calculate discount (TL bazlı indirim tutarı verilirse)
     if quote_data.discount_type == "percent":
-        discount_amount = subtotal * (quote_data.discount_rate / 100)
+        discount_amount_tl = subtotal_tl * (quote_data.discount_rate / 100)
+        discount_amount_usd = subtotal_usd * (quote_data.discount_rate / 100)
     else:
-        discount_amount = quote_data.discount_amount
+        discount_amount_tl = quote_data.discount_amount
+        discount_amount_usd = quote_data.discount_amount / usd_rate
     
     # Calculate VAT
-    subtotal_after_discount = subtotal - discount_amount
-    vat_amount = subtotal_after_discount * (quote_data.vat_rate / 100)
-    total = subtotal_after_discount + vat_amount
+    subtotal_after_discount_tl = subtotal_tl - discount_amount_tl
+    subtotal_after_discount_usd = subtotal_usd - discount_amount_usd
+    vat_amount_tl = subtotal_after_discount_tl * (quote_data.vat_rate / 100)
+    vat_amount_usd = subtotal_after_discount_usd * (quote_data.vat_rate / 100)
+    total_tl = subtotal_after_discount_tl + vat_amount_tl
+    total_usd = subtotal_after_discount_usd + vat_amount_usd
     
     quote_number = await generate_quote_number()
     
@@ -1750,14 +1781,23 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         "quote_number": quote_number,
         "customer_id": quote_data.customer_id,
         "customer_name": customer["name"],
-        "items": [item.model_dump() for item in items],
-        "subtotal": round(subtotal, 2),
+        "items": items,
+        "subtotal_usd": round(subtotal_usd, 2),
+        "subtotal_tl": round(subtotal_tl, 2),
+        "subtotal": round(subtotal_tl, 2),  # Legacy
         "discount_type": quote_data.discount_type,
         "discount_rate": quote_data.discount_rate,
-        "discount_amount": round(discount_amount, 2),
+        "discount_amount_usd": round(discount_amount_usd, 2),
+        "discount_amount_tl": round(discount_amount_tl, 2),
+        "discount_amount": round(discount_amount_tl, 2),  # Legacy
         "vat_rate": quote_data.vat_rate,
-        "vat_amount": round(vat_amount, 2),
-        "total": round(total, 2),
+        "vat_amount_usd": round(vat_amount_usd, 2),
+        "vat_amount_tl": round(vat_amount_tl, 2),
+        "vat_amount": round(vat_amount_tl, 2),  # Legacy
+        "total_usd": round(total_usd, 2),
+        "total_tl": round(total_tl, 2),
+        "total": round(total_tl, 2),  # Legacy
+        "exchange_rate": usd_rate,
         "currency": quote_data.currency,
         "validity_days": quote_data.validity_days,
         "notes": quote_data.notes,
