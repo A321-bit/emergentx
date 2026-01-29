@@ -765,8 +765,10 @@ const Quotes = () => {
                     <TableRow>
                       <TableHead>Ürün</TableHead>
                       <TableHead className="w-24 text-center">Miktar</TableHead>
-                      <TableHead className="w-32">Birim Fiyat</TableHead>
-                      <TableHead className="text-right">Toplam</TableHead>
+                      <TableHead className="w-28">USD Fiyat</TableHead>
+                      <TableHead className="w-32">TL Fiyat</TableHead>
+                      <TableHead className="text-right">USD Toplam</TableHead>
+                      <TableHead className="text-right">TL Toplam</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -776,7 +778,7 @@ const Quotes = () => {
                         <TableCell>
                           <div>
                             <p className="font-medium">{item.product_name}</p>
-                            <p className="text-xs text-muted-foreground">Stok: {item.stock}</p>
+                            <p className="text-xs text-muted-foreground">Stok: {item.stock} • {item.currency || 'USD'}</p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -798,16 +800,22 @@ const Quotes = () => {
                             >+</Button>
                           </div>
                         </TableCell>
+                        <TableCell className="text-blue-600 text-sm">
+                          {formatUSD(item.unit_price_usd || (item.unit_price / exchangeRate))}
+                        </TableCell>
                         <TableCell>
                           <Input
                             type="number"
-                            value={item.unit_price}
+                            value={(item.unit_price_tl || item.unit_price || 0).toFixed(2)}
                             onChange={(e) => handleUpdateItemPrice(index, e.target.value)}
                             className="w-28"
                           />
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatTRY(item.total_price)}
+                        <TableCell className="text-right font-medium text-blue-600">
+                          {formatUSD(item.total_price_usd || (item.total_price / exchangeRate))}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-green-600">
+                          {formatTRY(item.total_price_tl || item.total_price)}
                         </TableCell>
                         <TableCell>
                           <Button
