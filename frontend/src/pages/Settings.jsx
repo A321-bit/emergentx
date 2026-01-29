@@ -6,7 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Upload, Save, Building2, Loader2, FileText, CreditCard, Image } from 'lucide-react';
+import { Upload, Save, Building2, Loader2, FileText, CreditCard, Image, DollarSign, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -30,8 +30,14 @@ const Settings = () => {
     bank_iban: '',
     bank_swift: ''
   });
+  const [exchangeRates, setExchangeRates] = useState({
+    usd_to_try: 34.0,
+    eur_to_try: 37.0,
+    last_updated: null
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingRates, setSavingRates] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const logoInputRef = useRef(null);
@@ -41,6 +47,7 @@ const Settings = () => {
 
   useEffect(() => {
     fetchSettings();
+    fetchExchangeRates();
   }, []);
 
   const fetchSettings = async () => {
