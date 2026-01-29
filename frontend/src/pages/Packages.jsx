@@ -397,46 +397,76 @@ const Packages = () => {
             </div>
             
             {/* Add Product */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Ürün Ekle</Label>
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Input
-                    type="text"
-                    placeholder="Ürün adı yazarak arayın..."
-                    value={productSearchTerm}
-                    onChange={(e) => setProductSearchTerm(e.target.value)}
-                    className="w-full"
-                    data-testid="product-search-input"
-                  />
-                  {productSearchTerm && filteredProductsForSelect.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {filteredProductsForSelect.map((product) => (
-                        <div
-                          key={product.id}
-                          className={cn(
-                            "px-3 py-2 cursor-pointer hover:bg-accent text-sm",
-                            selectedProduct === product.id && "bg-accent"
-                          )}
-                          onClick={() => {
-                            setSelectedProduct(product.id);
-                            setProductSearchTerm(product.name);
-                          }}
-                        >
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatCurrency(product.sale_price, product.currency)} • Stok: {product.stock_quantity}
-                          </div>
+              
+              {/* Option 1: Search by name */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Ürün adı yazarak arayın..."
+                  value={productSearchTerm}
+                  onChange={(e) => {
+                    setProductSearchTerm(e.target.value);
+                    setSelectedProduct('');
+                  }}
+                  className="pl-10"
+                  data-testid="product-search-input"
+                />
+                {productSearchTerm && filteredProductsForSelect.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredProductsForSelect.map((product) => (
+                      <div
+                        key={product.id}
+                        className={cn(
+                          "px-3 py-2 cursor-pointer hover:bg-accent text-sm",
+                          selectedProduct === product.id && "bg-accent"
+                        )}
+                        onClick={() => {
+                          setSelectedProduct(product.id);
+                          setProductSearchTerm(product.name);
+                        }}
+                      >
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatCurrency(product.sale_price, product.currency)} • Stok: {product.stock_quantity}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                  {productSearchTerm && filteredProductsForSelect.length === 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
-                      Ürün bulunamadı
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {productSearchTerm && filteredProductsForSelect.length === 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
+                    Ürün bulunamadı
+                  </div>
+                )}
+              </div>
+              
+              {/* Option 2: Select from dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">veya listeden seçin:</span>
+              </div>
+              <div className="flex gap-2">
+                <Select 
+                  value={selectedProduct} 
+                  onValueChange={(value) => {
+                    setSelectedProduct(value);
+                    const product = products.find(p => p.id === value);
+                    if (product) setProductSearchTerm(product.name);
+                  }}
+                >
+                  <SelectTrigger className="flex-1" data-testid="product-select">
+                    <SelectValue placeholder="Ürün listesinden seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name} - {formatCurrency(product.sale_price, product.currency)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   type="number"
                   min="1"
