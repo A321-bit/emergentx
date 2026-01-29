@@ -322,6 +322,7 @@ class QuoteItem(BaseModel):
     quantity: int
     unit_price: float
     total_price: float
+    unit: str = "adet"
     datasheet_url: Optional[str] = None
 
 class QuoteBase(BaseModel):
@@ -329,20 +330,33 @@ class QuoteBase(BaseModel):
     customer_name: str
     items: List[QuoteItem]
     subtotal: float
+    discount_type: str = "percent"  # percent or amount
     discount_rate: float = 0
     discount_amount: float = 0
+    vat_rate: float = 20  # KDV oranı
+    vat_amount: float = 0
     total: float
     currency: str = "TRY"
     validity_days: int = 15
     notes: Optional[str] = None
+    delivery_time: Optional[str] = None  # Teslim süresi
+    payment_terms: Optional[str] = None  # Ödeme şartları
+    warranty_info: Optional[str] = None  # Garanti bilgisi
 
 class QuoteCreate(BaseModel):
     customer_id: str
     items: List[dict]
+    discount_type: str = "percent"
     discount_rate: float = 0
+    discount_amount: float = 0
+    vat_rate: float = 20
     currency: str = "TRY"
     validity_days: int = 15
     notes: Optional[str] = None
+    delivery_time: Optional[str] = None
+    payment_terms: Optional[str] = None
+    warranty_info: Optional[str] = None
+    status: str = "taslak"
 
 class QuoteStatusUpdate(BaseModel):
     status: str
@@ -351,7 +365,7 @@ class Quote(QuoteBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     quote_number: str = ""
-    status: str = "teklif_gonderildi"
+    status: str = "taslak"  # taslak, teklif_gonderildi, onaylandi, reddedildi, satisa_dondu
     created_by: str = ""
     created_by_name: str = ""
     dealer_id: Optional[str] = None
