@@ -2707,7 +2707,8 @@ async def create_package(package: PackageCreate, current_user: dict = Depends(re
     package_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.packages.insert_one(package_dict.copy())
-    del package_dict["_id"] if "_id" in package_dict else None
+    if "_id" in package_dict:
+        del package_dict["_id"]
     
     return package_dict
 
