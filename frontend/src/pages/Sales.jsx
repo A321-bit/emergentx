@@ -289,6 +289,20 @@ const Sales = () => {
       toast.error('Müşteri adı zorunludur');
       return;
     }
+
+    // Çek validasyonu
+    if (formData.payment_method === 'cek') {
+      if (formData.checks.length === 0) {
+        toast.error('En az bir çek eklemelisiniz');
+        return;
+      }
+      for (let i = 0; i < formData.checks.length; i++) {
+        if (!formData.checks[i].amount_tl || !formData.checks[i].due_date) {
+          toast.error(`Çek ${i + 1}: Tutar ve vade tarihi zorunludur`);
+          return;
+        }
+      }
+    }
     
     const data = {
       customer_id: formData.customer_id || null,
@@ -303,7 +317,14 @@ const Sales = () => {
       notes: formData.notes,
       payment_method: formData.payment_method,
       paid_amount_tl: parseFloat(formData.paid_amount_tl) || 0,
-      due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null
+      due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null,
+      checks: formData.payment_method === 'cek' ? formData.checks.map(check => ({
+        check_no: check.check_no,
+        bank_name: check.bank_name,
+        amount_tl: parseFloat(check.amount_tl) || 0,
+        due_date: new Date(check.due_date).toISOString(),
+        is_collected: false
+      })) : null
     };
     
     try {
@@ -318,6 +339,7 @@ const Sales = () => {
       resetForm();
       fetchData();
       fetchUpcomingPayments();
+      fetchUpcomingChecks();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'İşlem başarısız');
     }
