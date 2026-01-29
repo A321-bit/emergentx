@@ -1816,23 +1816,44 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
     usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
     eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
     
+    # Basic counts
     total_products = await db.products.count_documents({"is_active": True})
     total_customers = await db.customers.count_documents(customer_query)
     total_quotes = await db.quotes.count_documents(quote_query)
+    total_dealers = await db.dealers.count_documents({"is_active": True})
+    total_users = await db.users.count_documents({})
     
+    # Quotes analysis
     quotes = await db.quotes.find(quote_query, {"_id": 0}).to_list(10000)
     
-    total_revenue = sum(q["total"] for q in quotes if q.get("status") == "satisa_dondu")
+    total_quote_revenue = sum(q.get("total", 0) for q in quotes if q.get("status") == "satisa_dondu")
     pending_quotes = len([q for q in quotes if q.get("status") == "teklif_gonderildi"])
     approved_quotes = len([q for q in quotes if q.get("status") == "onaylandi"])
     converted_quotes = len([q for q in quotes if q.get("status") == "satisa_dondu"])
+    rejected_quotes = len([q for q in quotes if q.get("status") == "reddedildi"])
+    draft_quotes = len([q for q in quotes if q.get("status") == "taslak"])
     
+    # Sales analysis (manuel satışlar)
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=today_start.weekday())
+    month_start = today_start.replace(day=1)
+    
+    sales = await db.sales.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    total_sale_revenue_tl = sum(s.get("sale_amount_tl", 0) for s in sales)
+    total_sale_cost_tl = sum(s.get("purchase_amount_tl", 0) for s in sales)
+    total_sale_profit_tl = total_sale_revenue_tl - total_sale_cost_tl
+    
+    # Daily revenue
+    daily_revenue_tl = sum(s.get("sale_amount_tl", 0) for s in sales 
+        if s.get("sale_date") and datetime.fromisoformat(s["sale_date"].replace("Z", "+00:00")) >= today_start)
+    
+    # Stock value calculation
     stock_value_usd = 0
     stock_value_tl = 0
     stock_sale_value_usd = 0
     stock_sale_value_tl = 0
-    total_dealers = 0
-    total_users = 0
     
     if "all" in user_perms or "finance_view" in user_perms:
         products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(10000)
@@ -1847,37 +1868,98 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
                 stock_value_usd += purchase_price * quantity
                 stock_sale_value_usd += sale_price * quantity
             elif currency == "EUR":
-                # Convert EUR to USD (approximate)
                 stock_value_usd += (purchase_price * eur_rate / usd_rate) * quantity
                 stock_sale_value_usd += (sale_price * eur_rate / usd_rate) * quantity
             else:  # TRY
                 stock_value_tl += purchase_price * quantity
                 stock_sale_value_tl += sale_price * quantity
         
-        # Calculate TL equivalents for USD values
         stock_value_tl += stock_value_usd * usd_rate
         stock_sale_value_tl += stock_sale_value_usd * usd_rate
-        
-        total_dealers = await db.dealers.count_documents({"is_active": True})
-        total_users = await db.users.count_documents({})
+    
+    # Dealer revenue calculation
+    dealer_total_revenue = 0
+    dealer_sales = [q for q in quotes if q.get("dealer_id") and q.get("status") == "satisa_dondu"]
+    dealer_total_revenue = sum(q.get("total", 0) for q in dealer_sales)
+    
+    # Upcoming payments (satışlardan kalan ödemeler)
+    upcoming_payments_total = sum(s.get("remaining_amount_tl", 0) for s in sales 
+        if s.get("remaining_amount_tl", 0) > 0)
+    
+    # Upcoming checks (tahsil edilmemiş çekler)
+    upcoming_checks_total = 0
+    overdue_checks_total = 0
+    upcoming_checks_count = 0
+    overdue_checks_count = 0
+    
+    for sale in sales:
+        checks = sale.get("checks")
+        if checks and isinstance(checks, list):
+            for check in checks:
+                if not check.get("is_collected"):
+                    amount = check.get("amount_tl", 0)
+                    due_date_str = check.get("due_date")
+                    if due_date_str:
+                        try:
+                            due_date = datetime.fromisoformat(due_date_str.replace("Z", "+00:00"))
+                            if due_date < now:
+                                overdue_checks_total += amount
+                                overdue_checks_count += 1
+                            else:
+                                upcoming_checks_total += amount
+                                upcoming_checks_count += 1
+                        except:
+                            upcoming_checks_total += amount
+                            upcoming_checks_count += 1
+    
+    # Profit margin calculation
+    profit_margin = 0
+    if total_sale_revenue_tl > 0:
+        profit_margin = (total_sale_profit_tl / total_sale_revenue_tl) * 100
     
     return {
+        # Counts
         "total_products": total_products,
         "total_customers": total_customers,
         "total_quotes": total_quotes,
-        "total_revenue": total_revenue,
+        "total_dealers": total_dealers,
+        "total_users": total_users,
+        
+        # Quote statuses
         "pending_quotes": pending_quotes,
         "approved_quotes": approved_quotes,
         "converted_quotes": converted_quotes,
+        "rejected_quotes": rejected_quotes,
+        "draft_quotes": draft_quotes,
+        
+        # Revenue & Costs
+        "total_quote_revenue": round(total_quote_revenue, 2),
+        "total_sale_revenue_tl": round(total_sale_revenue_tl, 2),
+        "total_sale_cost_tl": round(total_sale_cost_tl, 2),
+        "total_sale_profit_tl": round(total_sale_profit_tl, 2),
+        "profit_margin": round(profit_margin, 1),
+        "daily_revenue_tl": round(daily_revenue_tl, 2),
+        
+        # Stock values
         "stock_value_usd": round(stock_value_usd, 2),
         "stock_value_tl": round(stock_value_tl, 2),
         "stock_sale_value_usd": round(stock_sale_value_usd, 2),
         "stock_sale_value_tl": round(stock_sale_value_tl, 2),
-        "stock_value": round(stock_value_tl, 2),  # Backward compatibility (TL)
+        
+        # Dealer info
+        "dealer_total_revenue": round(dealer_total_revenue, 2),
+        "dealer_sales_count": len(dealer_sales),
+        
+        # Upcoming payments & collections
+        "upcoming_payments_total": round(upcoming_payments_total, 2),
+        "upcoming_checks_total": round(upcoming_checks_total, 2),
+        "upcoming_checks_count": upcoming_checks_count,
+        "overdue_checks_total": round(overdue_checks_total, 2),
+        "overdue_checks_count": overdue_checks_count,
+        
+        # Exchange rates
         "exchange_rate_usd": usd_rate,
-        "exchange_rate_eur": eur_rate,
-        "total_dealers": total_dealers,
-        "total_users": total_users
+        "exchange_rate_eur": eur_rate
     }
 
 @api_router.get("/stats/sales-by-user")
