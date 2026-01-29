@@ -404,7 +404,15 @@ const Sales = () => {
       notes: sale.notes || '',
       payment_method: sale.payment_method || 'nakit',
       paid_amount_tl: sale.paid_amount_tl?.toString() || '',
-      due_date: sale.due_date?.split('T')[0] || ''
+      due_date: sale.due_date?.split('T')[0] || '',
+      checks: (sale.checks || []).map(c => ({
+        id: c.id,
+        check_no: c.check_no || '',
+        bank_name: c.bank_name || '',
+        amount_tl: c.amount_tl?.toString() || '',
+        due_date: c.due_date?.split('T')[0] || '',
+        is_collected: c.is_collected || false
+      }))
     });
     setIsModalOpen(true);
   };
@@ -417,6 +425,7 @@ const Sales = () => {
       toast.success('Satış silindi');
       fetchData();
       fetchUpcomingPayments();
+      fetchUpcomingChecks();
     } catch (error) {
       toast.error('Silme başarısız');
     }
@@ -437,7 +446,8 @@ const Sales = () => {
       notes: '',
       payment_method: 'nakit',
       paid_amount_tl: '',
-      due_date: ''
+      due_date: '',
+      checks: []
     });
   };
 
