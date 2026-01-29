@@ -399,18 +399,43 @@ const Packages = () => {
             <div className="space-y-2">
               <Label>Ürün Ekle</Label>
               <div className="flex gap-2">
-                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                  <SelectTrigger className="flex-1" data-testid="product-select">
-                    <SelectValue placeholder="Ürün seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name} - {formatCurrency(product.sale_price, product.currency)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex-1 relative">
+                  <Input
+                    type="text"
+                    placeholder="Ürün adı yazarak arayın..."
+                    value={productSearchTerm}
+                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                    className="w-full"
+                    data-testid="product-search-input"
+                  />
+                  {productSearchTerm && filteredProductsForSelect.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {filteredProductsForSelect.map((product) => (
+                        <div
+                          key={product.id}
+                          className={cn(
+                            "px-3 py-2 cursor-pointer hover:bg-accent text-sm",
+                            selectedProduct === product.id && "bg-accent"
+                          )}
+                          onClick={() => {
+                            setSelectedProduct(product.id);
+                            setProductSearchTerm(product.name);
+                          }}
+                        >
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatCurrency(product.sale_price, product.currency)} • Stok: {product.stock_quantity}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {productSearchTerm && filteredProductsForSelect.length === 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
+                      Ürün bulunamadı
+                    </div>
+                  )}
+                </div>
                 <Input
                   type="number"
                   min="1"
