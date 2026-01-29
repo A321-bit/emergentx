@@ -553,6 +553,34 @@ class Expense(ExpenseBase):
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# Package Model (Paketler - E-ticaret ürün paketleri)
+class PackageItemBase(BaseModel):
+    product_id: str
+    product_name: str
+    quantity: int
+    unit_price: float
+    currency: str = "USD"
+    total_price: float = 0
+
+class PackageBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    items: List[PackageItemBase] = []
+    total_price_usd: float = 0
+    total_price_tl: float = 0
+    exchange_rate: float = 34.0
+
+class PackageCreate(PackageBase):
+    pass
+
+class Package(PackageBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: str = ""
+    created_by_name: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ==================== HELPER FUNCTIONS ====================
 
 def hash_password(password: str) -> str:
