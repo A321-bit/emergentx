@@ -82,6 +82,7 @@ const Packages = () => {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Check permissions
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('products_manage');
