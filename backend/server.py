@@ -74,6 +74,10 @@ PERMISSIONS = {
     "settings_manage": "Sistem Ayarları",
     "customer_categories_manage": "Müşteri Kategorisi Yönetimi",
     "customer_sources_manage": "Müşteri Edinme Yeri Yönetimi",
+    "hr_view": "Personel Görüntüleme",
+    "hr_manage": "Personel Ekleme/Düzenleme/Silme",
+    "payroll_view": "Bordro Görüntüleme",
+    "payroll_manage": "Bordro/Avans/Prim Yönetimi",
 }
 
 # Role Model
