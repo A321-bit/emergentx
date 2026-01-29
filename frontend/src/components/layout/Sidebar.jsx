@@ -25,7 +25,8 @@ import {
   ShoppingCart,
   Calculator,
   BarChart3,
-  ShoppingBag
+  ShoppingBag,
+  UserCog
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
