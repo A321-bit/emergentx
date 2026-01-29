@@ -11,7 +11,8 @@ import {
   DollarSign,
   CheckCircle,
   Clock,
-  Boxes
+  Boxes,
+  BadgeDollarSign
 } from 'lucide-react';
 import axios from 'axios';
 import {
@@ -30,6 +31,25 @@ import {
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const COLORS = ['hsl(38, 92%, 50%)', 'hsl(199, 89%, 48%)', 'hsl(160, 84%, 39%)', 'hsl(350, 89%, 60%)'];
+
+// Format functions for different currencies
+const formatUSD = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
+};
+
+const formatTRY = (value) => {
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
+};
 
 const Dashboard = () => {
   const { user, isAdmin } = useAuth();
