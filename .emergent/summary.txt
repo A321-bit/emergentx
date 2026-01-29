@@ -1,125 +1,101 @@
 <analysis>**original_problem_statement:**
-The user wants to build a comprehensive Solar Energy Sales Management System (CRM/ERP) with a phased development approach.
+The user wants to build a comprehensive Solar Energy Sales Management System.
 
 **PRODUCT REQUIREMENTS:**
 
-**A) ADMIN PANEL:**
--   Full system visibility and modification rights.
--   Reporting capabilities.
--   **Modules:**
-    -   **User Management:** Add/remove staff, define roles (Sales, Technical, Accounting, Dealer Manager), and manage role-based permissions.
-    -   **Product & Stock Management:** Add products (Panels, Inverters, Batteries, Accessories) with purchase, sale, and dealer prices. Manage stock entry/exit.
-    -   **Sales & Quote Management:** View all quotes and their statuses (Sent, Approved, Converted to Sale, Canceled). Track creator, customer, and pricing.
-    -   **Finance Panel:** View total stock value, sales revenue, and profitability. Filter sales by staff and dealer.
-    -   **Dealer Management:** Create dealers and define their specific discount rates. Dealers have their own users, customers, and quotes.
+**Phase 1 & 2 (Largely Complete):**
+-   **Admin & Sales Panels:** Full-featured user, role, product, stock, customer, dealer, and quote management.
+-   **Advanced Features:**
+    -   Custom Roles & Permissions management.
+    -   Dealer Groups with tiered discounts and separate login credentials.
+    -   Advanced Customer Management (categories, sources, types).
+    -   Advanced Pricing (VAT, profit margins, multi-currency).
+    -   Product Management with multiple image and PDF datasheet uploads.
+    -   Excel Import/Export for products.
+    -   Professional PDF quote generation.
+    -   Responsive UI for mobile and desktop use.
 
-**B) SALES STAFF PANEL:**
--   Cannot change stock prices or dealer discounts.
--   Can add customers, prepare quotes, and view their own sales.
--   **Modules:**
-    -   **Customer Management:** Manage customer details (name, phone, address, type) and add notes.
-    -   **Quote Creation:** Select products to generate a quote with automatic pricing, create a PDF, and send it via WhatsApp/email.
-    -   **Sales Tracking:** Monitor quote status and confirmed sales.
-
-**C) DEALER PANEL:**
--   Views products with their specific discounted prices.
--   Can create quotes for their own customers.
--   **Features:**
-    -   View product list with discounted prices and general stock status.
-    -   Quote creation and order placement.
-
-**D) CUSTOMER & QUOTE SYSTEM:**
--   **PDF Quotes:** Must include company logo, product details, warranty info, and validity period.
-
-**Subsequent User Requests (Implemented or In-Progress):**
-1.  **Multi-Currency:** Product prices should support USD (default), EUR, and TL.
-2.  **Dynamic Categories:** Admins must be able to create and manage product categories with specific default profit margins.
-3.  **Product Image Upload:** Allow direct upload of multiple / images for each product.
-4.  **PDF Datasheet Upload:** Allow uploading a PDF datasheet for each product, to be included in quotes.
-5.  **Advanced Pricing Logic:**
-    -   Purchase price is entered VAT-exclusive.
-    -   The system automatically adds 20% VAT to calculate the cost.
-    -   Sales price is calculated using a profit margin (%) on top of the VAT-inclusive cost.
-6.  **Dealer Tiers:** Create dealer groups (e.g., Silver, Gold) with specific discount percentages instead of per-dealer discounts.
-7.  **Custom Roles & Permissions:** Admins must be able to create custom role names and assign permissions using a granular, checkbox-style UI.
-8.  **Dealer Credentials:** Admins must be able to create a username and password for dealers upon creation.
-9.  **Advanced Customer Management:**
-    -   Differentiate between 'Individual' and 'Corporate' customers.
-    -   Add new fields: TC Kimlik (for individuals), customer category (e.g., on-grid, off-grid), and acquisition source (e.g., referral, Instagram).
-    -   These categories and sources must be manageable from a separate settings page.
+**Phase 3 (Current & Upcoming Requests):**
+1.  **Manual Sales Entry:** A new section to manually log sales with fields for Customer, Sale Amount (USD/TL), Cost Amount (USD/TL), and Date. Should include a currency conversion helper.
+2.  **Accounting Module:**
+    -   A dedicated Muhasebe (Accounting) section.
+    -   **Income:** Automatically pulls from sales (both quotes and manual entries) and allows manual income entries.
+    -   **Expenses:**
+        -   Manual entry for expenses.
+        -   Manageable expense categories (e.g., rent, salary, fuel, utilities).
+        -   Manageable personnel list with associated salary expenses.
+    -   **Reporting:** Dashboard showing total/monthly/weekly/daily revenue, net profit, and income vs. expense charts.
+3.  **XML Integration:** Ability to import products from a B2B system via an XML link (user will provide the link later).
+4.  **WhatsApp Integration:** Send quotes via WhatsApp.
+5.  **Payment Gateway:** Integrate PayTR for installment options on quotes (future task).
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A functional full-stack application with a FastAPI backend and React frontend. It includes:
-- JWT-based authentication for different user roles (Admin, Staff, Dealer).
-- CRUD functionality for Users, Products, Customers, and Quotes.
-- A dynamic category management system where admins can create categories with default profit margins.
-- A dealer group system where admins can create tiers (e.g., Silver, Gold) with set discount percentages.
-- An advanced pricing system that calculates sales price based on purchase price, a fixed VAT rate, and a variable profit margin.
-- Multi-currency support for products.
+A full-stack application with a FastAPI backend and React frontend. The application is largely functional and includes user/role management, product/stock control, customer/dealer management, and quote creation. A major refactor for custom roles is complete. Excel import/export for products is implemented. A responsive layout for mobile has been partially implemented. The backend for the new Manual Sales and Accounting modules has been created, along with placeholder frontend pages.
+
+The PDF generation feature is **BROKEN**; images (logo, cover) do not load, which is a major point of user frustration.
 
 **Last working item**:
-The agent was performing a major overhaul to implement a large set of new features requested by the user. This involves custom roles with granular permissions, dealer-specific user accounts, multi-image and PDF uploads for products, and an advanced customer management system.
+The agent was implementing the new Manual Sales and Accounting features requested by the user.
 
-- **Last item agent was working**: The agent was in the middle of a massive rewrite of both the backend and frontend to implement the latest, complex user requests. It had just overwritten  and the frontend pages for Users, Customers, Dealers, and Products.
+- **Last item agent was working**: The agent created the backend models (, , , ) and their corresponding CRUD API endpoints in . It then created new placeholder frontend pages (, ) and added them to the router () and navigation ().
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N
+- **Agent Testing Done**: N (Only checked if backend restarts and took one screenshot showing the new menu items).
 - **Which testing method agent to use?**: both
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** (P0) The application is currently in a broken, non-functional state due to an incomplete major feature implementation.
+-   **Issue 1:** (P0) PDF generation is broken - logos and cover images do not appear.
 
     **Issues Detail:**
-    -   **Issue 1:** Complete the major feature update.
-        -   **Attempted fixes:** The agent started a full rewrite by overwriting  and the frontend pages: , , , and . The implementation was interrupted before it could be completed and tested.
+    -   **Issue 1:** Fix broken images in PDF quotes.
+        -   **Attempted fixes:** The agent tried multiple frontend solutions (, ,  with blobs) which all failed. The agent correctly identified the likely root cause: the Kubernetes ingress only routes  to the backend, but the image URLs point to , resulting in a 404 error from the frontend's perspective. The agent failed to fix this server-side issue and instead moved to another task.
         -   **Next debug checklist**:
-            1.  **Review :** Verify that the new file correctly implements all required models (Roles, Permissions, CustomerCategories, CustomerSources) and their associated API endpoints for CRUD operations. Ensure logic for permission checks, dealer credential creation, and media uploads is present.
-            2.  **Review Frontend Pages:** Check the overwritten files (, , , ) to ensure they correctly implement the new UI requirements (permission matrix, dealer login form, multi-file upload components, advanced customer fields).
-            3.  **Update Routing:** Modify  and  to add routes and navigation links for the new pages (, ).
-            4.  **Install Dependencies:** Check if new dependencies for file handling (e.g.,  on the backend) are needed and installed.
-            5.  **Restart & Test:** Restart both services (backend: stopped
-frontend: ERROR (not running)
-backend: started
-frontend: started) and perform comprehensive end-to-end testing using the testing agent.
-        -   **Why fix this issue and what will be achieved with the fix?** This is the highest priority task. Fixing it will implement the user's latest critical requirements and restore the application to a functional state.
-        -   **Status**: IN PROGRESS
-        -   **Is recurring issue?** N
+            1.  **Do not try another frontend fix.** The problem is server-side routing.
+            2.  Modify  to serve the static  directory under an  prefixed path. For example, create a new endpoint like  that returns a  from the  directory.
+            3.  Alternatively, configure a static route using  in  **before** including the main API router.
+            4.  Update all frontend code that generates image URLs (in , , ) to prefix them with the new API path (e.g., ).
+            5.  Restart the backend and test PDF generation thoroughly.
+        -   **Why fix this issue and what will be achieved with the fix?** This is the highest priority. The user is extremely frustrated, has spent a lot of credits on this, and a core feature of the application is unusable. Fixing this will restore user confidence.
+        -   **Status**: BLOCKED (Agent moved on without fixing).
+        -   **Is recurring issue?** Y
         -   **Should Test frontend/backend/both after fix?** both
-        -   **Blocked on other issue**: None
+        -   **Blocked on other issue**: None.
 
 **In progress Task List**:
--   **Task 1:** (P0) Finalize the major feature implementation.
-    -   **Where to resume**: The agent has just overwritten several core backend and frontend files. The immediate next step is to ensure the new files are complete, update the application's routing in  and , restart the services, and then begin thorough testing.
-    -   **What will be achieved with this?** Implementation of custom roles/permissions, dealer accounts, product media uploads, and advanced customer fields.
+-   **Task 1:** (P1) Complete the Manual Sales & Accounting feature.
+    -   **Where to resume**: The backend is complete. The frontend pages  and  are just placeholders. The next step is to build out the UI and logic for these pages to allow creating, listing, and managing manual sales, expenses, personnel, and viewing financial reports.
+    -   **What will be achieved with this?** The user will be able to manually track sales and manage income/expenses, providing a complete financial overview.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something**: No
+    -   **Blocked on something**: Blocked by the P0 PDF issue. Should fix that first.
+
+-   **Task 2:** (P2) Complete the mobile responsiveness refactor.
+    -   **Where to resume**: The agent made , , , and  pages responsive. It needs to review all other pages (, , , , , etc.) and apply responsive classes (e.g., , hiding columns on small screens, using card views for tables) to ensure the entire application is usable on mobile devices.
+    -   **What will be achieved with this?** A fully responsive application that works on both desktop and mobile.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **P1: Update PDF Quote Generation:** Modify the quote generation logic to include uploaded product PDF datasheets.
--   **P1: Address User's Query:** After the system is stable, provide a simple, step-by-step guide on how to use the new features, as requested by the user (...anlat ben bir bilgisiz cahilim...).
--   **P2: Implement Finance Reports:** Build out the Finans Paneli to show total stock value, sales revenue, and profitability reports as per the original requirements.
+-   **P1: XML B2B Integration:** Implement product import from an XML feed. The user will provide the URL.
+-   **P2: WhatsApp Quote Sending:** Integrate an API to send generated PDF quotes via WhatsApp.
 
-**Future Tasks (Phase 3):**
--   WhatsApp integration for sending quotes.
--   Integration with ERP systems like LogoGo or Mikro.
--   Enhanced mobile responsiveness.
--   Develop a public API for third-party access.
+**Future Tasks:**
+-   **PayTR Integration:** Add installment calculation and payment options to quotes using the PayTR payment gateway.
 
 **Completed work in this session**
--   Core application scaffolding (Backend + Frontend).
--   JWT Authentication and basic role-based access.
--   CRUD operations for Users, Products, Customers, and Quotes.
--   **Feature:** Multi-currency support for products (USD, EUR, TL).
--   **Feature:** Dynamic Product Category management with category-specific profit margins.
--   **Feature:** Advanced pricing logic (Purchase Price + VAT -> Cost -> + Profit Margin -> Sale Price).
--   **Feature:** Dealer Group management with tiered discounts.
+-   Stabilized the application after a major refactor (custom roles, dealer auth, etc.).
+-   Implemented a testing suite and confirmed backend/frontend functionality.
+-   Created a user guide ().
+-   Implemented Excel import/export functionality for products.
+-   Started the mobile responsiveness refactor (, , ).
+-   Implemented the backend for the Manual Sales & Accounting modules.
 
 **Earlier issues found/mentioned but not fixed**
-None. The agent has been addressing issues as they arise.
+-   **Issue 1:** The PDF generation feature is critically broken. Images (logo, cover) do not load in the generated PDF. The agent made over 5 attempts to fix this from the frontend, wasting significant user credits, before correctly identifying the server-side ingress routing issue, and then abandoning the fix to start a new task.
 
 **Known issue recurrence from previous fork**
 None.
@@ -128,101 +104,101 @@ None.
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI
--   **Frontend:** React.js
+-   **Backend:** FastAPI, Pydantic
+-   **Frontend:** React, Tailwind CSS, shadcn/ui
 -   **Database:** MongoDB
--   **Authentication:** JWT (JSON Web Tokens)
--   **Styling:** Tailwind CSS, shadcn/ui
--   **Deployment:** Docker container managed by Supervisor
+-   **Authentication:** JWT
+-   **File Handling:**  for uploads,  for Excel,  and  for PDFs.
 
 **key DB schema**
 -   : {email, password_hash, role_id, ...}
--   : {name, permissions: {resource: [actions]}}
--   : {name, category_id, purchase_price, vat_rate, profit_margin, image_urls: [], datasheet_url, ...}
--   : {name, default_profit_margin}
--   : {name, type: ('individual'/'corporate'), tc_kimlik, address, customer_category_id, acquisition_source_id, ...}
--   : {name}
--   : {name}
--   : {name, dealer_group_id, username, password_hash, ...}
--   : {name, discount_percentage}
+-   : {name, permissions}
+-   : {name, purchase_price, image_urls: [], datasheet_url, ...}
+-   : {name, type, city, district, ...}
 -   : {customer_id, products: [], status, ...}
+-   : {company_name, logo_url, quote_cover_url, quote_terms, bank_accounts: []}
+-    (new): {customer_name, sale_amount_usd, sale_amount_tl, cost_amount_usd, cost_amount_tl, exchange_rate, sale_date}
+-    (new): {description, amount, currency, category_id, expense_date}
+-    (new): {name, is_fixed}
+-    (new): {name, position, salary, currency}
 
 **changes in tech stack**
-None.
+-   : Added for Excel file operations.
+-   : Added to the frontend in an attempt to fix PDF image loading issues.
 
 **All files of reference**
-**Recently Overwritten/Created (In-Progress):**
--   : Rewritten to support all new models and logic.
--   : Rewritten for role assignment UI.
--   : Rewritten for advanced customer fields.
--   : Rewritten to include dealer credential creation.
--   : Rewritten for multi-image and PDF upload UI.
--   : New page for managing roles and permissions.
--   : New page for managing customer categories and sources.
-
-**Other Key Files:**
--   : Needs updates for new routes.
--   : Needs updates for new navigation links.
--   : Contains project requirements and progress.
+**Recently Created/Modified:**
+-   : Heavily modified to add models and endpoints for Sales and Accounting. Needs modification to fix static file serving.
+-   : New file, currently a placeholder.
+-   : New file, currently a placeholder.
+-   : Modified to add new routes for Sales and Accounting.
+-   : Modified to add new menu items and initial responsive logic.
+-   : Modified for mobile responsiveness.
+-   : Modified for mobile responsiveness.
+-   : Modified for mobile responsiveness.
+-   : Heavily modified in multiple failed attempts to fix PDF generation. Needs review and cleanup after the root cause is fixed.
+-   : Modified to handle uploads for quote cover/logo.
+-   : Updated with new features.
 
 **Areas that need refactoring**:
-The agent opted for a full rewrite of  and several frontend pages. While necessary for the scope of changes, this approach is risky. The next agent must focus on stabilizing and verifying this new code before proceeding.
+-   ****: This file is a mess after numerous failed attempts to fix the PDF image loading. It should be simplified and cleaned up once the underlying server-side routing issue for static files is resolved.
+-   **Static File Serving:** The core issue of serving uploaded files needs a proper backend solution instead of repeated frontend hacks.
 
 **key api endpoints**
 -   
--   , , 
--   , 
--   , 
--   , 
+-   , , , 
 -   
--    (for seeding database)
--   (New) ,  for media.
+-   , , 
+-   (New)  (CRUD)
+-   (New)  (CRUD)
+-   (New)  (CRUD)
+-   (New)  (CRUD)
+-   (New) 
 
 **Critical Info for New Agent**
--   The previous agent was interrupted mid-way through a very large and complex feature update. It overwrote several critical files (, , , etc.).
--   **The application is currently in a broken state.** Your first priority is to stabilize the system.
--   You must complete the implementation based on the user's last request, update the routing (, ), and then conduct thorough testing before moving on. Do not assume the overwritten files are complete.
--   After stabilizing, you need to address the user's request for a simple explanation of how to use the system.
+-   **P0 is the PDF bug.** The user is out of patience. You MUST fix the image loading issue in PDFs before doing anything else. The root cause is that static files in  are not served via an  route, causing frontend requests to fail. Fix this on the backend by creating an endpoint like  or mounting a static directory under . DO NOT attempt another frontend-only fix.
+-   The user is very sensitive about credit usage. Be efficient and avoid repeated failed attempts.
+-   After fixing the PDF, prioritize completing the Manual Sales & Accounting UI, then the mobile responsiveness for all remaining pages.
+-   The user has asked to be informed before you start working on the XML integration.
 
 **documents and test reports created in this job**
 -   
 -   
 -   
--   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests dynamic categories, product image uploads, advanced pricing (VAT + margin), and dealer groups. (Implemented)
-2.  **Agent:** Acknowledges and starts implementing.
-3.  ... (Agent implements and tests successfully) ...
-4.  **Agent:** Finishes the task, confirming features are ready.
-5.  **User:** Requests a major new set of features: custom roles with a permission matrix, dealer-specific logins, multi-image and PDF uploads for products, advanced customer fields with manageable categories/sources.
-6.  **Agent:** Acknowledges the large scope and starts work.
-7.  **Agent:** Decides to rewrite  and overwrites it.
-8.  **User:**  (continue).
-9.  **Agent:** Overwrites several frontend pages (, ).
-10. **User:**  (I saved it, what do I need to do, explain it to me like I'm a complete novice, I have no knowledge). This is a **pending human message** that needs to be addressed once the system is stable.
-11. **Agent:** Acknowledges the user's request for an explanation and states it needs to finish updating files first.
+1.  **User:** Requests the app be made mobile-friendly.
+2.  **Agent:** Proposes a plan to make the layout, dashboard, and tables responsive.
+3.  **User:** Approves.
+4.  **Agent:** Implements responsive layout and tests with screenshots.
+5.  **User:** Interrupts and provides a large new request: Manual Sales entry, a full Accounting module with income/expense tracking, and reporting.
+6.  **Agent:** Clarifies the requirements for the Accounting module.
+7.  **User:** Provides detailed specs for the Accounting module, including expense categories and personnel costs.
+8.  **Agent:** Acknowledges and starts on the backend implementation.
+9.  **(Agent works on backend models, APIs, and creates placeholder frontend files)**
+10. **Agent:** Shows a screenshot of the new menu items. **The agent has not built the UI for these new pages yet.**
 
 **Project Health Check:**
--   **Broken:** The main application logic is currently broken due to an in-progress major rewrite.
+-   **Broken:**
+    -   PDF Quote Generation (Images do not load).
+-   **Mocked:**
+    -   Manual Sales page () is a placeholder.
+    -   Accounting page () is a placeholder.
 
 **3rd Party Integrations**
--   None explicitly integrated yet, but future plans include WhatsApp and ERPs.
+-   None implemented.
+-   **Planned:** XML feed, WhatsApp, PayTR.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, used twice for previous feature updates. Not yet used for the current (incomplete) rewrite.
+-   **Testing agent used after significant changes:** YES, after the major role refactor.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** The entire application is likely in a regressed state due to the incomplete rewrite.
+-   **Known regressions:** PDF generation is a major regression.
 
 **Credentials to test flow:**
-The  endpoint creates a default admin user. After fixing the backend, run a  to this endpoint to get the credentials.
+-   **URL:** (will be provided by the environment)
 -   **Email:** 
 -   **Password:** 
 
 **What agent forgot to execute**
-The agent was interrupted and did not complete its planned work. It needs to:
-1.  Finish writing/verifying the code in the overwritten files (, , etc.).
-2.  Update  and  to add routes and navigation for  and .
-3.  Restart services and run a full end-to-end test with .
-4.  Address the user's pending request for a simple explanation of how to use the platform.</analysis>
+-   The agent **failed to fix the P0 PDF image loading bug.** It correctly diagnosed the server-side routing problem but then abandoned the issue to start a new feature, which is a critical error in prioritization and has led to significant user frustration.</analysis>
