@@ -1698,6 +1698,44 @@ async def upload_quote_cover(file: UploadFile = File(...), current_user: dict = 
     
     return {"quote_cover_image": cover_url}
 
+# ==================== EXCHANGE RATE ROUTES ====================
+
+@api_router.get("/settings/exchange-rates")
+async def get_exchange_rates():
+    settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    if not settings:
+        settings = ExchangeRateSettings().model_dump()
+        settings["last_updated"] = settings["last_updated"].isoformat()
+    else:
+        if settings.get("last_updated"):
+            settings["last_updated"] = settings["last_updated"].isoformat() if isinstance(settings["last_updated"], datetime) else settings["last_updated"]
+    return settings
+
+@api_router.put("/settings/exchange-rates")
+async def update_exchange_rates(
+    usd_to_try: float = Form(...),
+    eur_to_try: float = Form(...),
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    update_data = {
+        "id": "exchange_rate_settings",
+        "usd_to_try": usd_to_try,
+        "eur_to_try": eur_to_try,
+        "last_updated": datetime.now(timezone.utc),
+        "updated_by": current_user.get("email", "")
+    }
+    
+    await db.exchange_rate_settings.update_one(
+        {"id": "exchange_rate_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    result = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    if result.get("last_updated"):
+        result["last_updated"] = result["last_updated"].isoformat() if isinstance(result["last_updated"], datetime) else result["last_updated"]
+    return result
+
 # ==================== DASHBOARD STATS ROUTES ====================
 
 @api_router.get("/stats/dashboard")
