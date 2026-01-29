@@ -23,7 +23,8 @@ import {
   Menu,
   X,
   ShoppingCart,
-  Calculator
+  Calculator,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
