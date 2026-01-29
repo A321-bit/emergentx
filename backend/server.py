@@ -1931,7 +1931,9 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
     if sale_dict.get("due_date"):
         sale_dict["due_date"] = sale_dict["due_date"].isoformat() if isinstance(sale_dict["due_date"], datetime) else sale_dict["due_date"]
     
-    # Process checks if payment method is "cek"
+    # Process checks
+    check_total = 0
+    collected_check_total = 0
     if sale_dict.get("checks"):
         processed_checks = []
         for check in sale_dict["checks"]:
@@ -1944,21 +1946,36 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
                 "is_collected": check.get("is_collected", False),
                 "collected_date": check["collected_date"].isoformat() if isinstance(check.get("collected_date"), datetime) else check.get("collected_date") if check.get("collected_date") else None
             }
+            check_total += check_data["amount_tl"]
+            if check_data["is_collected"]:
+                collected_check_total += check_data["amount_tl"]
             processed_checks.append(check_data)
         sale_dict["checks"] = processed_checks
+    
+    sale_dict["check_total_tl"] = check_total
     
     # Calculate profits
     sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
     
-    # Calculate remaining amount and payment status
-    paid = sale_dict.get("paid_amount_tl", 0)
-    total = sale_dict.get("sale_amount_tl", 0)
-    sale_dict["remaining_amount_tl"] = total - paid
+    # Calculate paid amount (nakit + kart + havale + tahsil edilen çekler)
+    nakit = sale_dict.get("nakit_tl", 0)
+    kart = sale_dict.get("kart_tl", 0)
+    havale = sale_dict.get("havale_tl", 0)
+    sale_dict["paid_amount_tl"] = nakit + kart + havale + collected_check_total
     
-    if paid >= total:
-        sale_dict["payment_status"] = "odendi"
-    elif paid > 0:
+    # Calculate remaining amount
+    total = sale_dict.get("sale_amount_tl", 0)
+    total_payments = nakit + kart + havale + check_total  # Tüm ödemeler (çekler dahil)
+    sale_dict["remaining_amount_tl"] = total - total_payments
+    
+    # Determine payment status
+    if sale_dict["remaining_amount_tl"] <= 0:
+        if collected_check_total >= check_total:
+            sale_dict["payment_status"] = "odendi"
+        else:
+            sale_dict["payment_status"] = "kismi"  # Çekler henüz tahsil edilmedi
+    elif total_payments > 0:
         sale_dict["payment_status"] = "kismi"
     else:
         sale_dict["payment_status"] = "bekliyor"
@@ -1974,7 +1991,9 @@ async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depen
     if sale_dict.get("due_date"):
         sale_dict["due_date"] = sale_dict["due_date"].isoformat() if isinstance(sale_dict["due_date"], datetime) else sale_dict["due_date"]
     
-    # Process checks if payment method is "cek"
+    # Process checks
+    check_total = 0
+    collected_check_total = 0
     if sale_dict.get("checks"):
         processed_checks = []
         for check in sale_dict["checks"]:
@@ -1987,20 +2006,35 @@ async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depen
                 "is_collected": check.get("is_collected", False),
                 "collected_date": check["collected_date"].isoformat() if isinstance(check.get("collected_date"), datetime) else check.get("collected_date") if check.get("collected_date") else None
             }
+            check_total += check_data["amount_tl"]
+            if check_data["is_collected"]:
+                collected_check_total += check_data["amount_tl"]
             processed_checks.append(check_data)
         sale_dict["checks"] = processed_checks
+    
+    sale_dict["check_total_tl"] = check_total
     
     sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
     
-    # Calculate remaining amount and payment status
-    paid = sale_dict.get("paid_amount_tl", 0)
-    total = sale_dict.get("sale_amount_tl", 0)
-    sale_dict["remaining_amount_tl"] = total - paid
+    # Calculate paid amount
+    nakit = sale_dict.get("nakit_tl", 0)
+    kart = sale_dict.get("kart_tl", 0)
+    havale = sale_dict.get("havale_tl", 0)
+    sale_dict["paid_amount_tl"] = nakit + kart + havale + collected_check_total
     
-    if paid >= total:
-        sale_dict["payment_status"] = "odendi"
-    elif paid > 0:
+    # Calculate remaining amount
+    total = sale_dict.get("sale_amount_tl", 0)
+    total_payments = nakit + kart + havale + check_total
+    sale_dict["remaining_amount_tl"] = total - total_payments
+    
+    # Determine payment status
+    if sale_dict["remaining_amount_tl"] <= 0:
+        if collected_check_total >= check_total:
+            sale_dict["payment_status"] = "odendi"
+        else:
+            sale_dict["payment_status"] = "kismi"
+    elif total_payments > 0:
         sale_dict["payment_status"] = "kismi"
     else:
         sale_dict["payment_status"] = "bekliyor"
