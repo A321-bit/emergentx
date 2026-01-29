@@ -21,7 +21,9 @@ import {
   Shield,
   Tags,
   Menu,
-  X
+  X,
+  ShoppingCart,
+  Calculator
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
