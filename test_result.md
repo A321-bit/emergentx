@@ -151,3 +151,9 @@ test_plan:
   - "Dark mode geçişinin düzgün çalıştığını kontrol et"
 
 incorporate_user_feedback: "Kullanıcı sadece dashboard test ve doğrulamasına devam etmemi istedi. PDF hatası şimdilik beklemede."
+
+agent_communication:
+    - agent: "main"
+      message: "Dashboard yeniden yazıldı ve temel görünüm test edildi. Kapsamlı UI testi için testing subagent'a devredildi."
+    - agent: "testing"
+      message: "Dashboard kapsamlı test tamamlandı - TÜM ÖZELLİKLER BAŞARIYLA ÇALIŞIYOR! Giriş, tüm kartlar, metrikler, chart, tablo, responsive tasarım test edildi. Sadece chart legend minor sorunu var ama core functionality mükemmel. Dashboard production ready."
