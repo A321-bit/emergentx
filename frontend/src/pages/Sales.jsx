@@ -60,15 +60,18 @@ const Sales = () => {
   const [customers, setCustomers] = useState([]);
   const [stats, setStats] = useState(null);
   const [upcomingPayments, setUpcomingPayments] = useState(null);
+  const [upcomingChecks, setUpcomingChecks] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isCheckModalOpen, setIsCheckModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState(null);
   const [selectedSaleForPayment, setSelectedSaleForPayment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statsPeriod, setStatsPeriod] = useState('monthly');
   const [systemExchangeRate, setSystemExchangeRate] = useState(34.0);
   const [showUpcoming, setShowUpcoming] = useState(true);
+  const [showChecks, setShowChecks] = useState(true);
   
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -83,8 +86,17 @@ const Sales = () => {
     notes: '',
     payment_method: 'nakit',
     paid_amount_tl: '',
-    due_date: ''
+    due_date: '',
+    checks: []  // Çekler listesi
   });
+
+  // Yeni çek ekleme için boş şablon
+  const emptyCheck = {
+    check_no: '',
+    bank_name: '',
+    amount_tl: '',
+    due_date: ''
+  };
 
   const [paymentFormData, setPaymentFormData] = useState({
     amount_tl: '',
@@ -99,6 +111,7 @@ const Sales = () => {
     fetchData();
     fetchExchangeRate();
     fetchUpcomingPayments();
+    fetchUpcomingChecks();
   }, []);
 
   const fetchData = async () => {
