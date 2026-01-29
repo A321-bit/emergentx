@@ -89,6 +89,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('finance_view')) {
     navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
   }
+  if (hasPermission('finance_view')) {
+    navItems.push({ path: '/reports', icon: BarChart3, label: 'Raporlar' });
+  }
   if (hasPermission('settings_manage')) {
     navItems.push({ path: '/settings', icon: Settings, label: 'Ayarlar' });
   }
