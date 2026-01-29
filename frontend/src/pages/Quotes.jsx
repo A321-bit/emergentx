@@ -889,27 +889,53 @@ const Quotes = () => {
                 </div>
               </div>
               
-              {/* Totals Summary */}
+              {/* Totals Summary - USD ve TL */}
               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Ara Toplam:</span>
-                  <span>{formatTRY(subtotal)}</span>
-                </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>İndirim:</span>
-                    <span>-{formatTRY(discountAmount)}</span>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-blue-600">
+                      <span>USD Ara Toplam:</span>
+                      <span>{formatUSD(subtotalUSD)}</span>
+                    </div>
+                    {discountAmountUSD > 0 && (
+                      <div className="flex justify-between text-red-500">
+                        <span>İndirim:</span>
+                        <span>-{formatUSD(discountAmountUSD)}</span>
+                      </div>
+                    )}
+                    {vatAmountUSD > 0 && (
+                      <div className="flex justify-between text-blue-600">
+                        <span>KDV (%{formData.vat_rate}):</span>
+                        <span>{formatUSD(vatAmountUSD)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t border-blue-200">
+                      <span>USD Toplam:</span>
+                      <span className="text-blue-600">{formatUSD(grandTotalUSD)}</span>
+                    </div>
                   </div>
-                )}
-                {vatAmount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>KDV (%{formData.vat_rate}):</span>
-                    <span>{formatTRY(vatAmount)}</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-green-600">
+                      <span>TL Ara Toplam:</span>
+                      <span>{formatTRY(subtotalTL)}</span>
+                    </div>
+                    {discountAmountTL > 0 && (
+                      <div className="flex justify-between text-red-500">
+                        <span>İndirim:</span>
+                        <span>-{formatTRY(discountAmountTL)}</span>
+                      </div>
+                    )}
+                    {vatAmountTL > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>KDV (%{formData.vat_rate}):</span>
+                        <span>{formatTRY(vatAmountTL)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t border-green-200">
+                      <span>TL Toplam:</span>
+                      <span className="text-green-600">{formatTRY(grandTotalTL)}</span>
+                    </div>
                   </div>
-                )}
-                <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                  <span>Genel Toplam:</span>
-                  <span className="text-primary">{formatTRY(grandTotal)}</span>
                 </div>
               </div>
             </div>
