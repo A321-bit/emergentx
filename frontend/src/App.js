@@ -26,6 +26,8 @@ import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import Packages from "./pages/Packages";
 import Employees from "./pages/Employees";
+import Attendance from "./pages/Attendance";
+import Payroll from "./pages/Payroll";
 import Settings from "./pages/Settings";
 
 function App() {
