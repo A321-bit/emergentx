@@ -601,7 +601,9 @@ const Sales = () => {
                     </TableCell>
                     <TableCell className="text-right font-mono">{formatCurrency(sale.sale_amount_tl)}</TableCell>
                     <TableCell className="text-right font-mono text-green-600">{formatCurrency(sale.paid_amount_tl || 0)}</TableCell>
-                    <TableCell className="text-right font-mono text-red-600">{formatCurrency(sale.remaining_amount_tl || sale.sale_amount_tl)}</TableCell>
+                    <TableCell className="text-right font-mono text-red-600">
+                      {formatCurrency(sale.remaining_amount_tl !== undefined && sale.remaining_amount_tl !== null ? sale.remaining_amount_tl : sale.sale_amount_tl)}
+                    </TableCell>
                     <TableCell className="text-center">{getPaymentStatusBadge(sale.payment_status)}</TableCell>
                     <TableCell className="text-sm">{sale.due_date ? formatDate(sale.due_date) : '-'}</TableCell>
                     {canManage && (
