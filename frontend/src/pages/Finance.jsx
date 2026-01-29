@@ -16,7 +16,9 @@ import {
   DollarSign,
   Package,
   Users,
-  FileText
+  FileText,
+  BadgeDollarSign,
+  ArrowRightLeft
 } from 'lucide-react';
 import axios from 'axios';
 import {
@@ -32,6 +34,25 @@ import {
 } from 'recharts';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Format functions for different currencies
+const formatUSD = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
+};
+
+const formatTRY = (value) => {
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
+};
 
 const Finance = () => {
   const [stats, setStats] = useState(null);
