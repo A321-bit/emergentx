@@ -2219,6 +2219,109 @@ async def get_payment_methods():
     """Get available payment methods"""
     return PAYMENT_METHODS
 
+# ==================== CHECK (ÇEK) ROUTES ====================
+
+@api_router.put("/sales/{sale_id}/checks/{check_id}/collect")
+async def collect_check(sale_id: str, check_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    """Mark a check as collected"""
+    sale = await db.sales.find_one({"id": sale_id, "is_active": True}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Satış bulunamadı")
+    
+    checks = sale.get("checks", [])
+    check_found = False
+    collected_amount = 0
+    
+    for check in checks:
+        if check.get("id") == check_id:
+            check["is_collected"] = True
+            check["collected_date"] = datetime.now(timezone.utc).isoformat()
+            check_found = True
+            collected_amount = check.get("amount_tl", 0)
+            break
+    
+    if not check_found:
+        raise HTTPException(status_code=404, detail="Çek bulunamadı")
+    
+    # Update paid amount
+    new_paid = sale.get("paid_amount_tl", 0) + collected_amount
+    total = sale.get("sale_amount_tl", 0)
+    remaining = total - new_paid
+    
+    status = "bekliyor"
+    if new_paid >= total:
+        status = "odendi"
+    elif new_paid > 0:
+        status = "kismi"
+    
+    await db.sales.update_one(
+        {"id": sale_id},
+        {"$set": {
+            "checks": checks,
+            "paid_amount_tl": new_paid,
+            "remaining_amount_tl": remaining,
+            "payment_status": status
+        }}
+    )
+    
+    return {"message": "Çek tahsil edildi", "collected_amount": collected_amount}
+
+@api_router.get("/checks/upcoming")
+async def get_upcoming_checks(current_user: dict = Depends(require_permission("finance_view"))):
+    """Get all uncollected checks with their due dates"""
+    now = datetime.now(timezone.utc)
+    
+    sales = await db.sales.find({
+        "is_active": True,
+        "payment_method": "cek",
+        "checks": {"$exists": True, "$ne": []}
+    }, {"_id": 0}).to_list(1000)
+    
+    upcoming_checks = []
+    overdue_checks = []
+    
+    for sale in sales:
+        for check in sale.get("checks", []):
+            if check.get("is_collected"):
+                continue
+            
+            due_date_str = check.get("due_date")
+            if due_date_str:
+                try:
+                    due_date = datetime.fromisoformat(due_date_str.replace("Z", "+00:00")) if isinstance(due_date_str, str) else due_date_str
+                    days_until_due = (due_date - now).days
+                    
+                    check_info = {
+                        "sale_id": sale["id"],
+                        "check_id": check.get("id"),
+                        "customer_name": sale.get("customer_name", ""),
+                        "check_no": check.get("check_no"),
+                        "bank_name": check.get("bank_name"),
+                        "amount_tl": check.get("amount_tl", 0),
+                        "due_date": due_date_str,
+                        "days_until_due": days_until_due
+                    }
+                    
+                    if days_until_due < 0:
+                        check_info["is_overdue"] = True
+                        overdue_checks.append(check_info)
+                    else:
+                        check_info["is_overdue"] = False
+                        upcoming_checks.append(check_info)
+                except:
+                    pass
+    
+    # Sort by due date
+    overdue_checks.sort(key=lambda x: x["days_until_due"])
+    upcoming_checks.sort(key=lambda x: x["days_until_due"])
+    
+    return {
+        "overdue": overdue_checks,
+        "upcoming": upcoming_checks,
+        "total_overdue_amount": sum(c["amount_tl"] for c in overdue_checks),
+        "total_upcoming_amount": sum(c["amount_tl"] for c in upcoming_checks)
+    }
+
 # ==================== EXPENSE CATEGORIES ROUTES ====================
 
 @api_router.get("/expense-categories")
