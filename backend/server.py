@@ -434,6 +434,15 @@ PAYMENT_STATUS = {
     "gecikti": "Gecikmiş"
 }
 
+# Check (Çek) Model
+class CheckItem(BaseModel):
+    check_no: Optional[str] = None  # Çek numarası
+    bank_name: Optional[str] = None  # Banka adı
+    amount_tl: float  # Çek tutarı (TL)
+    due_date: datetime  # Vade tarihi
+    is_collected: bool = False  # Tahsil edildi mi?
+    collected_date: Optional[datetime] = None  # Tahsil tarihi
+
 # Sales Model (Manuel Satış Girişi)
 class SaleBase(BaseModel):
     customer_id: Optional[str] = None
@@ -450,6 +459,7 @@ class SaleBase(BaseModel):
     payment_method: str = "nakit"  # nakit, kart, havale, cek, vadeli
     paid_amount_tl: float = 0  # Ödenen tutar (TL)
     due_date: Optional[datetime] = None  # Vade tarihi (vadeli satışlar için)
+    checks: Optional[List[CheckItem]] = None  # Çekler (çek ödemesi için)
 
 class SaleCreate(SaleBase):
     pass
