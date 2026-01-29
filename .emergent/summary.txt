@@ -4,44 +4,40 @@ The user wants to build a comprehensive Solar Energy Sales Management System.
 **PRODUCT REQUIREMENTS:**
 
 **Phase 1 & 2 (Largely Complete):**
--   **Admin & Sales Panels:** Full-featured user, role, product, stock, customer, dealer, and quote management.
--   **Advanced Features:**
-    -   Custom Roles & Permissions management.
-    -   Dealer Groups with tiered discounts and separate login credentials.
-    -   Advanced Customer Management (categories, sources, types).
-    -   Advanced Pricing (VAT, profit margins, multi-currency).
-    -   Product Management with multiple image and PDF datasheet uploads.
-    -   Excel Import/Export for products.
-    -   Professional PDF quote generation.
-    -   Responsive UI for mobile and desktop use.
+-   Admin & Sales Panels: Full-featured user, role, product, stock, customer, dealer, and quote management.
+-   Advanced Features: Custom Roles, Dealer Groups, Advanced Customer Management, Advanced Pricing, Product Management with uploads, Excel Import/Export, and PDF quote generation.
 
 **Phase 3 (Current & Upcoming Requests):**
-1.  **Manual Sales Entry:** A new section to manually log sales with fields for Customer, Sale Amount (USD/TL), Cost Amount (USD/TL), and Date. Should include a currency conversion helper.
-2.  **Accounting Module:**
-    -   A dedicated Muhasebe (Accounting) section.
-    -   **Income:** Automatically pulls from sales (both quotes and manual entries) and allows manual income entries.
-    -   **Expenses:**
-        -   Manual entry for expenses.
-        -   Manageable expense categories (e.g., rent, salary, fuel, utilities).
-        -   Manageable personnel list with associated salary expenses.
-    -   **Reporting:** Dashboard showing total/monthly/weekly/daily revenue, net profit, and income vs. expense charts.
-3.  **XML Integration:** Ability to import products from a B2B system via an XML link (user will provide the link later).
-4.  **WhatsApp Integration:** Send quotes via WhatsApp.
-5.  **Payment Gateway:** Integrate PayTR for installment options on quotes (future task).
+1.  **Manual Sales Entry & Tracking (In Progress/Advanced):**
+    -   A new section to manually log sales with fields for Customer and amounts.
+    -   Support for both USD and TL currencies with a configurable exchange rate.
+    -   Allow users to input amounts in either TL or USD, with the other currency calculated automatically.
+    -   Implement comprehensive payment tracking:
+        -   Allow a single sale to be paid via multiple methods (Cash, Card, Bank Transfer, Checks).
+        -   The sale form should show a running total of payments and the remaining balance.
+        -   Track payment status (Pending, Partial Payment, Paid).
+        -   Record individual payments/collections against a sale.
+    -   Implement advanced check management:
+        -   Allow multiple checks to be added to a single sale, each with its own amount, due date, bank, and check number.
+        -   Create a dashboard/widget to show upcoming and overdue checks.
+        -   Functionality to mark a check as collected.
+2.  **Dashboard Overhaul (In Progress):** A comprehensive dashboard showing key metrics: Total Turnover (and by dealers), Stock Value, Customer/Dealer counts, Total Cost, Profit Margin, Upcoming Payments/Checks, Quote Statuses, and Daily Turnover.
+3.  **Accounting Module (Not Started):** A dedicated Muhasebe (Accounting) section for income/expense tracking and reporting.
+4.  **XML Integration (Upcoming):** Ability to import products from a B2B system via an XML link.
+5.  **WhatsApp Integration (Upcoming):** Send quotes via WhatsApp.
+6.  **Payment Gateway (Future):** Integrate PayTR for installment options on quotes.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A full-stack application with a FastAPI backend and React frontend. The application is largely functional and includes user/role management, product/stock control, customer/dealer management, and quote creation. A major refactor for custom roles is complete. Excel import/export for products is implemented. A responsive layout for mobile has been partially implemented. The backend for the new Manual Sales and Accounting modules has been created, along with placeholder frontend pages.
-
-The PDF generation feature is **BROKEN**; images (logo, cover) do not load, which is a major point of user frustration.
+A full-stack application (FastAPI backend, React frontend) with robust features for user/role, product, customer, and quote management. The sales module has been significantly enhanced to include currency management (USD/TL with configurable rates) and an advanced multi-payment system, allowing a single sale to be paid with a mix of cash, card, bank transfer, and multiple checks. The backend logic for a new comprehensive dashboard is complete, and the frontend file has been rewritten but is untested. The core PDF generation feature remains **BROKEN**, as images do not load. The Accounting module exists only as a placeholder page.
 
 **Last working item**:
-The agent was implementing the new Manual Sales and Accounting features requested by the user.
+The agent was implementing a complete overhaul of the main Dashboard.
 
-- **Last item agent was working**: The agent created the backend models (, , , ) and their corresponding CRUD API endpoints in . It then created new placeholder frontend pages (, ) and added them to the router () and navigation ().
+- **Last item agent was working**: The agent finished rewriting the backend dashboard endpoint () to provide a wide range of new metrics. It then completely overwrote the frontend page  to display this new data.
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N (Only checked if backend restarts and took one screenshot showing the new menu items).
+- **Agent Testing Done**: N
 - **Which testing method agent to use?**: both
 - **User Testing Done**: N
 
@@ -50,30 +46,38 @@ The agent was implementing the new Manual Sales and Accounting features requeste
 
     **Issues Detail:**
     -   **Issue 1:** Fix broken images in PDF quotes.
-        -   **Attempted fixes:** The agent tried multiple frontend solutions (, ,  with blobs) which all failed. The agent correctly identified the likely root cause: the Kubernetes ingress only routes  to the backend, but the image URLs point to , resulting in a 404 error from the frontend's perspective. The agent failed to fix this server-side issue and instead moved to another task.
+        -   **Attempted fixes:** The previous agent tried multiple frontend solutions (, , ) which all failed. The root cause is that the Kubernetes ingress only routes  to the backend, but the image URLs in the DB point to , resulting in a 404 error.
         -   **Next debug checklist**:
             1.  **Do not try another frontend fix.** The problem is server-side routing.
-            2.  Modify  to serve the static  directory under an  prefixed path. For example, create a new endpoint like  that returns a  from the  directory.
-            3.  Alternatively, configure a static route using  in  **before** including the main API router.
-            4.  Update all frontend code that generates image URLs (in , , ) to prefix them with the new API path (e.g., ).
-            5.  Restart the backend and test PDF generation thoroughly.
-        -   **Why fix this issue and what will be achieved with the fix?** This is the highest priority. The user is extremely frustrated, has spent a lot of credits on this, and a core feature of the application is unusable. Fixing this will restore user confidence.
-        -   **Status**: BLOCKED (Agent moved on without fixing).
+            2.  In , mount the static directory to serve files under an API-prefixed path. Add this line **before** the main API router is included: .
+            3.  Update all frontend code that generates image URLs (in , , ) to prefix them with the new path (e.g., ).
+            4.  Restart the backend (backend: stopped
+backend: started) and test PDF generation thoroughly.
+        -   **Why fix this issue and what will be achieved with the fix?** This is the highest priority blocker. The user is frustrated, and a core feature of the application is unusable.
+        -   **Status**: BLOCKED (Agent has not addressed this yet).
         -   **Is recurring issue?** Y
         -   **Should Test frontend/backend/both after fix?** both
         -   **Blocked on other issue**: None.
 
 **In progress Task List**:
--   **Task 1:** (P1) Complete the Manual Sales & Accounting feature.
-    -   **Where to resume**: The backend is complete. The frontend pages  and  are just placeholders. The next step is to build out the UI and logic for these pages to allow creating, listing, and managing manual sales, expenses, personnel, and viewing financial reports.
-    -   **What will be achieved with this?** The user will be able to manually track sales and manage income/expenses, providing a complete financial overview.
+-   **Task 1:** (P0) Complete and Verify Dashboard Overhaul.
+    -   **Where to resume**: The backend endpoint is updated, and  is rewritten. The agent needs to restart the backend (backend: stopped
+backend: started), test the new  endpoint with , and then take a screenshot of the new dashboard at  to verify it displays all the new metrics correctly.
+    -   **What will be achieved with this?** Fulfills the user's latest request for a comprehensive overview of their business on the main page.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something**: Blocked by the P0 PDF issue. Should fix that first.
+    -   **Blocked on something**: No.
 
--   **Task 2:** (P2) Complete the mobile responsiveness refactor.
-    -   **Where to resume**: The agent made , , , and  pages responsive. It needs to review all other pages (, , , , , etc.) and apply responsive classes (e.g., , hiding columns on small screens, using card views for tables) to ensure the entire application is usable on mobile devices.
-    -   **What will be achieved with this?** A fully responsive application that works on both desktop and mobile.
+-   **Task 2:** (P1) Build the Accounting Module UI.
+    -   **Where to resume**: The backend models (, , ) and CRUD APIs are already created. The frontend page  is currently a placeholder. The next step is to build the UI for managing expenses, categories, and personnel, and to display financial reports.
+    -   **What will be achieved with this?** The user will be able to manage income/expenses for a complete financial overview.
+    -   **Status**: NOT STARTED
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something**: No.
+
+-   **Task 3:** (P2) Complete the mobile responsiveness refactor.
+    -   **Where to resume**: , , , and  are partially responsive. The agent needs to review and update all other pages (, , , , , , ) to ensure they are fully usable on mobile devices.
+    -   **What will be achieved with this?** A fully responsive application.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** frontend
     -   **Blocked on something**: No.
@@ -84,82 +88,71 @@ The agent was implementing the new Manual Sales and Accounting features requeste
 -   **P2: WhatsApp Quote Sending:** Integrate an API to send generated PDF quotes via WhatsApp.
 
 **Future Tasks:**
--   **PayTR Integration:** Add installment calculation and payment options to quotes using the PayTR payment gateway.
+-   **PayTR Integration:** Add installment calculation and payment options to quotes.
 
 **Completed work in this session**
--   Stabilized the application after a major refactor (custom roles, dealer auth, etc.).
--   Implemented a testing suite and confirmed backend/frontend functionality.
--   Created a user guide ().
--   Implemented Excel import/export functionality for products.
--   Started the mobile responsiveness refactor (, , ).
--   Implemented the backend for the Manual Sales & Accounting modules.
+- Implemented a currency exchange rate manager in the Settings page.
+- Updated Dashboard, Finance, and Sales pages to calculate and display both USD and TL values based on the configurable exchange rate.
+- Enhanced the New Sale form to allow input in either TL or USD, with automatic conversion for the other currency.
+- **Implemented a comprehensive multi-payment system for sales:**
+    - A single sale can now be paid with a combination of Cash, Card, Bank Transfer, and multiple Checks.
+    - The sales form UI was completely redesigned to show a running total of payments against the sale amount, calculating the remaining balance in real-time.
+- **Implemented advanced check management:**
+    - Users can add multiple checks to a sale, each with its own due date and amount.
+    - Created a Upcoming Checks dashboard widget to track due dates.
+    - Added functionality to mark checks as collected, which updates the sale's payment status.
+- Fixed a bug where  was missing when creating a sale.
+- Fixed a UI bug where a  remaining balance was incorrectly displayed as the full sale amount.
+- Fixed a backend bug where the upcoming checks list was not populating due to an incorrect filter.
+- Rewrote the backend dashboard endpoint and the frontend  file to support a massive data overhaul (untested).
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1:** The PDF generation feature is critically broken. Images (logo, cover) do not load in the generated PDF. The agent made over 5 attempts to fix this from the frontend, wasting significant user credits, before correctly identifying the server-side ingress routing issue, and then abandoning the fix to start a new task.
+-   **Issue 1:** The P0 PDF generation feature remains broken due to a server-side static file routing issue. The agent has not attempted the required backend fix.
 
 **Known issue recurrence from previous fork**
-None.
+- None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Backend:** FastAPI, Pydantic
--   **Frontend:** React, Tailwind CSS, shadcn/ui
+-   **Frontend:** React, Tailwind CSS, shadcn/ui,  (for toasts)
 -   **Database:** MongoDB
 -   **Authentication:** JWT
--   **File Handling:**  for uploads,  for Excel,  and  for PDFs.
 
 **key DB schema**
--   : {email, password_hash, role_id, ...}
--   : {name, permissions}
--   : {name, purchase_price, image_urls: [], datasheet_url, ...}
--   : {name, type, city, district, ...}
--   : {customer_id, products: [], status, ...}
--   : {company_name, logo_url, quote_cover_url, quote_terms, bank_accounts: []}
--    (new): {customer_name, sale_amount_usd, sale_amount_tl, cost_amount_usd, cost_amount_tl, exchange_rate, sale_date}
--    (new): {description, amount, currency, category_id, expense_date}
--    (new): {name, is_fixed}
--    (new): {name, position, salary, currency}
+-   : { uid=0(root) gid=0(root) groups=0(root): exchange_rate_settings, ,  }
+-   : { , , , , : [ { ,  } ], : [ { , , ,  } ] }
+-   , , , , 
 
 **changes in tech stack**
--   : Added for Excel file operations.
--   : Added to the frontend in an attempt to fix PDF image loading issues.
+-   None.
 
 **All files of reference**
-**Recently Created/Modified:**
--   : Heavily modified to add models and endpoints for Sales and Accounting. Needs modification to fix static file serving.
--   : New file, currently a placeholder.
--   : New file, currently a placeholder.
--   : Modified to add new routes for Sales and Accounting.
--   : Modified to add new menu items and initial responsive logic.
--   : Modified for mobile responsiveness.
--   : Modified for mobile responsiveness.
--   : Modified for mobile responsiveness.
--   : Heavily modified in multiple failed attempts to fix PDF generation. Needs review and cleanup after the root cause is fixed.
--   : Modified to handle uploads for quote cover/logo.
--   : Updated with new features.
+-   : Heavily modified to add exchange rates, advanced sales/payment/check logic, and the new dashboard endpoint. **Needs a restart.**
+-   : Completely rewritten to support the multi-payment and check management UI.
+-   : Completely rewritten to support the new dashboard metrics. **Is untested.**
+-   : Modified to add the Kur Ayarları (Exchange Rate Settings) tab.
+-   : Modified to show USD/TL values.
+-   : Needs cleanup after the P0 PDF bug is fixed.
 
 **Areas that need refactoring**:
--   ****: This file is a mess after numerous failed attempts to fix the PDF image loading. It should be simplified and cleaned up once the underlying server-side routing issue for static files is resolved.
--   **Static File Serving:** The core issue of serving uploaded files needs a proper backend solution instead of repeated frontend hacks.
+-   ****: This file contains remnants of failed attempts to fix the PDF bug and should be simplified after the server-side fix is implemented.
+-   **Static File Serving:** The entire approach needs to be fixed on the backend to properly serve uploaded files via an  prefixed route.
 
 **key api endpoints**
--   
--   , , , 
--   
--   , , 
--   (New)  (CRUD)
--   (New)  (CRUD)
--   (New)  (CRUD)
--   (New)  (CRUD)
--   (New) 
+-   (New)  (GET, PUT)
+-   (Updated)  (GET, POST, PUT) - Now handles complex payment and check objects.
+-   (New)  (POST) - To add a payment/collection to a sale.
+-   (New)  (GET)
+-   (New)  (POST)
+-   (Updated)  (GET) - Provides comprehensive data for the new dashboard.
 
 **Critical Info for New Agent**
--   **P0 is the PDF bug.** The user is out of patience. You MUST fix the image loading issue in PDFs before doing anything else. The root cause is that static files in  are not served via an  route, causing frontend requests to fail. Fix this on the backend by creating an endpoint like  or mounting a static directory under . DO NOT attempt another frontend-only fix.
--   The user is very sensitive about credit usage. Be efficient and avoid repeated failed attempts.
--   After fixing the PDF, prioritize completing the Manual Sales & Accounting UI, then the mobile responsiveness for all remaining pages.
--   The user has asked to be informed before you start working on the XML integration.
+-   **P0 is the PDF bug.** You MUST fix the image loading issue in PDFs before doing anything else. The fix is on the backend () by mounting the  directory to an  path.
+-   The immediate next task is to restart the backend and test the newly implemented Dashboard UI to confirm it works as expected.
+-   The user is highly engaged and provides detailed, iterative feedback. Work in small, verifiable steps and confirm with screenshots.
 
 **documents and test reports created in this job**
 -   
@@ -167,38 +160,38 @@ None.
 -   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests the app be made mobile-friendly.
-2.  **Agent:** Proposes a plan to make the layout, dashboard, and tables responsive.
-3.  **User:** Approves.
-4.  **Agent:** Implements responsive layout and tests with screenshots.
-5.  **User:** Interrupts and provides a large new request: Manual Sales entry, a full Accounting module with income/expense tracking, and reporting.
-6.  **Agent:** Clarifies the requirements for the Accounting module.
-7.  **User:** Provides detailed specs for the Accounting module, including expense categories and personnel costs.
-8.  **Agent:** Acknowledges and starts on the backend implementation.
-9.  **(Agent works on backend models, APIs, and creates placeholder frontend files)**
-10. **Agent:** Shows a screenshot of the new menu items. **The agent has not built the UI for these new pages yet.**
+1.  **User:** Requests an option to set a currency exchange rate and see both USD/TL values in the dashboard/finance pages. (DONE)
+2.  **User:** Requests that the New Sale screen allow entering the sale amount in TL, which should then be automatically converted to USD. (DONE)
+3.  **User:** Requests payment tracking for sales: payment options (cash, card), paid/remaining amounts, and due dates. (DONE)
+4.  **User:** Requests support for check payments, including adding multiple checks with different due dates for a single sale. (DONE)
+5.  **User:** Clarifies that a single sale can be paid with a mix of methods (cash + card + check) and the form should handle this. (DONE)
+6.  **User:** Reports a bug where sales paid by check were not appearing in the Upcoming Checks list. (FIXED)
+7.  **User:** Provides a detailed list of metrics required for a new, comprehensive main dashboard screen. (IN PROGRESS)
+8.  **User:** Interrupts and reports a bug. When a sale is created with multiple checks, they are not being added to the Upcoming Checks list.
+9.  **User:** Requests the dashboard to show dealer-specific turnover, stock value, customer counts, total revenue, costs, profit margins, upcoming payments, quote statuses, and daily revenue.
+10. **Agent:** Acknowledges the dashboard request and begins implementation by overhauling the backend endpoint and frontend file.
 
 **Project Health Check:**
 -   **Broken:**
     -   PDF Quote Generation (Images do not load).
 -   **Mocked:**
-    -   Manual Sales page () is a placeholder.
-    -   Accounting page () is a placeholder.
+    -    is a placeholder.
+    -    has been rewritten but is completely untested.
 
 **3rd Party Integrations**
 -   None implemented.
 -   **Planned:** XML feed, WhatsApp, PayTR.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, after the major role refactor.
+-   **Testing agent used after significant changes:** NO (not in this session)
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** PDF generation is a major regression.
+-   **Known regressions:** PDF generation.
 
 **Credentials to test flow:**
--   **URL:** (will be provided by the environment)
 -   **Email:** 
 -   **Password:** 
 
 **What agent forgot to execute**
--   The agent **failed to fix the P0 PDF image loading bug.** It correctly diagnosed the server-side routing problem but then abandoned the issue to start a new feature, which is a critical error in prioritization and has led to significant user frustration.</analysis>
+-   The agent has **still not fixed the P0 PDF image loading bug.** This remains the most critical outstanding issue.
+-   The agent did not restart the backend or test the frontend after rewriting . The current active task is incomplete and unverified.</analysis>
