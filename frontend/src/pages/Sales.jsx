@@ -974,7 +974,13 @@ const Sales = () => {
             {/* Payment Method */}
             <div className="space-y-2">
               <Label>Ödeme Yöntemi</Label>
-              <Select value={formData.payment_method} onValueChange={(val) => setFormData(prev => ({ ...prev, payment_method: val }))}>
+              <Select value={formData.payment_method} onValueChange={(val) => {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  payment_method: val,
+                  checks: val === 'cek' ? (prev.checks.length > 0 ? prev.checks : [{ ...emptyCheck }]) : []
+                }));
+              }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -991,31 +997,112 @@ const Sales = () => {
               </Select>
             </div>
 
-            {/* Payment & Due Date */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Ödenen Tutar (TL)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+            {/* Çek Girişi - Sadece Çek seçiliyse */}
+            {formData.payment_method === 'cek' && (
+              <div className="space-y-4 p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center justify-between">
+                  <Label className="text-orange-800 dark:text-orange-200 flex items-center gap-2">
+                    <FileCheck className="h-4 w-4" />
+                    Çekler ({formData.checks.length} adet)
+                  </Label>
+                  <Button type="button" size="sm" variant="outline" onClick={addCheck}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Çek Ekle
+                  </Button>
+                </div>
+
+                {formData.checks.map((check, index) => (
+                  <div key={index} className="p-3 bg-white dark:bg-slate-800 rounded-lg border space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Çek #{index + 1}</span>
+                      {formData.checks.length > 1 && (
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removeCheck(index)} className="h-6 w-6 text-red-500">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Çek No</Label>
+                        <Input
+                          placeholder="Opsiyonel"
+                          value={check.check_no}
+                          onChange={(e) => updateCheck(index, 'check_no', e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Banka</Label>
+                        <Input
+                          placeholder="Opsiyonel"
+                          value={check.bank_name}
+                          onChange={(e) => updateCheck(index, 'bank_name', e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Tutar (TL) *</Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₺</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={check.amount_tl}
+                            onChange={(e) => updateCheck(index, 'amount_tl', e.target.value)}
+                            className="h-9 pl-6"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Vade Tarihi *</Label>
+                        <Input
+                          type="date"
+                          value={check.due_date}
+                          onChange={(e) => updateCheck(index, 'due_date', e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {formData.checks.length > 0 && (
+                  <div className="flex justify-between items-center pt-2 border-t border-orange-200">
+                    <span className="text-sm text-orange-700 dark:text-orange-300">Toplam Çek Tutarı:</span>
+                    <span className="font-bold text-orange-800 dark:text-orange-200">{formatCurrency(getTotalChecksAmount())}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Payment & Due Date - Çek haricinde göster */}
+            {formData.payment_method !== 'cek' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Ödenen Tutar (TL)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.paid_amount_tl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paid_amount_tl: e.target.value }))}
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Vade Tarihi</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.paid_amount_tl}
-                    onChange={(e) => setFormData(prev => ({ ...prev, paid_amount_tl: e.target.value }))}
-                    className="pl-7"
+                    type="date"
+                    value={formData.due_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Vade Tarihi</Label>
-                <Input
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                />
-              </div>
-            </div>
+            )}
 
             {/* Remaining Amount Preview */}
             {formData.sale_amount_tl && (
