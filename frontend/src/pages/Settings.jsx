@@ -539,6 +539,131 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Currency/Exchange Rate Tab */}
+        <TabsContent value="currency" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">Döviz Kuru Ayarları</CardTitle>
+              <CardDescription>
+                Stok değeri ve finans hesaplamalarında kullanılacak güncel döviz kurları
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveExchangeRates} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* USD/TRY */}
+                  <div className="space-y-3">
+                    <Label htmlFor="usd_to_try" className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 font-bold text-sm">$</span>
+                      USD / TRY Kuru
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="usd_to_try"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={exchangeRates.usd_to_try}
+                        onChange={(e) => setExchangeRates({...exchangeRates, usd_to_try: parseFloat(e.target.value) || 0})}
+                        className="text-lg font-semibold pl-4 pr-12"
+                        data-testid="usd-rate-input"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">TL</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">1 USD = {exchangeRates.usd_to_try} TL</p>
+                  </div>
+
+                  {/* EUR/TRY */}
+                  <div className="space-y-3">
+                    <Label htmlFor="eur_to_try" className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-sm">€</span>
+                      EUR / TRY Kuru
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="eur_to_try"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={exchangeRates.eur_to_try}
+                        onChange={(e) => setExchangeRates({...exchangeRates, eur_to_try: parseFloat(e.target.value) || 0})}
+                        className="text-lg font-semibold pl-4 pr-12"
+                        data-testid="eur-rate-input"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">TL</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">1 EUR = {exchangeRates.eur_to_try} TL</p>
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <RefreshCw className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-amber-800 dark:text-amber-200">Kur Hesaplamaları</p>
+                      <p className="text-amber-700 dark:text-amber-300 mt-1">
+                        Bu kurlar Dashboard ve Finans panellerinde stok değeri hesaplamalarında kullanılır. 
+                        USD cinsinden kayıtlı ürünler bu kurla TL'ye çevrilir.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {exchangeRates.last_updated && (
+                  <p className="text-xs text-muted-foreground">
+                    Son güncelleme: {new Date(exchangeRates.last_updated).toLocaleString('tr-TR')}
+                  </p>
+                )}
+
+                <Button type="submit" disabled={savingRates} data-testid="save-rates-btn">
+                  {savingRates ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Kaydediliyor...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Kurları Kaydet
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Quick Preview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">Örnek Hesaplama</CardTitle>
+              <CardDescription>Mevcut kurlarla örnek dönüşüm</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-muted/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">100 USD</p>
+                  <p className="text-xl font-bold text-primary mt-1">
+                    {(100 * exchangeRates.usd_to_try).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">1.000 USD</p>
+                  <p className="text-xl font-bold text-primary mt-1">
+                    {(1000 * exchangeRates.usd_to_try).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">10.000 USD</p>
+                  <p className="text-xl font-bold text-primary mt-1">
+                    {(10000 * exchangeRates.usd_to_try).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
