@@ -662,7 +662,7 @@ const Quotes = () => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Teklif bulunamadı
                   </TableCell>
                 </TableRow>
@@ -672,11 +672,17 @@ const Quotes = () => {
         </CardContent>
       </Card>
 
+      {/* Exchange Rate Info */}
+      <div className="text-sm text-muted-foreground text-right">
+        Güncel Kur: 1 USD = {exchangeRate.toFixed(2)} TL
+      </div>
+
       {/* New/Edit Quote Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto" data-testid="quote-modal">
           <DialogHeader>
             <DialogTitle>{editingQuote ? 'Teklifi Düzenle' : 'Yeni Teklif Oluştur'}</DialogTitle>
+            <p className="text-sm text-muted-foreground">Güncel Kur: 1 USD = {exchangeRate.toFixed(2)} TL</p>
           </DialogHeader>
           
           <div className="space-y-6">
