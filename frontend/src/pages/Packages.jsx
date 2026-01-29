@@ -158,6 +158,11 @@ const Packages = () => {
     return formData.items.reduce((sum, item) => sum + item.total_price, 0);
   };
 
+  // Filter products by search term
+  const filteredProductsForSelect = products.filter(product =>
+    product.name.toLowerCase().includes(productSearchTerm.toLowerCase())
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
