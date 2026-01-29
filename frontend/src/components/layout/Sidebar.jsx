@@ -79,6 +79,12 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('dealers_view') || hasPermission('dealers_manage')) {
     navItems.push({ path: '/dealers', icon: Building2, label: 'Bayiler' });
   }
+  if (hasPermission('finance_view') || hasPermission('finance_manage')) {
+    navItems.push({ path: '/sales', icon: ShoppingCart, label: 'Satışlar' });
+  }
+  if (hasPermission('finance_view') || hasPermission('finance_manage')) {
+    navItems.push({ path: '/accounting', icon: Calculator, label: 'Muhasebe' });
+  }
   if (hasPermission('finance_view')) {
     navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
   }
