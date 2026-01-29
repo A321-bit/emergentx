@@ -24,6 +24,7 @@ import Sales from "./pages/Sales";
 import Accounting from "./pages/Accounting";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
+import Packages from "./pages/Packages";
 import Settings from "./pages/Settings";
 
 function App() {
