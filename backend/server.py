@@ -1768,6 +1768,283 @@ async def get_sales_by_dealer(current_user: dict = Depends(require_permission("f
     
     return [{"dealer_id": r["_id"], "dealer_name": r["dealer_name"], "total_sales": r["total_sales"], "count": r["count"]} for r in results]
 
+# ==================== SALES ROUTES (Satışlar) ====================
+
+@api_router.get("/sales")
+async def get_sales(current_user: dict = Depends(require_permission("finance_view"))):
+    sales = await db.sales.find({"is_active": True}, {"_id": 0}).sort("sale_date", -1).to_list(1000)
+    return sales
+
+@api_router.post("/sales")
+async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    sale_dict = sale.model_dump()
+    sale_dict["id"] = str(uuid.uuid4())
+    sale_dict["created_by"] = current_user["user_id"]
+    sale_dict["is_active"] = True
+    sale_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    sale_dict["sale_date"] = sale_dict["sale_date"].isoformat() if isinstance(sale_dict["sale_date"], datetime) else sale_dict["sale_date"]
+    
+    # Calculate profits
+    sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
+    sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
+    
+    await db.sales.insert_one(sale_dict.copy())
+    del sale_dict["_id"] if "_id" in sale_dict else None
+    return sale_dict
+
+@api_router.put("/sales/{sale_id}")
+async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    sale_dict = sale.model_dump()
+    sale_dict["sale_date"] = sale_dict["sale_date"].isoformat() if isinstance(sale_dict["sale_date"], datetime) else sale_dict["sale_date"]
+    sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
+    sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
+    
+    result = await db.sales.update_one({"id": sale_id}, {"$set": sale_dict})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Satış bulunamadı")
+    return {"message": "Satış güncellendi"}
+
+@api_router.delete("/sales/{sale_id}")
+async def delete_sale(sale_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.sales.update_one({"id": sale_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Satış bulunamadı")
+    return {"message": "Satış silindi"}
+
+@api_router.get("/sales/stats")
+async def get_sales_stats(current_user: dict = Depends(require_permission("finance_view"))):
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=today_start.weekday())
+    month_start = today_start.replace(day=1)
+    year_start = today_start.replace(month=1, day=1)
+    
+    sales = await db.sales.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    stats = {
+        "daily": {"sale_tl": 0, "sale_usd": 0, "profit_tl": 0, "profit_usd": 0, "count": 0},
+        "weekly": {"sale_tl": 0, "sale_usd": 0, "profit_tl": 0, "profit_usd": 0, "count": 0},
+        "monthly": {"sale_tl": 0, "sale_usd": 0, "profit_tl": 0, "profit_usd": 0, "count": 0},
+        "yearly": {"sale_tl": 0, "sale_usd": 0, "profit_tl": 0, "profit_usd": 0, "count": 0},
+        "total": {"sale_tl": 0, "sale_usd": 0, "profit_tl": 0, "profit_usd": 0, "count": 0}
+    }
+    
+    for sale in sales:
+        sale_date = datetime.fromisoformat(sale["sale_date"].replace("Z", "+00:00")) if isinstance(sale["sale_date"], str) else sale["sale_date"]
+        
+        # Total
+        stats["total"]["sale_tl"] += sale.get("sale_amount_tl", 0)
+        stats["total"]["sale_usd"] += sale.get("sale_amount_usd", 0)
+        stats["total"]["profit_tl"] += sale.get("profit_tl", 0)
+        stats["total"]["profit_usd"] += sale.get("profit_usd", 0)
+        stats["total"]["count"] += 1
+        
+        # Yearly
+        if sale_date >= year_start:
+            stats["yearly"]["sale_tl"] += sale.get("sale_amount_tl", 0)
+            stats["yearly"]["sale_usd"] += sale.get("sale_amount_usd", 0)
+            stats["yearly"]["profit_tl"] += sale.get("profit_tl", 0)
+            stats["yearly"]["profit_usd"] += sale.get("profit_usd", 0)
+            stats["yearly"]["count"] += 1
+        
+        # Monthly
+        if sale_date >= month_start:
+            stats["monthly"]["sale_tl"] += sale.get("sale_amount_tl", 0)
+            stats["monthly"]["sale_usd"] += sale.get("sale_amount_usd", 0)
+            stats["monthly"]["profit_tl"] += sale.get("profit_tl", 0)
+            stats["monthly"]["profit_usd"] += sale.get("profit_usd", 0)
+            stats["monthly"]["count"] += 1
+        
+        # Weekly
+        if sale_date >= week_start:
+            stats["weekly"]["sale_tl"] += sale.get("sale_amount_tl", 0)
+            stats["weekly"]["sale_usd"] += sale.get("sale_amount_usd", 0)
+            stats["weekly"]["profit_tl"] += sale.get("profit_tl", 0)
+            stats["weekly"]["profit_usd"] += sale.get("profit_usd", 0)
+            stats["weekly"]["count"] += 1
+        
+        # Daily
+        if sale_date >= today_start:
+            stats["daily"]["sale_tl"] += sale.get("sale_amount_tl", 0)
+            stats["daily"]["sale_usd"] += sale.get("sale_amount_usd", 0)
+            stats["daily"]["profit_tl"] += sale.get("profit_tl", 0)
+            stats["daily"]["profit_usd"] += sale.get("profit_usd", 0)
+            stats["daily"]["count"] += 1
+    
+    return stats
+
+# ==================== EXPENSE CATEGORIES ROUTES ====================
+
+@api_router.get("/expense-categories")
+async def get_expense_categories(current_user: dict = Depends(require_permission("finance_view"))):
+    categories = await db.expense_categories.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return categories
+
+@api_router.post("/expense-categories")
+async def create_expense_category(category: ExpenseCategoryBase, current_user: dict = Depends(require_permission("finance_manage"))):
+    cat_dict = category.model_dump()
+    cat_dict["id"] = str(uuid.uuid4())
+    cat_dict["is_active"] = True
+    cat_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    await db.expense_categories.insert_one(cat_dict.copy())
+    return cat_dict
+
+@api_router.delete("/expense-categories/{category_id}")
+async def delete_expense_category(category_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.expense_categories.update_one({"id": category_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    return {"message": "Kategori silindi"}
+
+# ==================== PERSONNEL ROUTES ====================
+
+@api_router.get("/personnel")
+async def get_personnel(current_user: dict = Depends(require_permission("finance_view"))):
+    personnel = await db.personnel.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return personnel
+
+@api_router.post("/personnel")
+async def create_personnel(person: PersonnelBase, current_user: dict = Depends(require_permission("finance_manage"))):
+    person_dict = person.model_dump()
+    person_dict["id"] = str(uuid.uuid4())
+    person_dict["is_active"] = True
+    person_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    if person_dict.get("start_date"):
+        person_dict["start_date"] = person_dict["start_date"].isoformat() if isinstance(person_dict["start_date"], datetime) else person_dict["start_date"]
+    await db.personnel.insert_one(person_dict.copy())
+    return person_dict
+
+@api_router.put("/personnel/{person_id}")
+async def update_personnel(person_id: str, person: PersonnelBase, current_user: dict = Depends(require_permission("finance_manage"))):
+    person_dict = person.model_dump()
+    if person_dict.get("start_date"):
+        person_dict["start_date"] = person_dict["start_date"].isoformat() if isinstance(person_dict["start_date"], datetime) else person_dict["start_date"]
+    result = await db.personnel.update_one({"id": person_id}, {"$set": person_dict})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Personel bulunamadı")
+    return {"message": "Personel güncellendi"}
+
+@api_router.delete("/personnel/{person_id}")
+async def delete_personnel(person_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.personnel.update_one({"id": person_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Personel bulunamadı")
+    return {"message": "Personel silindi"}
+
+# ==================== EXPENSES ROUTES ====================
+
+@api_router.get("/expenses")
+async def get_expenses(month: Optional[int] = None, year: Optional[int] = None, current_user: dict = Depends(require_permission("finance_view"))):
+    query = {"is_active": True}
+    expenses = await db.expenses.find(query, {"_id": 0}).sort("expense_date", -1).to_list(1000)
+    
+    # Filter by month/year if provided
+    if month and year:
+        filtered = []
+        for exp in expenses:
+            exp_date = datetime.fromisoformat(exp["expense_date"].replace("Z", "+00:00")) if isinstance(exp["expense_date"], str) else exp["expense_date"]
+            if exp_date.month == month and exp_date.year == year:
+                filtered.append(exp)
+        return filtered
+    
+    return expenses
+
+@api_router.post("/expenses")
+async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    exp_dict = expense.model_dump()
+    exp_dict["id"] = str(uuid.uuid4())
+    exp_dict["created_by"] = current_user["user_id"]
+    exp_dict["is_active"] = True
+    exp_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
+    
+    # Get category name
+    if expense.category_id:
+        cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
+        exp_dict["category_name"] = cat["name"] if cat else "Bilinmiyor"
+    
+    # Calculate TL amount
+    if exp_dict["currency"] == "USD":
+        exp_dict["amount_tl"] = exp_dict["amount"] * exp_dict["exchange_rate"]
+    else:
+        exp_dict["amount_tl"] = exp_dict["amount"]
+    
+    await db.expenses.insert_one(exp_dict.copy())
+    return exp_dict
+
+@api_router.delete("/expenses/{expense_id}")
+async def delete_expense(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Gider bulunamadı")
+    return {"message": "Gider silindi"}
+
+@api_router.get("/expenses/stats")
+async def get_expense_stats(current_user: dict = Depends(require_permission("finance_view"))):
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    expenses = await db.expenses.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    monthly_total = 0
+    yearly_total = 0
+    by_category = {}
+    
+    for exp in expenses:
+        exp_date = datetime.fromisoformat(exp["expense_date"].replace("Z", "+00:00")) if isinstance(exp["expense_date"], str) else exp["expense_date"]
+        amount_tl = exp.get("amount_tl", exp.get("amount", 0))
+        
+        if exp_date >= year_start:
+            yearly_total += amount_tl
+        
+        if exp_date >= month_start:
+            monthly_total += amount_tl
+            cat_name = exp.get("category_name", "Diğer")
+            by_category[cat_name] = by_category.get(cat_name, 0) + amount_tl
+    
+    return {
+        "monthly_total": monthly_total,
+        "yearly_total": yearly_total,
+        "by_category": by_category
+    }
+
+@api_router.get("/accounting/summary")
+async def get_accounting_summary(current_user: dict = Depends(require_permission("finance_view"))):
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # Get sales
+    sales = await db.sales.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    monthly_sales_tl = 0
+    monthly_profit_tl = 0
+    
+    for sale in sales:
+        sale_date = datetime.fromisoformat(sale["sale_date"].replace("Z", "+00:00")) if isinstance(sale["sale_date"], str) else sale["sale_date"]
+        if sale_date >= month_start:
+            monthly_sales_tl += sale.get("sale_amount_tl", 0)
+            monthly_profit_tl += sale.get("profit_tl", 0)
+    
+    # Get expenses
+    expenses = await db.expenses.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    monthly_expenses_tl = 0
+    
+    for exp in expenses:
+        exp_date = datetime.fromisoformat(exp["expense_date"].replace("Z", "+00:00")) if isinstance(exp["expense_date"], str) else exp["expense_date"]
+        if exp_date >= month_start:
+            monthly_expenses_tl += exp.get("amount_tl", exp.get("amount", 0))
+    
+    # Calculate net profit
+    net_profit = monthly_sales_tl - monthly_expenses_tl
+    
+    return {
+        "month": now.strftime("%B %Y"),
+        "total_income": monthly_sales_tl,
+        "total_expenses": monthly_expenses_tl,
+        "gross_profit": monthly_profit_tl,
+        "net_profit": net_profit
+    }
+
 # ==================== INIT DEFAULT DATA ====================
 
 @api_router.post("/init-data")
