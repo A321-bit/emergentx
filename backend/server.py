@@ -405,6 +405,15 @@ class CompanySettings(BaseModel):
     bank_iban: Optional[str] = None  # IBAN
     bank_swift: Optional[str] = None  # SWIFT kodu
 
+# Exchange Rate Settings (Kur Ayarları)
+class ExchangeRateSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "exchange_rate_settings"
+    usd_to_try: float = 34.0  # USD/TL kuru
+    eur_to_try: float = 37.0  # EUR/TL kuru
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_by: Optional[str] = None
+
 # ==================== SALES & ACCOUNTING MODELS ====================
 
 # Sales Model (Manuel Satış Girişi)
