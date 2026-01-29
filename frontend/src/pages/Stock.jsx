@@ -35,9 +35,11 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Stock = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     product_id: '',
@@ -52,11 +54,13 @@ const Stock = () => {
 
   const fetchData = async () => {
     try {
-      const [productsRes, movementsRes] = await Promise.all([
+      const [productsRes, categoriesRes, movementsRes] = await Promise.all([
         axios.get(`${API_URL}/api/products`),
+        axios.get(`${API_URL}/api/categories`),
         axios.get(`${API_URL}/api/stock-movements`)
       ]);
       setProducts(productsRes.data);
+      setCategories(categoriesRes.data);
       setMovements(movementsRes.data);
     } catch (error) {
       toast.error('Veriler yüklenemedi');
