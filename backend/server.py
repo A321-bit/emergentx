@@ -404,6 +404,83 @@ class CompanySettings(BaseModel):
     bank_iban: Optional[str] = None  # IBAN
     bank_swift: Optional[str] = None  # SWIFT kodu
 
+# ==================== SALES & ACCOUNTING MODELS ====================
+
+# Sales Model (Manuel Satış Girişi)
+class SaleBase(BaseModel):
+    customer_id: Optional[str] = None
+    customer_name: str
+    sale_amount_usd: float = 0
+    sale_amount_tl: float = 0
+    purchase_amount_usd: float = 0
+    purchase_amount_tl: float = 0
+    exchange_rate: float = 1  # USD/TL kuru
+    currency: str = "TRY"  # Ana para birimi
+    sale_date: datetime
+    notes: Optional[str] = None
+
+class SaleCreate(SaleBase):
+    pass
+
+class Sale(SaleBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    profit_usd: float = 0
+    profit_tl: float = 0
+    created_by: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Expense Category Model (Gider Kategorileri)
+class ExpenseCategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    is_recurring: bool = False  # Sabit gider mi?
+
+class ExpenseCategory(ExpenseCategoryBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Personnel Model (Personel)
+class PersonnelBase(BaseModel):
+    name: str
+    position: str
+    salary: float
+    currency: str = "TRY"
+    start_date: Optional[datetime] = None
+    phone: Optional[str] = None
+    notes: Optional[str] = None
+
+class Personnel(PersonnelBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Expense Model (Giderler)
+class ExpenseBase(BaseModel):
+    category_id: str
+    category_name: Optional[str] = None
+    amount: float
+    currency: str = "TRY"
+    exchange_rate: float = 1
+    amount_tl: float = 0
+    expense_date: datetime
+    description: Optional[str] = None
+    personnel_id: Optional[str] = None  # Personel gideri için
+
+class ExpenseCreate(ExpenseBase):
+    pass
+
+class Expense(ExpenseBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ==================== HELPER FUNCTIONS ====================
 
 def hash_password(password: str) -> str:
