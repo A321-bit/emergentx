@@ -2862,7 +2862,7 @@ async def get_expenses(month: Optional[int] = None, year: Optional[int] = None, 
 async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
     exp_dict = expense.model_dump()
     exp_dict["id"] = str(uuid.uuid4())
-    exp_dict["created_by"] = current_user["user_id"]
+    exp_dict["created_by"] = current_user["id"]
     exp_dict["is_active"] = True
     exp_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
@@ -2879,6 +2879,8 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(re
         exp_dict["amount_tl"] = exp_dict["amount"]
     
     await db.expenses.insert_one(exp_dict.copy())
+    if "_id" in exp_dict:
+        del exp_dict["_id"]
     return exp_dict
 
 @api_router.delete("/expenses/{expense_id}")
