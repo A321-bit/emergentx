@@ -120,54 +120,101 @@ const Finance = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="stat-card" data-testid="stat-total-revenue">
+        {/* Stock Value USD */}
+        <Card className="stat-card" data-testid="stat-stock-value-usd">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="data-label">Toplam Ciro</p>
-                <p className="stat-value mt-1 text-xl">{formatCurrency(stats?.total_revenue || 0)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{stats?.converted_quotes || 0} satış</p>
+                <p className="data-label">Stok Değeri (USD)</p>
+                <p className="stat-value mt-1 text-xl text-green-600">{formatUSD(stats?.stock_value_usd || 0)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Alış fiyatıyla</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-emerald-500" />
+              <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-green-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="stat-card" data-testid="stat-stock-value">
+        {/* Stock Value TL */}
+        <Card className="stat-card" data-testid="stat-stock-value-tl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="data-label">Stok Değeri</p>
-                <p className="stat-value mt-1 text-xl">{formatCurrency(stats?.stock_value || 0)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Maliyet bazlı</p>
+                <p className="data-label">Stok Değeri (TL)</p>
+                <p className="stat-value mt-1 text-xl text-blue-600">{formatTRY(stats?.stock_value_tl || 0)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Kur: {stats?.exchange_rate_usd || 34} TL</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <Package className="h-6 w-6 text-blue-500" />
+                <BadgeDollarSign className="h-6 w-6 text-blue-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="stat-card" data-testid="stat-potential-revenue">
+        {/* Potential Sale Value USD */}
+        <Card className="stat-card" data-testid="stat-sale-value-usd">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="data-label">Potansiyel Satış</p>
-                <p className="stat-value mt-1 text-xl">{formatCurrency(profitability.totalSale)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Liste fiyatlarıyla</p>
+                <p className="data-label">Satış Değeri (USD)</p>
+                <p className="stat-value mt-1 text-xl text-green-600">{formatUSD(stats?.stock_sale_value_usd || 0)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Liste fiyatıyla</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-orange-500" />
+              <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-emerald-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="stat-card" data-testid="stat-profit-margin">
+        {/* Potential Sale Value TL */}
+        <Card className="stat-card" data-testid="stat-sale-value-tl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
+              <div>
+                <p className="data-label">Satış Değeri (TL)</p>
+                <p className="stat-value mt-1 text-xl text-blue-600">{formatTRY(stats?.stock_sale_value_tl || 0)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Liste fiyatıyla</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <ArrowRightLeft className="h-6 w-6 text-orange-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Profit Summary Card */}
+      <Card className="bento-card">
+        <CardHeader>
+          <CardTitle className="section-title">Potansiyel Kar Özeti</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">Potansiyel Kar (USD)</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">
+                {formatUSD((stats?.stock_sale_value_usd || 0) - (stats?.stock_value_usd || 0))}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">Potansiyel Kar (TL)</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">
+                {formatTRY((stats?.stock_sale_value_tl || 0) - (stats?.stock_value_tl || 0))}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-primary/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Kar Marjı</p>
+              <p className="text-2xl font-bold text-primary mt-2">
+                %{stats?.stock_value_usd > 0 
+                  ? (((stats?.stock_sale_value_usd - stats?.stock_value_usd) / stats?.stock_value_usd) * 100).toFixed(1)
+                  : 0}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
               <div>
                 <p className="data-label">Kar Marjı</p>
                 <p className="stat-value mt-1 text-xl text-primary">%{profitability.profitMargin}</p>
