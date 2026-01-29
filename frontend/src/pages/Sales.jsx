@@ -589,6 +589,95 @@ const Sales = () => {
         </Card>
       )}
 
+      {/* Upcoming Checks Alert */}
+      {upcomingChecks && (upcomingChecks.overdue?.length > 0 || upcomingChecks.upcoming?.length > 0) && (
+        <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileCheck className="h-5 w-5 text-orange-600" />
+                Vadesi Gelen Çekler
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowChecks(!showChecks)}>
+                {showChecks ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          {showChecks && (
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
+                  <p className="text-xs text-red-700 dark:text-red-300">Gecikmiş Çekler</p>
+                  <p className="text-lg font-bold text-red-800 dark:text-red-200">
+                    {formatCurrency(upcomingChecks.total_overdue_amount)}
+                  </p>
+                  <p className="text-xs text-red-600">{upcomingChecks.overdue?.length || 0} adet</p>
+                </div>
+                <div className="bg-orange-100 dark:bg-orange-900/30 rounded-lg p-3">
+                  <p className="text-xs text-orange-700 dark:text-orange-300">Yaklaşan Çekler</p>
+                  <p className="text-lg font-bold text-orange-800 dark:text-orange-200">
+                    {formatCurrency(upcomingChecks.total_upcoming_amount)}
+                  </p>
+                  <p className="text-xs text-orange-600">{upcomingChecks.upcoming?.length || 0} adet</p>
+                </div>
+              </div>
+              
+              {/* Overdue checks */}
+              {upcomingChecks.overdue?.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-red-700">Gecikmiş Çekler:</p>
+                  {upcomingChecks.overdue.slice(0, 5).map((check, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-white dark:bg-slate-800 rounded p-2 text-sm">
+                      <div>
+                        <span className="font-medium">{check.customer_name}</span>
+                        {check.check_no && <span className="text-xs text-muted-foreground ml-1">#{check.check_no}</span>}
+                        <span className="text-xs text-red-600 ml-2">
+                          ({Math.abs(check.days_until_due)} gün gecikmiş)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-red-600">{formatCurrency(check.amount_tl)}</span>
+                        {canManage && (
+                          <Button size="sm" variant="outline" onClick={() => handleCollectCheck(check.sale_id, check.check_id)}>
+                            Tahsil Et
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Upcoming checks */}
+              {upcomingChecks.upcoming?.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  <p className="text-sm font-medium text-orange-700">Yaklaşan Vadeler:</p>
+                  {upcomingChecks.upcoming.slice(0, 5).map((check, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-white dark:bg-slate-800 rounded p-2 text-sm">
+                      <div>
+                        <span className="font-medium">{check.customer_name}</span>
+                        {check.check_no && <span className="text-xs text-muted-foreground ml-1">#{check.check_no}</span>}
+                        <span className="text-xs text-orange-600 ml-2">
+                          ({check.days_until_due} gün kaldı - {formatDate(check.due_date)})
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono">{formatCurrency(check.amount_tl)}</span>
+                        {canManage && (
+                          <Button size="sm" variant="outline" onClick={() => handleCollectCheck(check.sale_id, check.check_id)}>
+                            Tahsil Et
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
