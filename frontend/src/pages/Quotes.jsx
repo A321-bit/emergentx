@@ -551,7 +551,8 @@ const Quotes = () => {
                 <TableHead>Teklif No</TableHead>
                 <TableHead>Müşteri</TableHead>
                 <TableHead>Tarih</TableHead>
-                <TableHead className="text-right">Toplam</TableHead>
+                <TableHead className="text-right">USD Toplam</TableHead>
+                <TableHead className="text-right">TL Toplam</TableHead>
                 <TableHead>Durum</TableHead>
                 <TableHead>Oluşturan</TableHead>
                 <TableHead className="text-right">İşlemler</TableHead>
@@ -562,12 +563,16 @@ const Quotes = () => {
                 filteredQuotes.map((quote) => {
                   const statusInfo = getStatusInfo(quote.status);
                   const StatusIcon = statusInfo.icon;
+                  // USD ve TL tutarları - legacy support
+                  const totalUSD = quote.total_usd || (quote.total / (quote.exchange_rate || exchangeRate));
+                  const totalTL = quote.total_tl || quote.total;
                   return (
                     <TableRow key={quote.id}>
                       <TableCell className="font-mono font-medium">{quote.quote_number}</TableCell>
                       <TableCell>{quote.customer_name}</TableCell>
                       <TableCell>{formatDate(quote.created_at)}</TableCell>
-                      <TableCell className="text-right font-semibold">{formatTRY(quote.total)}</TableCell>
+                      <TableCell className="text-right font-semibold text-blue-600">{formatUSD(totalUSD)}</TableCell>
+                      <TableCell className="text-right font-semibold text-green-600">{formatTRY(totalTL)}</TableCell>
                       <TableCell>
                         <Badge className={cn("gap-1", statusInfo.color)}>
                           <StatusIcon className="h-3 w-3" />
@@ -591,14 +596,34 @@ const Quotes = () => {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          {canManage && quote.status === 'taslak' && (
+                          {/* Tüm düzenlenebilir durumlar için düzenleme butonu */}
+                          {canManage && !['onaylandi', 'satisa_dondu'].includes(quote.status) && (
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(quote)}
+                              title="Düzenle"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
+                          )}
+                          {/* Durum değiştirme dropdown */}
+                          {canApprove && (
+                            <Select 
+                              value={quote.status} 
+                              onValueChange={(newStatus) => handleStatusChange(quote.id, newStatus)}
+                            >
+                              <SelectTrigger className="w-8 h-8 p-0 border-0">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {STATUS_OPTIONS.map(opt => (
+                                  <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )}
                           {canApprove && quote.status === 'teklif_gonderildi' && (
                             <>
