@@ -70,6 +70,7 @@ PERMISSIONS = {
     "dealers_manage": "Bayi Ekleme/Düzenleme/Silme",
     "dealer_groups_manage": "Bayi Grubu Yönetimi",
     "finance_view": "Finans Raporları Görüntüleme",
+    "finance_manage": "Satış/Gider/Muhasebe Yönetimi",
     "settings_manage": "Sistem Ayarları",
     "customer_categories_manage": "Müşteri Kategorisi Yönetimi",
     "customer_sources_manage": "Müşteri Edinme Yeri Yönetimi",
