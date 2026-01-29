@@ -2624,6 +2624,465 @@ async def get_accounting_summary(current_user: dict = Depends(require_permission
         "net_profit": net_profit
     }
 
+# ==================== REPORTS API ====================
+
+@api_router.get("/reports/comprehensive")
+async def get_comprehensive_reports(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    period: Optional[str] = "monthly",  # daily, weekly, monthly, yearly
+    current_user: dict = Depends(require_permission("finance_view"))
+):
+    """Kapsamlı raporlar - tüm metrikleri döndürür"""
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Parse date filters
+    filter_start = None
+    filter_end = None
+    if start_date:
+        try:
+            filter_start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        except:
+            filter_start = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    if end_date:
+        try:
+            filter_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+        except:
+            filter_end = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            filter_end = filter_end.replace(hour=23, minute=59, second=59)
+    
+    # Period calculations
+    week_start = today_start - timedelta(days=today_start.weekday())
+    month_start = today_start.replace(day=1)
+    year_start = today_start.replace(month=1, day=1)
+    
+    # Get exchange rates
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
+    
+    # ==================== SALES DATA ====================
+    all_sales = await db.sales.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    def parse_sale_date(sale):
+        date_str = sale.get("sale_date")
+        if not date_str:
+            return None
+        try:
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        except:
+            return None
+    
+    # Filter sales by date range if provided
+    filtered_sales = all_sales
+    if filter_start or filter_end:
+        filtered_sales = []
+        for sale in all_sales:
+            sale_date = parse_sale_date(sale)
+            if sale_date:
+                if filter_start and sale_date < filter_start:
+                    continue
+                if filter_end and sale_date > filter_end:
+                    continue
+                filtered_sales.append(sale)
+    
+    # Calculate revenue by periods
+    daily_revenue = sum(s.get("sale_amount_tl", 0) for s in all_sales if parse_sale_date(s) and parse_sale_date(s) >= today_start)
+    weekly_revenue = sum(s.get("sale_amount_tl", 0) for s in all_sales if parse_sale_date(s) and parse_sale_date(s) >= week_start)
+    monthly_revenue = sum(s.get("sale_amount_tl", 0) for s in all_sales if parse_sale_date(s) and parse_sale_date(s) >= month_start)
+    yearly_revenue = sum(s.get("sale_amount_tl", 0) for s in all_sales if parse_sale_date(s) and parse_sale_date(s) >= year_start)
+    
+    # Total filtered revenue
+    filtered_revenue = sum(s.get("sale_amount_tl", 0) for s in filtered_sales)
+    filtered_cost = sum(s.get("purchase_amount_tl", 0) for s in filtered_sales)
+    filtered_profit = filtered_revenue - filtered_cost
+    
+    # Sales details for export (with user info)
+    sales_details = []
+    users_cache = {}
+    
+    for sale in filtered_sales:
+        user_id = sale.get("created_by")
+        user_name = sale.get("created_by_name", "Bilinmiyor")
+        
+        if user_id and user_id not in users_cache:
+            user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "name": True})
+            users_cache[user_id] = user_doc.get("name", "Bilinmiyor") if user_doc else "Bilinmiyor"
+        
+        if user_id:
+            user_name = users_cache.get(user_id, user_name)
+        
+        sales_details.append({
+            "id": sale.get("id"),
+            "date": sale.get("sale_date"),
+            "customer_name": sale.get("customer_name", ""),
+            "description": sale.get("description", ""),
+            "sale_amount_tl": sale.get("sale_amount_tl", 0),
+            "purchase_amount_tl": sale.get("purchase_amount_tl", 0),
+            "profit_tl": sale.get("sale_amount_tl", 0) - sale.get("purchase_amount_tl", 0),
+            "paid_amount_tl": sale.get("paid_amount_tl", 0),
+            "remaining_amount_tl": sale.get("remaining_amount_tl", 0),
+            "payment_status": sale.get("payment_status", ""),
+            "created_by": user_name
+        })
+    
+    # Sales by user (top performers)
+    sales_by_user = {}
+    for sale in all_sales:
+        user_name = sale.get("created_by_name", "Bilinmiyor")
+        if user_name not in sales_by_user:
+            sales_by_user[user_name] = {"total_revenue": 0, "sale_count": 0}
+        sales_by_user[user_name]["total_revenue"] += sale.get("sale_amount_tl", 0)
+        sales_by_user[user_name]["sale_count"] += 1
+    
+    top_performers = sorted(
+        [{"name": k, **v} for k, v in sales_by_user.items()],
+        key=lambda x: x["total_revenue"],
+        reverse=True
+    )[:10]
+    
+    # ==================== STOCK VALUE ====================
+    products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    stock_cost_usd = 0
+    stock_cost_tl = 0
+    stock_sale_usd = 0
+    stock_sale_tl = 0
+    
+    for p in products:
+        currency = p.get("currency", "USD").upper()
+        purchase_price = p.get("purchase_price", 0)
+        sale_price = p.get("sale_price", 0)
+        quantity = p.get("stock_quantity", 0)
+        
+        if currency == "USD":
+            stock_cost_usd += purchase_price * quantity
+            stock_sale_usd += sale_price * quantity
+        elif currency == "EUR":
+            stock_cost_usd += (purchase_price * eur_rate / usd_rate) * quantity
+            stock_sale_usd += (sale_price * eur_rate / usd_rate) * quantity
+        else:
+            stock_cost_tl += purchase_price * quantity
+            stock_sale_tl += sale_price * quantity
+    
+    stock_cost_total_tl = stock_cost_tl + (stock_cost_usd * usd_rate)
+    stock_sale_total_tl = stock_sale_tl + (stock_sale_usd * usd_rate)
+    stock_potential_profit_tl = stock_sale_total_tl - stock_cost_total_tl
+    
+    # ==================== EXPENSES ====================
+    all_expenses = await db.expenses.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    def parse_expense_date(exp):
+        date_str = exp.get("expense_date")
+        if not date_str:
+            return None
+        try:
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        except:
+            return None
+    
+    daily_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in all_expenses if parse_expense_date(e) and parse_expense_date(e) >= today_start)
+    weekly_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in all_expenses if parse_expense_date(e) and parse_expense_date(e) >= week_start)
+    monthly_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in all_expenses if parse_expense_date(e) and parse_expense_date(e) >= month_start)
+    yearly_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in all_expenses if parse_expense_date(e) and parse_expense_date(e) >= year_start)
+    
+    # Filtered expenses
+    filtered_expenses_list = all_expenses
+    if filter_start or filter_end:
+        filtered_expenses_list = []
+        for exp in all_expenses:
+            exp_date = parse_expense_date(exp)
+            if exp_date:
+                if filter_start and exp_date < filter_start:
+                    continue
+                if filter_end and exp_date > filter_end:
+                    continue
+                filtered_expenses_list.append(exp)
+    
+    filtered_expenses_total = sum(e.get("amount_tl", e.get("amount", 0)) for e in filtered_expenses_list)
+    
+    # ==================== PROFIT MARGIN ====================
+    total_revenue_all = sum(s.get("sale_amount_tl", 0) for s in all_sales)
+    total_cost_all = sum(s.get("purchase_amount_tl", 0) for s in all_sales)
+    total_profit_all = total_revenue_all - total_cost_all
+    profit_margin = (total_profit_all / total_revenue_all * 100) if total_revenue_all > 0 else 0
+    
+    # ==================== PAYMENTS & COLLECTIONS ====================
+    total_paid = sum(s.get("paid_amount_tl", 0) for s in all_sales)
+    total_remaining = sum(s.get("remaining_amount_tl", 0) for s in all_sales)
+    
+    # Upcoming collections (remaining payments)
+    upcoming_collections = []
+    for sale in all_sales:
+        remaining = sale.get("remaining_amount_tl", 0)
+        if remaining > 0:
+            upcoming_collections.append({
+                "id": sale.get("id"),
+                "customer_name": sale.get("customer_name", ""),
+                "amount_tl": remaining,
+                "sale_date": sale.get("sale_date"),
+                "description": sale.get("description", "")
+            })
+    
+    # Checks analysis
+    upcoming_checks = []
+    overdue_checks = []
+    total_upcoming_checks = 0
+    total_overdue_checks = 0
+    
+    for sale in all_sales:
+        checks = sale.get("checks")
+        if checks and isinstance(checks, list):
+            for check in checks:
+                if not check.get("is_collected"):
+                    check_data = {
+                        "sale_id": sale.get("id"),
+                        "customer_name": sale.get("customer_name", ""),
+                        "check_number": check.get("check_number", ""),
+                        "bank_name": check.get("bank_name", ""),
+                        "amount_tl": check.get("amount_tl", 0),
+                        "due_date": check.get("due_date")
+                    }
+                    
+                    due_date_str = check.get("due_date")
+                    if due_date_str:
+                        try:
+                            due_date = datetime.fromisoformat(due_date_str.replace("Z", "+00:00"))
+                            if due_date < now:
+                                overdue_checks.append(check_data)
+                                total_overdue_checks += check.get("amount_tl", 0)
+                            else:
+                                upcoming_checks.append(check_data)
+                                total_upcoming_checks += check.get("amount_tl", 0)
+                        except:
+                            upcoming_checks.append(check_data)
+                            total_upcoming_checks += check.get("amount_tl", 0)
+    
+    # Sort checks by due date
+    upcoming_checks.sort(key=lambda x: x.get("due_date", ""))
+    overdue_checks.sort(key=lambda x: x.get("due_date", ""), reverse=True)
+    
+    # ==================== QUOTES ====================
+    all_quotes = await db.quotes.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    def parse_quote_date(quote):
+        date_str = quote.get("created_at")
+        if not date_str:
+            return None
+        try:
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        except:
+            return None
+    
+    daily_quotes = len([q for q in all_quotes if parse_quote_date(q) and parse_quote_date(q) >= today_start])
+    weekly_quotes = len([q for q in all_quotes if parse_quote_date(q) and parse_quote_date(q) >= week_start])
+    monthly_quotes = len([q for q in all_quotes if parse_quote_date(q) and parse_quote_date(q) >= month_start])
+    yearly_quotes = len([q for q in all_quotes if parse_quote_date(q) and parse_quote_date(q) >= year_start])
+    total_quotes = len(all_quotes)
+    
+    # ==================== CUSTOMERS ====================
+    total_customers = await db.customers.count_documents({"is_active": True})
+    
+    # ==================== TOTAL SALES COUNT ====================
+    total_sales_count = len(all_sales)
+    
+    return {
+        # Revenue by period
+        "revenue": {
+            "daily": round(daily_revenue, 2),
+            "weekly": round(weekly_revenue, 2),
+            "monthly": round(monthly_revenue, 2),
+            "yearly": round(yearly_revenue, 2),
+            "filtered": round(filtered_revenue, 2),
+            "filtered_cost": round(filtered_cost, 2),
+            "filtered_profit": round(filtered_profit, 2)
+        },
+        
+        # Stock values
+        "stock": {
+            "cost_usd": round(stock_cost_usd, 2),
+            "cost_tl": round(stock_cost_total_tl, 2),
+            "sale_value_usd": round(stock_sale_usd, 2),
+            "sale_value_tl": round(stock_sale_total_tl, 2),
+            "potential_profit_tl": round(stock_potential_profit_tl, 2)
+        },
+        
+        # Expenses by period
+        "expenses": {
+            "daily": round(daily_expenses, 2),
+            "weekly": round(weekly_expenses, 2),
+            "monthly": round(monthly_expenses, 2),
+            "yearly": round(yearly_expenses, 2),
+            "filtered": round(filtered_expenses_total, 2)
+        },
+        
+        # Profit margin
+        "profit_margin": round(profit_margin, 2),
+        "total_profit": round(total_profit_all, 2),
+        
+        # Collections & Payments
+        "collections": {
+            "total_paid": round(total_paid, 2),
+            "total_remaining": round(total_remaining, 2),
+            "upcoming_list": upcoming_collections[:20],
+            "upcoming_checks": upcoming_checks[:20],
+            "upcoming_checks_total": round(total_upcoming_checks, 2),
+            "overdue_checks": overdue_checks[:20],
+            "overdue_checks_total": round(total_overdue_checks, 2)
+        },
+        
+        # Quotes by period
+        "quotes": {
+            "daily": daily_quotes,
+            "weekly": weekly_quotes,
+            "monthly": monthly_quotes,
+            "yearly": yearly_quotes,
+            "total": total_quotes
+        },
+        
+        # Counts
+        "total_customers": total_customers,
+        "total_sales": total_sales_count,
+        
+        # Top performers
+        "top_performers": top_performers,
+        
+        # Sales details for export
+        "sales_details": sales_details,
+        
+        # Exchange rates
+        "exchange_rates": {
+            "usd": usd_rate,
+            "eur": eur_rate
+        }
+    }
+
+@api_router.get("/reports/export-sales")
+async def export_sales_excel(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(require_permission("finance_view"))
+):
+    """Satış raporlarını Excel olarak dışa aktar"""
+    
+    # Get all sales
+    all_sales = await db.sales.find({"is_active": True}, {"_id": 0}).sort("sale_date", -1).to_list(10000)
+    
+    # Filter by date if provided
+    filtered_sales = all_sales
+    if start_date or end_date:
+        filtered_sales = []
+        filter_start = None
+        filter_end = None
+        
+        if start_date:
+            try:
+                filter_start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            except:
+                filter_start = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        if end_date:
+            try:
+                filter_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            except:
+                filter_end = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                filter_end = filter_end.replace(hour=23, minute=59, second=59)
+        
+        for sale in all_sales:
+            date_str = sale.get("sale_date")
+            if date_str:
+                try:
+                    sale_date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                    if filter_start and sale_date < filter_start:
+                        continue
+                    if filter_end and sale_date > filter_end:
+                        continue
+                    filtered_sales.append(sale)
+                except:
+                    continue
+    
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Satış Raporu"
+    
+    # Header style
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Headers
+    headers = ["Tarih", "Müşteri", "Açıklama", "Satış Tutarı (TL)", "Maliyet (TL)", "Kar (TL)", "Tahsil Edilen (TL)", "Kalan (TL)", "Durum", "Satışı Yapan"]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Data rows
+    for row_idx, sale in enumerate(filtered_sales, 2):
+        # Format date
+        date_str = sale.get("sale_date", "")
+        if date_str:
+            try:
+                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                date_str = dt.strftime("%d.%m.%Y")
+            except:
+                pass
+        
+        row_data = [
+            date_str,
+            sale.get("customer_name", ""),
+            sale.get("description", ""),
+            sale.get("sale_amount_tl", 0),
+            sale.get("purchase_amount_tl", 0),
+            sale.get("sale_amount_tl", 0) - sale.get("purchase_amount_tl", 0),
+            sale.get("paid_amount_tl", 0),
+            sale.get("remaining_amount_tl", 0),
+            sale.get("payment_status", ""),
+            sale.get("created_by_name", "")
+        ]
+        
+        for col, value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_idx, column=col, value=value)
+            cell.border = thin_border
+            if col >= 4 and col <= 8:
+                cell.number_format = '#,##0.00'
+    
+    # Set column widths
+    column_widths = [12, 25, 30, 15, 15, 15, 15, 15, 15, 20]
+    for col, width in enumerate(column_widths, 1):
+        ws.column_dimensions[chr(64 + col)].width = width
+    
+    # Summary section
+    summary_row = len(filtered_sales) + 3
+    ws.cell(row=summary_row, column=1, value="TOPLAM").font = Font(bold=True)
+    ws.cell(row=summary_row, column=4, value=sum(s.get("sale_amount_tl", 0) for s in filtered_sales)).font = Font(bold=True)
+    ws.cell(row=summary_row, column=5, value=sum(s.get("purchase_amount_tl", 0) for s in filtered_sales)).font = Font(bold=True)
+    ws.cell(row=summary_row, column=6, value=sum(s.get("sale_amount_tl", 0) - s.get("purchase_amount_tl", 0) for s in filtered_sales)).font = Font(bold=True)
+    ws.cell(row=summary_row, column=7, value=sum(s.get("paid_amount_tl", 0) for s in filtered_sales)).font = Font(bold=True)
+    ws.cell(row=summary_row, column=8, value=sum(s.get("remaining_amount_tl", 0) for s in filtered_sales)).font = Font(bold=True)
+    
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # Generate filename
+    filename = f"satis_raporu_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 # ==================== INIT DEFAULT DATA ====================
 
 @api_router.post("/init-data")
