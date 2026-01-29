@@ -91,6 +91,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('finance_view') || hasPermission('finance_manage')) {
     navItems.push({ path: '/accounting', icon: Calculator, label: 'Muhasebe' });
   }
+  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
+    navItems.push({ path: '/employees', icon: UserCog, label: 'Personel' });
+  }
   if (hasPermission('finance_view')) {
     navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
   }
