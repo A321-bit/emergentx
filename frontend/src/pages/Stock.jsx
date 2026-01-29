@@ -148,41 +148,71 @@ const Stock = () => {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {['panel', 'inverter', 'batarya', 'aksesuar'].map((category) => {
-          const categoryProducts = products.filter(p => p.category === category);
-          const totalStock = categoryProducts.reduce((sum, p) => sum + p.stock_quantity, 0);
-          return (
-            <Card key={category} className="stat-card">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="data-label">{getCategoryLabel(category)}</p>
-                    <p className="stat-value mt-1">{totalStock}</p>
-                    <p className="text-xs text-muted-foreground">{categoryProducts.length} ürün çeşidi</p>
+      {/* Category Stats - Dynamic */}
+      {categoryStats.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {categoryStats.map((stat, index) => {
+            const colors = [
+              { bg: 'bg-orange-500/10', text: 'text-orange-500', border: 'border-orange-200' },
+              { bg: 'bg-cyan-500/10', text: 'text-cyan-500', border: 'border-cyan-200' },
+              { bg: 'bg-violet-500/10', text: 'text-violet-500', border: 'border-violet-200' },
+              { bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-200' },
+              { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-200' },
+              { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-200' },
+            ];
+            const colorSet = colors[index % colors.length];
+            
+            return (
+              <Card 
+                key={stat.id}
+                className={cn(
+                  "cursor-pointer transition-all hover:shadow-md",
+                  categoryFilter === stat.id ? `border-2 ${colorSet.border} bg-primary/5` : ""
+                )}
+                onClick={() => setCategoryFilter(stat.id)}
+                data-testid={`category-stat-${stat.id}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Package className={cn("h-4 w-4", colorSet.text)} />
+                        <p className="text-xs font-medium text-muted-foreground truncate">
+                          {stat.name}
+                        </p>
+                      </div>
+                      <p className="text-2xl font-bold">{stat.totalQuantity}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Boxes className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">
+                          {stat.productCount} ürün çeşidi
+                        </p>
+                      </div>
+                    </div>
+                    <div className={cn("h-10 w-10 rounded-full flex items-center justify-center", colorSet.bg)}>
+                      <Package className={cn("h-5 w-5", colorSet.text)} />
+                    </div>
                   </div>
-                  <div className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center",
-                    category === 'panel' && "bg-orange-500/10",
-                    category === 'inverter' && "bg-cyan-500/10",
-                    category === 'batarya' && "bg-violet-500/10",
-                    category === 'aksesuar' && "bg-slate-500/10"
-                  )}>
-                    <Package className={cn(
-                      "h-5 w-5",
-                      category === 'panel' && "text-orange-500",
-                      category === 'inverter' && "text-cyan-500",
-                      category === 'batarya' && "text-violet-500",
-                      category === 'aksesuar' && "text-slate-500"
-                    )} />
-                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {categoryFilter !== 'all' && (
+            <Card 
+              className="cursor-pointer transition-all hover:shadow-md border-dashed"
+              onClick={() => setCategoryFilter('all')}
+              data-testid="clear-category-filter"
+            >
+              <CardContent className="p-4 flex items-center justify-center h-full">
+                <div className="text-center">
+                  <X className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Filtreyi Temizle</p>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Products Stock Table */}
       <Card>
