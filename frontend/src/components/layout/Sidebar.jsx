@@ -94,6 +94,12 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('hr_view') || hasPermission('hr_manage')) {
     navItems.push({ path: '/employees', icon: UserCog, label: 'Personel' });
   }
+  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
+    navItems.push({ path: '/attendance', icon: Calendar, label: 'Puantaj' });
+  }
+  if (hasPermission('payroll_view') || hasPermission('payroll_manage')) {
+    navItems.push({ path: '/payroll', icon: Banknote, label: 'Bordro' });
+  }
   if (hasPermission('finance_view')) {
     navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
   }
