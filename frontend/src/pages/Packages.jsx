@@ -226,6 +226,7 @@ const Packages = () => {
     setSelectedProduct('');
     setSelectedQuantity(1);
     setProductSearchTerm('');
+    setShowSearchResults(false);
   };
 
   const filteredPackages = packages.filter(pkg =>
