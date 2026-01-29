@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -26,35 +27,69 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Pencil, Trash2, TrendingUp, DollarSign, Calendar, Search, RefreshCw } from 'lucide-react';
+import { 
+  Plus, Pencil, Trash2, TrendingUp, DollarSign, Calendar, Search, RefreshCw,
+  CreditCard, Banknote, Building, FileCheck, Clock, AlertTriangle, CheckCircle2,
+  Receipt, ChevronDown, ChevronUp
+} from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Payment method icons and labels
+const PAYMENT_METHODS = {
+  nakit: { label: 'Nakit', icon: Banknote, color: 'text-green-600' },
+  kart: { label: 'Kredi/Banka Kartı', icon: CreditCard, color: 'text-blue-600' },
+  havale: { label: 'Havale/EFT', icon: Building, color: 'text-purple-600' },
+  cek: { label: 'Çek', icon: FileCheck, color: 'text-orange-600' },
+  vadeli: { label: 'Vadeli', icon: Clock, color: 'text-amber-600' },
+  diger: { label: 'Diğer', icon: Receipt, color: 'text-gray-600' }
+};
+
+const PAYMENT_STATUS = {
+  odendi: { label: 'Ödendi', color: 'bg-green-100 text-green-800' },
+  bekliyor: { label: 'Bekliyor', color: 'bg-yellow-100 text-yellow-800' },
+  kismi: { label: 'Kısmi Ödeme', color: 'bg-blue-100 text-blue-800' },
+  gecikti: { label: 'Gecikmiş', color: 'bg-red-100 text-red-800' }
+};
 
 const Sales = () => {
   const { user } = useAuth();
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [stats, setStats] = useState(null);
+  const [upcomingPayments, setUpcomingPayments] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState(null);
+  const [selectedSaleForPayment, setSelectedSaleForPayment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statsPeriod, setStatsPeriod] = useState('monthly');
   const [systemExchangeRate, setSystemExchangeRate] = useState(34.0);
+  const [showUpcoming, setShowUpcoming] = useState(true);
   
   const [formData, setFormData] = useState({
     customer_id: '',
     customer_name: '',
-    input_currency: 'USD', // Hangi para birimi cinsinden giriş yapılıyor
+    input_currency: 'USD',
     sale_amount_usd: '',
     sale_amount_tl: '',
     purchase_amount_usd: '',
     purchase_amount_tl: '',
     exchange_rate: '34.00',
     sale_date: new Date().toISOString().split('T')[0],
+    notes: '',
+    payment_method: 'nakit',
+    paid_amount_tl: '',
+    due_date: ''
+  });
+
+  const [paymentFormData, setPaymentFormData] = useState({
+    amount_tl: '',
+    payment_method: 'nakit',
+    payment_date: new Date().toISOString().split('T')[0],
     notes: ''
   });
 
@@ -63,6 +98,7 @@ const Sales = () => {
   useEffect(() => {
     fetchData();
     fetchExchangeRate();
+    fetchUpcomingPayments();
   }, []);
 
   const fetchData = async () => {
@@ -93,19 +129,27 @@ const Sales = () => {
     }
   };
 
+  const fetchUpcomingPayments = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/sales/upcoming-payments`);
+      setUpcomingPayments(response.data);
+    } catch (error) {
+      console.error('Yaklaşan tahsilatlar alınamadı');
+    }
+  };
+
   const handleInputCurrencyChange = (currency) => {
-    // Para birimi değiştiğinde diğer alanları temizle
     setFormData(prev => ({ 
       ...prev, 
       input_currency: currency,
       sale_amount_usd: '',
       sale_amount_tl: '',
       purchase_amount_usd: '',
-      purchase_amount_tl: ''
+      purchase_amount_tl: '',
+      paid_amount_tl: ''
     }));
   };
 
-  // USD girişi -> TL'ye çevir
   const handleUsdInput = (field, value) => {
     const numValue = parseFloat(value) || 0;
     const rate = parseFloat(formData.exchange_rate) || 1;
@@ -125,7 +169,6 @@ const Sales = () => {
     }
   };
 
-  // TL girişi -> USD'ye çevir
   const handleTlInput = (field, value) => {
     const numValue = parseFloat(value) || 0;
     const rate = parseFloat(formData.exchange_rate) || 1;
@@ -148,7 +191,6 @@ const Sales = () => {
   const handleRateChange = (rate) => {
     const numRate = parseFloat(rate) || 1;
     
-    // Giriş türüne göre hesaplama yap
     if (formData.input_currency === 'USD') {
       const saleUsd = parseFloat(formData.sale_amount_usd) || 0;
       const purchaseUsd = parseFloat(formData.purchase_amount_usd) || 0;
@@ -193,7 +235,10 @@ const Sales = () => {
       purchase_amount_tl: parseFloat(formData.purchase_amount_tl) || 0,
       exchange_rate: parseFloat(formData.exchange_rate) || 1,
       sale_date: new Date(formData.sale_date).toISOString(),
-      notes: formData.notes
+      notes: formData.notes,
+      payment_method: formData.payment_method,
+      paid_amount_tl: parseFloat(formData.paid_amount_tl) || 0,
+      due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null
     };
     
     try {
@@ -207,9 +252,54 @@ const Sales = () => {
       setIsModalOpen(false);
       resetForm();
       fetchData();
+      fetchUpcomingPayments();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'İşlem başarısız');
     }
+  };
+
+  const handleAddPayment = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedSaleForPayment || !paymentFormData.amount_tl) {
+      toast.error('Tutar zorunludur');
+      return;
+    }
+    
+    try {
+      await axios.post(`${API_URL}/api/sales/${selectedSaleForPayment.id}/payments`, {
+        sale_id: selectedSaleForPayment.id,
+        amount_tl: parseFloat(paymentFormData.amount_tl),
+        payment_method: paymentFormData.payment_method,
+        payment_date: new Date(paymentFormData.payment_date).toISOString(),
+        notes: paymentFormData.notes
+      });
+      
+      toast.success('Tahsilat kaydedildi');
+      setIsPaymentModalOpen(false);
+      setSelectedSaleForPayment(null);
+      setPaymentFormData({
+        amount_tl: '',
+        payment_method: 'nakit',
+        payment_date: new Date().toISOString().split('T')[0],
+        notes: ''
+      });
+      fetchData();
+      fetchUpcomingPayments();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Tahsilat kaydedilemedi');
+    }
+  };
+
+  const openPaymentModal = (sale) => {
+    setSelectedSaleForPayment(sale);
+    setPaymentFormData({
+      amount_tl: sale.remaining_amount_tl?.toString() || '',
+      payment_method: 'nakit',
+      payment_date: new Date().toISOString().split('T')[0],
+      notes: ''
+    });
+    setIsPaymentModalOpen(true);
   };
 
   const handleEdit = (sale) => {
@@ -224,7 +314,10 @@ const Sales = () => {
       purchase_amount_tl: sale.purchase_amount_tl?.toString() || '',
       exchange_rate: sale.exchange_rate?.toString() || systemExchangeRate.toString(),
       sale_date: sale.sale_date?.split('T')[0] || '',
-      notes: sale.notes || ''
+      notes: sale.notes || '',
+      payment_method: sale.payment_method || 'nakit',
+      paid_amount_tl: sale.paid_amount_tl?.toString() || '',
+      due_date: sale.due_date?.split('T')[0] || ''
     });
     setIsModalOpen(true);
   };
@@ -236,6 +329,7 @@ const Sales = () => {
       await axios.delete(`${API_URL}/api/sales/${id}`);
       toast.success('Satış silindi');
       fetchData();
+      fetchUpcomingPayments();
     } catch (error) {
       toast.error('Silme başarısız');
     }
@@ -253,7 +347,10 @@ const Sales = () => {
       purchase_amount_tl: '',
       exchange_rate: systemExchangeRate.toString(),
       sale_date: new Date().toISOString().split('T')[0],
-      notes: ''
+      notes: '',
+      payment_method: 'nakit',
+      paid_amount_tl: '',
+      due_date: ''
     });
   };
 
@@ -268,11 +365,19 @@ const Sales = () => {
     return new Date(dateStr).toLocaleDateString('tr-TR');
   };
 
+  const getPaymentStatusBadge = (status) => {
+    const statusInfo = PAYMENT_STATUS[status] || PAYMENT_STATUS.bekliyor;
+    return <Badge className={`${statusInfo.color} text-xs`}>{statusInfo.label}</Badge>;
+  };
+
   const filteredSales = sales.filter(sale => 
     sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const currentStats = stats?.[statsPeriod] || {};
+
+  // Calculate remaining amount in form
+  const calculatedRemaining = (parseFloat(formData.sale_amount_tl) || 0) - (parseFloat(formData.paid_amount_tl) || 0);
 
   if (loading) {
     return (
@@ -297,6 +402,95 @@ const Sales = () => {
           </Button>
         )}
       </div>
+
+      {/* Upcoming Payments Alert */}
+      {upcomingPayments && (upcomingPayments.overdue?.length > 0 || upcomingPayments.upcoming?.length > 0) && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                Yaklaşan Tahsilatlar
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowUpcoming(!showUpcoming)}>
+                {showUpcoming ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          {showUpcoming && (
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
+                  <p className="text-xs text-red-700 dark:text-red-300">Gecikmiş</p>
+                  <p className="text-lg font-bold text-red-800 dark:text-red-200">
+                    {formatCurrency(upcomingPayments.total_overdue_amount)}
+                  </p>
+                  <p className="text-xs text-red-600">{upcomingPayments.overdue?.length || 0} adet</p>
+                </div>
+                <div className="bg-amber-100 dark:bg-amber-900/30 rounded-lg p-3">
+                  <p className="text-xs text-amber-700 dark:text-amber-300">7 Gün İçinde</p>
+                  <p className="text-lg font-bold text-amber-800 dark:text-amber-200">
+                    {formatCurrency(upcomingPayments.total_upcoming_amount)}
+                  </p>
+                  <p className="text-xs text-amber-600">{upcomingPayments.upcoming?.length || 0} adet</p>
+                </div>
+              </div>
+              
+              {/* Overdue list */}
+              {upcomingPayments.overdue?.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-red-700">Gecikmiş Tahsilatlar:</p>
+                  {upcomingPayments.overdue.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center justify-between bg-white dark:bg-slate-800 rounded p-2 text-sm">
+                      <div>
+                        <span className="font-medium">{item.customer_name}</span>
+                        <span className="text-xs text-red-600 ml-2">
+                          ({Math.abs(item.days_until_due)} gün gecikmiş)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-red-600">{formatCurrency(item.remaining_amount_tl)}</span>
+                        {canManage && (
+                          <Button size="sm" variant="outline" onClick={() => openPaymentModal(item)}>
+                            Tahsil Et
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Upcoming list */}
+              {upcomingPayments.upcoming?.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  <p className="text-sm font-medium text-amber-700">Yaklaşan Vadeler:</p>
+                  {upcomingPayments.upcoming.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center justify-between bg-white dark:bg-slate-800 rounded p-2 text-sm">
+                      <div>
+                        <span className="font-medium">{item.customer_name}</span>
+                        {item.days_until_due !== null && (
+                          <span className="text-xs text-amber-600 ml-2">
+                            ({item.days_until_due} gün kaldı)
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono">{formatCurrency(item.remaining_amount_tl)}</span>
+                        {canManage && (
+                          <Button size="sm" variant="outline" onClick={() => openPaymentModal(item)}>
+                            Tahsil Et
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -383,41 +577,56 @@ const Sales = () => {
               <TableRow>
                 <TableHead>Tarih</TableHead>
                 <TableHead>Müşteri</TableHead>
-                <TableHead className="text-right">Satış (USD)</TableHead>
+                <TableHead>Ödeme</TableHead>
                 <TableHead className="text-right">Satış (TL)</TableHead>
-                <TableHead className="text-right">Alış (USD)</TableHead>
-                <TableHead className="text-right">Alış (TL)</TableHead>
-                <TableHead className="text-right">Kar (TL)</TableHead>
+                <TableHead className="text-right">Ödenen</TableHead>
+                <TableHead className="text-right">Kalan</TableHead>
+                <TableHead className="text-center">Durum</TableHead>
+                <TableHead>Vade</TableHead>
                 {canManage && <TableHead className="text-right">İşlemler</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSales.map((sale) => (
-                <TableRow key={sale.id}>
-                  <TableCell className="text-sm">{formatDate(sale.sale_date)}</TableCell>
-                  <TableCell className="font-medium">{sale.customer_name}</TableCell>
-                  <TableCell className="text-right font-mono">{formatCurrency(sale.sale_amount_usd, 'USD')}</TableCell>
-                  <TableCell className="text-right font-mono">{formatCurrency(sale.sale_amount_tl)}</TableCell>
-                  <TableCell className="text-right font-mono text-muted-foreground">{formatCurrency(sale.purchase_amount_usd, 'USD')}</TableCell>
-                  <TableCell className="text-right font-mono text-muted-foreground">{formatCurrency(sale.purchase_amount_tl)}</TableCell>
-                  <TableCell className="text-right font-mono text-green-600 font-medium">{formatCurrency(sale.profit_tl)}</TableCell>
-                  {canManage && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(sale)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(sale.id)} className="text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+              {filteredSales.map((sale) => {
+                const PaymentIcon = PAYMENT_METHODS[sale.payment_method]?.icon || Receipt;
+                return (
+                  <TableRow key={sale.id}>
+                    <TableCell className="text-sm">{formatDate(sale.sale_date)}</TableCell>
+                    <TableCell className="font-medium">{sale.customer_name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <PaymentIcon className={`h-4 w-4 ${PAYMENT_METHODS[sale.payment_method]?.color || ''}`} />
+                        <span className="text-xs">{PAYMENT_METHODS[sale.payment_method]?.label || sale.payment_method}</span>
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    <TableCell className="text-right font-mono">{formatCurrency(sale.sale_amount_tl)}</TableCell>
+                    <TableCell className="text-right font-mono text-green-600">{formatCurrency(sale.paid_amount_tl || 0)}</TableCell>
+                    <TableCell className="text-right font-mono text-red-600">{formatCurrency(sale.remaining_amount_tl || sale.sale_amount_tl)}</TableCell>
+                    <TableCell className="text-center">{getPaymentStatusBadge(sale.payment_status)}</TableCell>
+                    <TableCell className="text-sm">{sale.due_date ? formatDate(sale.due_date) : '-'}</TableCell>
+                    {canManage && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {(sale.remaining_amount_tl > 0 || !sale.paid_amount_tl) && (
+                            <Button variant="ghost" size="icon" onClick={() => openPaymentModal(sale)} title="Tahsilat Ekle">
+                              <Receipt className="h-4 w-4 text-green-600" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(sale)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(sale.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
               {filteredSales.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Satış kaydı bulunamadı
                   </TableCell>
                 </TableRow>
@@ -429,41 +638,58 @@ const Sales = () => {
 
       {/* Sales Cards - Mobile */}
       <div className="sm:hidden space-y-3">
-        {filteredSales.map((sale) => (
-          <Card key={sale.id} className="p-4">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="font-medium">{sale.customer_name}</p>
-                <p className="text-xs text-muted-foreground">{formatDate(sale.sale_date)}</p>
+        {filteredSales.map((sale) => {
+          const PaymentIcon = PAYMENT_METHODS[sale.payment_method]?.icon || Receipt;
+          return (
+            <Card key={sale.id} className="p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="font-medium">{sale.customer_name}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(sale.sale_date)}</p>
+                </div>
+                {getPaymentStatusBadge(sale.payment_status)}
               </div>
-              <span className="text-sm font-bold text-green-600">{formatCurrency(sale.profit_tl)}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">Satış USD</p>
-                <p className="font-mono">{formatCurrency(sale.sale_amount_usd, 'USD')}</p>
+              <div className="grid grid-cols-3 gap-2 text-sm mb-3">
+                <div>
+                  <p className="text-muted-foreground text-xs">Satış</p>
+                  <p className="font-mono">{formatCurrency(sale.sale_amount_tl)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Ödenen</p>
+                  <p className="font-mono text-green-600">{formatCurrency(sale.paid_amount_tl || 0)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Kalan</p>
+                  <p className="font-mono text-red-600">{formatCurrency(sale.remaining_amount_tl || sale.sale_amount_tl)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Satış TL</p>
-                <p className="font-mono">{formatCurrency(sale.sale_amount_tl)}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                <PaymentIcon className={`h-4 w-4 ${PAYMENT_METHODS[sale.payment_method]?.color || ''}`} />
+                {PAYMENT_METHODS[sale.payment_method]?.label}
+                {sale.due_date && <span className="ml-auto">Vade: {formatDate(sale.due_date)}</span>}
               </div>
-            </div>
-            {canManage && (
-              <div className="flex justify-end gap-2 mt-3 pt-3 border-t">
-                <Button variant="outline" size="sm" onClick={() => handleEdit(sale)}>
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Düzenle
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDelete(sale.id)} className="text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </Card>
-        ))}
+              {canManage && (
+                <div className="flex justify-end gap-2 pt-3 border-t">
+                  {(sale.remaining_amount_tl > 0 || !sale.paid_amount_tl) && (
+                    <Button variant="outline" size="sm" onClick={() => openPaymentModal(sale)}>
+                      <Receipt className="h-4 w-4 mr-1" />
+                      Tahsil Et
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(sale)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(sale.id)} className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Sale Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -500,7 +726,7 @@ const Sales = () => {
               />
             </div>
 
-            {/* Currency Selection & Exchange Rate */}
+            {/* Currency Selection */}
             <div className="space-y-3">
               <Label>Giriş Para Birimi</Label>
               <div className="flex gap-2">
@@ -522,11 +748,6 @@ const Sales = () => {
                   ₺ TL
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {formData.input_currency === 'USD' 
-                  ? 'USD cinsinden girin, TL otomatik hesaplanır' 
-                  : 'TL cinsinden girin, USD otomatik hesaplanır'}
-              </p>
             </div>
 
             {/* Exchange Rate */}
@@ -540,14 +761,14 @@ const Sales = () => {
                   onChange={(e) => handleRateChange(e.target.value)}
                   className="flex-1"
                 />
-                <Button type="button" variant="outline" onClick={useSystemRate} title="Güncel kuru kullan">
+                <Button type="button" variant="outline" onClick={useSystemRate}>
                   <RefreshCw className="h-4 w-4 mr-1" />
                   {systemExchangeRate}
                 </Button>
               </div>
             </div>
 
-            {/* Sale Amount - USD input mode */}
+            {/* Sale Amount */}
             {formData.input_currency === 'USD' ? (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -568,13 +789,7 @@ const Sales = () => {
                   <Label>Satış Tutarı (TL)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.sale_amount_tl}
-                      readOnly
-                      className="pl-7 bg-muted"
-                    />
+                    <Input type="number" value={formData.sale_amount_tl} readOnly className="pl-7 bg-muted" />
                   </div>
                 </div>
               </div>
@@ -598,13 +813,7 @@ const Sales = () => {
                   <Label>Satış Tutarı (USD)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.sale_amount_usd}
-                      readOnly
-                      className="pl-7 bg-muted"
-                    />
+                    <Input type="number" value={formData.sale_amount_usd} readOnly className="pl-7 bg-muted" />
                   </div>
                 </div>
               </div>
@@ -631,13 +840,7 @@ const Sales = () => {
                   <Label>Alış/Maliyet (TL)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.purchase_amount_tl}
-                      readOnly
-                      className="pl-7 bg-muted"
-                    />
+                    <Input type="number" value={formData.purchase_amount_tl} readOnly className="pl-7 bg-muted" />
                   </div>
                 </div>
               </div>
@@ -661,19 +864,76 @@ const Sales = () => {
                   <Label>Alış/Maliyet (USD)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.purchase_amount_usd}
-                      readOnly
-                      className="pl-7 bg-muted"
-                    />
+                    <Input type="number" value={formData.purchase_amount_usd} readOnly className="pl-7 bg-muted" />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Date */}
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label>Ödeme Yöntemi</Label>
+              <Select value={formData.payment_method} onValueChange={(val) => setFormData(prev => ({ ...prev, payment_method: val }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PAYMENT_METHODS).map(([key, { label, icon: Icon }]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        {label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment & Due Date */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Ödenen Tutar (TL)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={formData.paid_amount_tl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, paid_amount_tl: e.target.value }))}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Vade Tarihi</Label>
+                <Input
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Remaining Amount Preview */}
+            {formData.sale_amount_tl && (
+              <div className={`p-3 rounded-lg ${calculatedRemaining > 0 ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
+                <div className="flex justify-between text-sm">
+                  <span>Kalan Tutar:</span>
+                  <span className={`font-bold ${calculatedRemaining > 0 ? 'text-amber-700' : 'text-green-700'}`}>
+                    {formatCurrency(calculatedRemaining)}
+                  </span>
+                </div>
+                {calculatedRemaining <= 0 && (
+                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Tam ödeme yapıldı
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Sale Date */}
             <div className="space-y-2">
               <Label>Satış Tarihi</Label>
               <Input
@@ -693,20 +953,93 @@ const Sales = () => {
               />
             </div>
 
-            {/* Profit Preview */}
-            {(formData.sale_amount_tl && formData.purchase_amount_tl) && (
-              <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <p className="text-sm text-green-800 dark:text-green-300">
-                  Tahmini Kar: <strong>{formatCurrency(parseFloat(formData.sale_amount_tl || 0) - parseFloat(formData.purchase_amount_tl || 0))}</strong>
-                </p>
-              </div>
-            )}
-
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>İptal</Button>
               <Button type="submit">{editingSale ? 'Güncelle' : 'Ekle'}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Payment Modal */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tahsilat Ekle</DialogTitle>
+          </DialogHeader>
+          {selectedSaleForPayment && (
+            <form onSubmit={handleAddPayment} className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="font-medium">{selectedSaleForPayment.customer_name}</p>
+                <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Toplam</p>
+                    <p className="font-mono">{formatCurrency(selectedSaleForPayment.sale_amount_tl)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Kalan</p>
+                    <p className="font-mono text-red-600">{formatCurrency(selectedSaleForPayment.remaining_amount_tl)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tahsilat Tutarı (TL) *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₺</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={paymentFormData.amount_tl}
+                    onChange={(e) => setPaymentFormData(prev => ({ ...prev, amount_tl: e.target.value }))}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Ödeme Yöntemi</Label>
+                <Select value={paymentFormData.payment_method} onValueChange={(val) => setPaymentFormData(prev => ({ ...prev, payment_method: val }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PAYMENT_METHODS).map(([key, { label, icon: Icon }]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tahsilat Tarihi</Label>
+                <Input
+                  type="date"
+                  value={paymentFormData.payment_date}
+                  onChange={(e) => setPaymentFormData(prev => ({ ...prev, payment_date: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Not</Label>
+                <Input
+                  value={paymentFormData.notes}
+                  onChange={(e) => setPaymentFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Opsiyonel"
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsPaymentModalOpen(false)}>İptal</Button>
+                <Button type="submit">Tahsilat Kaydet</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
