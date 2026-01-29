@@ -133,15 +133,32 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="stat-card" data-testid="stat-stock-value">
+            {/* Stock Value - USD */}
+            <Card className="stat-card" data-testid="stat-stock-value-usd">
               <CardContent className="p-3 sm:p-5">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Stok Değeri</p>
-                    <p className="text-sm sm:text-lg font-bold mt-1 truncate">{formatCurrency(stats?.stock_value || 0)}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Stok Değeri (USD)</p>
+                    <p className="text-sm sm:text-lg font-bold mt-1 truncate text-green-600">{formatUSD(stats?.stock_value_usd || 0)}</p>
                   </div>
                   <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0 ml-2">
-                    <Boxes className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
+                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stock Value - TL */}
+            <Card className="stat-card" data-testid="stat-stock-value-tl">
+              <CardContent className="p-3 sm:p-5">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Stok Değeri (TL)</p>
+                    <p className="text-sm sm:text-lg font-bold mt-1 truncate text-blue-600">{formatTRY(stats?.stock_value_tl || 0)}</p>
+                    <p className="text-[10px] text-muted-foreground">Kur: {stats?.exchange_rate_usd || 34} TL</p>
+                  </div>
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 ml-2">
+                    <BadgeDollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
                   </div>
                 </div>
               </CardContent>
