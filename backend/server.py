@@ -1785,15 +1785,88 @@ async def get_quote(quote_id: str, current_user: dict = Depends(require_permissi
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     return quote
 
+@api_router.put("/quotes/{quote_id}", response_model=dict)
+async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dict = Depends(require_permission("quotes_manage"))):
+    existing = await db.quotes.find_one({"id": quote_id, "is_active": True})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    # Check if quote can be edited (only draft or sent quotes)
+    if existing.get("status") in ["onaylandi", "satisa_dondu"]:
+        raise HTTPException(status_code=400, detail="Onaylanmış veya satışa dönmüş teklifler düzenlenemez")
+    
+    customer = await db.customers.find_one({"id": quote_data.customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+    
+    items = []
+    subtotal = 0
+    
+    for item in quote_data.items:
+        product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
+        
+        unit_price = item.get("unit_price") or product["sale_price"]
+        total_price = unit_price * item["quantity"]
+        
+        items.append({
+            "product_id": product["id"],
+            "product_name": product["name"],
+            "quantity": item["quantity"],
+            "unit_price": unit_price,
+            "total_price": total_price,
+            "unit": product.get("unit", "adet"),
+            "datasheet_url": product.get("datasheet_url")
+        })
+        subtotal += total_price
+    
+    # Calculate discount
+    if quote_data.discount_type == "percent":
+        discount_amount = subtotal * (quote_data.discount_rate / 100)
+    else:
+        discount_amount = quote_data.discount_amount
+    
+    # Calculate VAT
+    subtotal_after_discount = subtotal - discount_amount
+    vat_amount = subtotal_after_discount * (quote_data.vat_rate / 100)
+    total = subtotal_after_discount + vat_amount
+    
+    update_data = {
+        "customer_id": quote_data.customer_id,
+        "customer_name": customer["name"],
+        "items": items,
+        "subtotal": round(subtotal, 2),
+        "discount_type": quote_data.discount_type,
+        "discount_rate": quote_data.discount_rate,
+        "discount_amount": round(discount_amount, 2),
+        "vat_rate": quote_data.vat_rate,
+        "vat_amount": round(vat_amount, 2),
+        "total": round(total, 2),
+        "currency": quote_data.currency,
+        "validity_days": quote_data.validity_days,
+        "notes": quote_data.notes,
+        "delivery_time": quote_data.delivery_time,
+        "payment_terms": quote_data.payment_terms,
+        "warranty_info": quote_data.warranty_info,
+        "status": quote_data.status or existing.get("status", "taslak"),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "valid_until": (datetime.now(timezone.utc) + timedelta(days=quote_data.validity_days)).isoformat()
+    }
+    
+    await db.quotes.update_one({"id": quote_id}, {"$set": update_data})
+    updated = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    return updated
+
 @api_router.put("/quotes/{quote_id}/status", response_model=dict)
 async def update_quote_status(quote_id: str, status_data: QuoteStatusUpdate, current_user: dict = Depends(require_permission("quotes_approve"))):
-    valid_statuses = ["teklif_gonderildi", "onaylandi", "satisa_dondu", "iptal"]
+    valid_statuses = ["taslak", "teklif_gonderildi", "onaylandi", "reddedildi", "satisa_dondu", "iptal"]
     if status_data.status not in valid_statuses:
         raise HTTPException(status_code=400, detail="Geçersiz durum")
     
     result = await db.quotes.update_one(
         {"id": quote_id},
-        {"$set": {"status": status_data.status}}
+        {"$set": {"status": status_data.status, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
