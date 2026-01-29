@@ -102,9 +102,23 @@ const Stock = () => {
     return product ? product.name : 'Bilinmeyen Ürün';
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Calculate stock by dynamic categories
+  const categoryStats = categories.map(category => {
+    const categoryProducts = products.filter(p => p.category_id === category.id);
+    const totalQuantity = categoryProducts.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
+    return {
+      id: category.id,
+      name: category.name,
+      productCount: categoryProducts.length,
+      totalQuantity: totalQuantity
+    };
+  }).filter(stat => stat.productCount > 0);
 
   const totalStockValue = products.reduce(
     (sum, p) => sum + (p.purchase_price * p.stock_quantity), 0
