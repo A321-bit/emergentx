@@ -2315,17 +2315,21 @@ async def get_upcoming_checks(current_user: dict = Depends(require_permission("f
     """Get all uncollected checks with their due dates"""
     now = datetime.now(timezone.utc)
     
+    # Çekleri olan tüm satışları getir (payment_method kontrolü kaldırıldı)
     sales = await db.sales.find({
         "is_active": True,
-        "payment_method": "cek",
-        "checks": {"$exists": True, "$ne": []}
+        "checks": {"$exists": True, "$ne": [], "$ne": None}
     }, {"_id": 0}).to_list(1000)
     
     upcoming_checks = []
     overdue_checks = []
     
     for sale in sales:
-        for check in sale.get("checks", []):
+        checks = sale.get("checks")
+        if not checks or not isinstance(checks, list):
+            continue
+            
+        for check in checks:
             if check.get("is_collected"):
                 continue
             
