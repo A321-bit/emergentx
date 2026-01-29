@@ -352,10 +352,23 @@ const Products = () => {
   };
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+  // Calculate product count by category
+  const categoryStats = categories.map(category => {
+    const categoryProducts = products.filter(p => p.category_id === category.id);
+    const totalQuantity = categoryProducts.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
+    return {
+      id: category.id,
+      name: category.name,
+      productCount: categoryProducts.length,
+      totalQuantity: totalQuantity
+    };
+  }).filter(stat => stat.productCount > 0); // Only show categories with products
 
   const getCurrencySymbol = (currency) => {
     const symbols = { USD: '$', EUR: '€', TRY: '₺' };
