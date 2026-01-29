@@ -320,23 +320,38 @@ class QuoteItem(BaseModel):
     product_id: str
     product_name: str
     quantity: int
-    unit_price: float
-    total_price: float
+    unit_price_usd: float = 0  # USD birim fiyatı
+    unit_price_tl: float = 0   # TL birim fiyatı
+    total_price_usd: float = 0  # USD toplam
+    total_price_tl: float = 0   # TL toplam
+    # Legacy support
+    unit_price: float = 0
+    total_price: float = 0
     unit: str = "adet"
     datasheet_url: Optional[str] = None
+    currency: str = "USD"  # Ürünün para birimi
 
 class QuoteBase(BaseModel):
     customer_id: str
     customer_name: str
     items: List[QuoteItem]
-    subtotal: float
+    subtotal_usd: float = 0
+    subtotal_tl: float = 0
+    subtotal: float = 0  # Legacy
     discount_type: str = "percent"  # percent or amount
     discount_rate: float = 0
-    discount_amount: float = 0
+    discount_amount_usd: float = 0
+    discount_amount_tl: float = 0
+    discount_amount: float = 0  # Legacy
     vat_rate: float = 20  # KDV oranı
-    vat_amount: float = 0
-    total: float
-    currency: str = "TRY"
+    vat_amount_usd: float = 0
+    vat_amount_tl: float = 0
+    vat_amount: float = 0  # Legacy
+    total_usd: float = 0
+    total_tl: float = 0
+    total: float = 0  # Legacy (TL)
+    exchange_rate: float = 34.0  # Kullanılan kur
+    currency: str = "TRY"  # Ana gösterim para birimi
     validity_days: int = 15
     notes: Optional[str] = None
     delivery_time: Optional[str] = None  # Teslim süresi
@@ -348,7 +363,7 @@ class QuoteCreate(BaseModel):
     items: List[dict]
     discount_type: str = "percent"
     discount_rate: float = 0
-    discount_amount: float = 0
+    discount_amount: float = 0  # TL cinsinden indirim tutarı
     vat_rate: float = 20
     currency: str = "TRY"
     validity_days: int = 15
