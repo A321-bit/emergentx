@@ -215,18 +215,6 @@ const Finance = () => {
           </div>
         </CardContent>
       </Card>
-              <div>
-                <p className="data-label">Kar Marjı</p>
-                <p className="stat-value mt-1 text-xl text-primary">%{profitability.profitMargin}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatCurrency(profitability.potentialProfit)} potansiyel kar</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
