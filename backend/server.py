@@ -578,6 +578,138 @@ class Package(PackageBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_by: str = ""
     created_by_name: str = ""
+
+# ==================== HR MODELS ====================
+
+# Employee Model (Personel)
+class EmployeeBase(BaseModel):
+    name: str
+    employee_no: str
+    position: str
+    employment_type: str = "monthly"  # monthly (aylık maaşlı) / daily (günlük yevmiye)
+    monthly_salary: float = 0
+    daily_wage: float = 0
+    start_date: str  # İşe giriş tarihi
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+
+class EmployeeCreate(EmployeeBase):
+    pass
+
+class Employee(EmployeeBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Attendance Model (Puantaj/Devam)
+class AttendanceBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    date: str  # YYYY-MM-DD
+    status: str = "present"  # present (geldi), absent (gelmedi), half_day (yarım gün), leave (izin), sick (rapor)
+    notes: Optional[str] = None
+
+class AttendanceCreate(AttendanceBase):
+    pass
+
+class Attendance(AttendanceBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Advance Model (Avans)
+class AdvanceBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    amount: float
+    date: str
+    description: Optional[str] = None
+    is_deducted: bool = False  # Bordrodan kesildi mi?
+    deducted_month: Optional[str] = None  # Hangi ayda kesildi (YYYY-MM)
+
+class AdvanceCreate(AdvanceBase):
+    pass
+
+class Advance(AdvanceBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Bonus Model (Prim)
+class BonusBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    bonus_type: str  # sales (satış), project (proje), performance (performans)
+    amount: float
+    month: str  # YYYY-MM
+    description: Optional[str] = None
+
+class BonusCreate(BonusBase):
+    pass
+
+class Bonus(BonusBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Employee Expense Model (Personel Giderleri)
+class EmployeeExpenseBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    expense_type: str  # food (yemek), transport (yol), phone (telefon), accommodation (konaklama), other (diğer)
+    amount: float
+    month: str  # YYYY-MM
+    description: Optional[str] = None
+
+class EmployeeExpenseCreate(EmployeeExpenseBase):
+    pass
+
+class EmployeeExpense(EmployeeExpenseBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Salary/Payroll Model (Bordro)
+class SalaryBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    month: str  # YYYY-MM
+    gross_salary: float = 0  # Brüt maaş
+    working_days: int = 30
+    present_days: float = 0  # Çalışılan gün (yarım gün 0.5)
+    absent_days: float = 0
+    leave_days: int = 0
+    sick_days: int = 0
+    absence_deduction: float = 0  # Devamsızlık kesintisi
+    advance_deduction: float = 0  # Avans kesintisi
+    other_deductions: float = 0  # Diğer kesintiler
+    total_bonus: float = 0  # Toplam prim
+    net_salary: float = 0  # Net ödenecek
+    is_paid: bool = False
+    paid_date: Optional[str] = None
+    is_locked: bool = False  # Kilitli bordro (değiştirilemez)
+    notes: Optional[str] = None
+
+class SalaryCreate(SalaryBase):
+    pass
+
+class Salary(SalaryBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
