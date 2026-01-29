@@ -62,6 +62,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('products_view') || hasPermission('products_manage')) {
     navItems.push({ path: '/products', icon: Package, label: 'Ürünler' });
   }
+  if (hasPermission('products_view') || hasPermission('products_manage')) {
+    navItems.push({ path: '/packages', icon: ShoppingBag, label: 'Paketler' });
+  }
   if (hasPermission('stock_view') || hasPermission('stock_manage')) {
     navItems.push({ path: '/stock', icon: Boxes, label: 'Stok' });
   }
