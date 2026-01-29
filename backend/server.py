@@ -1749,6 +1749,11 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
             quote_query["dealer_id"] = current_user["dealer_id"]
             customer_query["dealer_id"] = current_user["dealer_id"]
     
+    # Get exchange rates
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
+    
     total_products = await db.products.count_documents({"is_active": True})
     total_customers = await db.customers.count_documents(customer_query)
     total_quotes = await db.quotes.count_documents(quote_query)
@@ -1760,13 +1765,37 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
     approved_quotes = len([q for q in quotes if q.get("status") == "onaylandi"])
     converted_quotes = len([q for q in quotes if q.get("status") == "satisa_dondu"])
     
-    stock_value = 0
+    stock_value_usd = 0
+    stock_value_tl = 0
+    stock_sale_value_usd = 0
+    stock_sale_value_tl = 0
     total_dealers = 0
     total_users = 0
     
     if "all" in user_perms or "finance_view" in user_perms:
         products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(10000)
-        stock_value = sum(p.get("purchase_price", 0) * p.get("stock_quantity", 0) for p in products)
+        
+        for p in products:
+            currency = p.get("currency", "USD").upper()
+            purchase_price = p.get("purchase_price", 0)
+            sale_price = p.get("sale_price", 0)
+            quantity = p.get("stock_quantity", 0)
+            
+            if currency == "USD":
+                stock_value_usd += purchase_price * quantity
+                stock_sale_value_usd += sale_price * quantity
+            elif currency == "EUR":
+                # Convert EUR to USD (approximate)
+                stock_value_usd += (purchase_price * eur_rate / usd_rate) * quantity
+                stock_sale_value_usd += (sale_price * eur_rate / usd_rate) * quantity
+            else:  # TRY
+                stock_value_tl += purchase_price * quantity
+                stock_sale_value_tl += sale_price * quantity
+        
+        # Calculate TL equivalents for USD values
+        stock_value_tl += stock_value_usd * usd_rate
+        stock_sale_value_tl += stock_sale_value_usd * usd_rate
+        
         total_dealers = await db.dealers.count_documents({"is_active": True})
         total_users = await db.users.count_documents({})
     
@@ -1778,7 +1807,13 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
         "pending_quotes": pending_quotes,
         "approved_quotes": approved_quotes,
         "converted_quotes": converted_quotes,
-        "stock_value": stock_value,
+        "stock_value_usd": round(stock_value_usd, 2),
+        "stock_value_tl": round(stock_value_tl, 2),
+        "stock_sale_value_usd": round(stock_sale_value_usd, 2),
+        "stock_sale_value_tl": round(stock_sale_value_tl, 2),
+        "stock_value": round(stock_value_tl, 2),  # Backward compatibility (TL)
+        "exchange_rate_usd": usd_rate,
+        "exchange_rate_eur": eur_rate,
         "total_dealers": total_dealers,
         "total_users": total_users
     }
