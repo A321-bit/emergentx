@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Pencil, Trash2, TrendingUp, DollarSign, Calendar, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, TrendingUp, DollarSign, Calendar, Search, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -43,16 +43,17 @@ const Sales = () => {
   const [editingSale, setEditingSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statsPeriod, setStatsPeriod] = useState('monthly');
+  const [systemExchangeRate, setSystemExchangeRate] = useState(34.0);
   
   const [formData, setFormData] = useState({
     customer_id: '',
     customer_name: '',
-    currency: 'USD',
+    input_currency: 'USD', // Hangi para birimi cinsinden giriş yapılıyor
     sale_amount_usd: '',
     sale_amount_tl: '',
     purchase_amount_usd: '',
     purchase_amount_tl: '',
-    exchange_rate: '34.50',
+    exchange_rate: '34.00',
     sale_date: new Date().toISOString().split('T')[0],
     notes: ''
   });
@@ -61,6 +62,7 @@ const Sales = () => {
 
   useEffect(() => {
     fetchData();
+    fetchExchangeRate();
   }, []);
 
   const fetchData = async () => {
@@ -80,38 +82,97 @@ const Sales = () => {
     }
   };
 
-  const handleCurrencyChange = (currency) => {
-    setFormData(prev => ({ ...prev, currency }));
+  const fetchExchangeRate = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/exchange-rates`);
+      const rate = response.data.usd_to_try || 34.0;
+      setSystemExchangeRate(rate);
+      setFormData(prev => ({ ...prev, exchange_rate: rate.toString() }));
+    } catch (error) {
+      console.error('Kur alınamadı');
+    }
   };
 
-  const handleAmountChange = (field, value) => {
+  const handleInputCurrencyChange = (currency) => {
+    // Para birimi değiştiğinde diğer alanları temizle
+    setFormData(prev => ({ 
+      ...prev, 
+      input_currency: currency,
+      sale_amount_usd: '',
+      sale_amount_tl: '',
+      purchase_amount_usd: '',
+      purchase_amount_tl: ''
+    }));
+  };
+
+  // USD girişi -> TL'ye çevir
+  const handleUsdInput = (field, value) => {
     const numValue = parseFloat(value) || 0;
     const rate = parseFloat(formData.exchange_rate) || 1;
     
-    let updates = { [field]: value };
-    
-    if (formData.currency === 'USD') {
-      if (field === 'sale_amount_usd') {
-        updates.sale_amount_tl = (numValue * rate).toFixed(2);
-      } else if (field === 'purchase_amount_usd') {
-        updates.purchase_amount_tl = (numValue * rate).toFixed(2);
-      }
+    if (field === 'sale_amount_usd') {
+      setFormData(prev => ({
+        ...prev,
+        sale_amount_usd: value,
+        sale_amount_tl: numValue > 0 ? (numValue * rate).toFixed(2) : ''
+      }));
+    } else if (field === 'purchase_amount_usd') {
+      setFormData(prev => ({
+        ...prev,
+        purchase_amount_usd: value,
+        purchase_amount_tl: numValue > 0 ? (numValue * rate).toFixed(2) : ''
+      }));
     }
+  };
+
+  // TL girişi -> USD'ye çevir
+  const handleTlInput = (field, value) => {
+    const numValue = parseFloat(value) || 0;
+    const rate = parseFloat(formData.exchange_rate) || 1;
     
-    setFormData(prev => ({ ...prev, ...updates }));
+    if (field === 'sale_amount_tl') {
+      setFormData(prev => ({
+        ...prev,
+        sale_amount_tl: value,
+        sale_amount_usd: numValue > 0 ? (numValue / rate).toFixed(2) : ''
+      }));
+    } else if (field === 'purchase_amount_tl') {
+      setFormData(prev => ({
+        ...prev,
+        purchase_amount_tl: value,
+        purchase_amount_usd: numValue > 0 ? (numValue / rate).toFixed(2) : ''
+      }));
+    }
   };
 
   const handleRateChange = (rate) => {
     const numRate = parseFloat(rate) || 1;
-    const saleUsd = parseFloat(formData.sale_amount_usd) || 0;
-    const purchaseUsd = parseFloat(formData.purchase_amount_usd) || 0;
     
-    setFormData(prev => ({
-      ...prev,
-      exchange_rate: rate,
-      sale_amount_tl: (saleUsd * numRate).toFixed(2),
-      purchase_amount_tl: (purchaseUsd * numRate).toFixed(2)
-    }));
+    // Giriş türüne göre hesaplama yap
+    if (formData.input_currency === 'USD') {
+      const saleUsd = parseFloat(formData.sale_amount_usd) || 0;
+      const purchaseUsd = parseFloat(formData.purchase_amount_usd) || 0;
+      setFormData(prev => ({
+        ...prev,
+        exchange_rate: rate,
+        sale_amount_tl: saleUsd > 0 ? (saleUsd * numRate).toFixed(2) : '',
+        purchase_amount_tl: purchaseUsd > 0 ? (purchaseUsd * numRate).toFixed(2) : ''
+      }));
+    } else {
+      const saleTl = parseFloat(formData.sale_amount_tl) || 0;
+      const purchaseTl = parseFloat(formData.purchase_amount_tl) || 0;
+      setFormData(prev => ({
+        ...prev,
+        exchange_rate: rate,
+        sale_amount_usd: saleTl > 0 ? (saleTl / numRate).toFixed(2) : '',
+        purchase_amount_usd: purchaseTl > 0 ? (purchaseTl / numRate).toFixed(2) : ''
+      }));
+    }
+  };
+
+  const useSystemRate = () => {
+    handleRateChange(systemExchangeRate.toString());
+    toast.success(`Güncel kur uygulandı: ${systemExchangeRate} TL`);
   };
 
   const handleSubmit = async (e) => {
