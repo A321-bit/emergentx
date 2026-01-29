@@ -404,6 +404,7 @@ class CompanySettings(BaseModel):
     bank_account_holder: Optional[str] = None  # Hesap sahibi
     bank_iban: Optional[str] = None  # IBAN
     bank_swift: Optional[str] = None  # SWIFT kodu
+    exchange_rate_usd: float = 34.50  # USD/TL kuru
 
 # ==================== SALES & ACCOUNTING MODELS ====================
 
