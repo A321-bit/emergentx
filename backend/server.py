@@ -1908,10 +1908,24 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
     sale_dict["is_active"] = True
     sale_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     sale_dict["sale_date"] = sale_dict["sale_date"].isoformat() if isinstance(sale_dict["sale_date"], datetime) else sale_dict["sale_date"]
+    if sale_dict.get("due_date"):
+        sale_dict["due_date"] = sale_dict["due_date"].isoformat() if isinstance(sale_dict["due_date"], datetime) else sale_dict["due_date"]
     
     # Calculate profits
     sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
+    
+    # Calculate remaining amount and payment status
+    paid = sale_dict.get("paid_amount_tl", 0)
+    total = sale_dict.get("sale_amount_tl", 0)
+    sale_dict["remaining_amount_tl"] = total - paid
+    
+    if paid >= total:
+        sale_dict["payment_status"] = "odendi"
+    elif paid > 0:
+        sale_dict["payment_status"] = "kismi"
+    else:
+        sale_dict["payment_status"] = "bekliyor"
     
     await db.sales.insert_one(sale_dict.copy())
     sale_dict.pop("_id", None)
@@ -1921,8 +1935,23 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
 async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depends(require_permission("finance_manage"))):
     sale_dict = sale.model_dump()
     sale_dict["sale_date"] = sale_dict["sale_date"].isoformat() if isinstance(sale_dict["sale_date"], datetime) else sale_dict["sale_date"]
+    if sale_dict.get("due_date"):
+        sale_dict["due_date"] = sale_dict["due_date"].isoformat() if isinstance(sale_dict["due_date"], datetime) else sale_dict["due_date"]
+    
     sale_dict["profit_usd"] = sale_dict["sale_amount_usd"] - sale_dict["purchase_amount_usd"]
     sale_dict["profit_tl"] = sale_dict["sale_amount_tl"] - sale_dict["purchase_amount_tl"]
+    
+    # Calculate remaining amount and payment status
+    paid = sale_dict.get("paid_amount_tl", 0)
+    total = sale_dict.get("sale_amount_tl", 0)
+    sale_dict["remaining_amount_tl"] = total - paid
+    
+    if paid >= total:
+        sale_dict["payment_status"] = "odendi"
+    elif paid > 0:
+        sale_dict["payment_status"] = "kismi"
+    else:
+        sale_dict["payment_status"] = "bekliyor"
     
     result = await db.sales.update_one({"id": sale_id}, {"$set": sale_dict})
     if result.matched_count == 0:
