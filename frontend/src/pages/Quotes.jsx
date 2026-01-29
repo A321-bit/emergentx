@@ -56,6 +56,14 @@ const formatTRY = (value) => {
   }).format(value || 0);
 };
 
+const formatUSD = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(value || 0);
+};
+
 const formatDate = (dateStr) => {
   if (!dateStr) return '-';
   try {
@@ -84,6 +92,7 @@ const Quotes = () => {
   const [products, setProducts] = useState([]);
   const [packages, setPackages] = useState([]);
   const [companySettings, setCompanySettings] = useState({});
+  const [exchangeRate, setExchangeRate] = useState(34.0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
