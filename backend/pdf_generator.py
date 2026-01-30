@@ -655,7 +655,16 @@ class QuotePDFGenerator:
             ('RIGHTPADDING', (1, 0), (1, -1), 10),
         ]))
         elements.append(savings_table)
-        elements.append(Spacer(1, 20))
+        
+        # Savings info note
+        savings_note = Paragraph(
+            "<i>• Tasarruf hesaplamaları güncel elektrik tarifelerine göre yapılmıştır.<br/>"
+            "• Elektrik fiyatlarındaki artışlar tasarruf miktarını olumlu etkileyecektir.</i>",
+            ParagraphStyle('InfoNote', parent=self.styles['Notes'], fontSize=7, textColor=colors.HexColor('#64748b'), leading=10)
+        )
+        elements.append(Spacer(1, 5))
+        elements.append(savings_note)
+        elements.append(Spacer(1, 15))
         
         # Environmental impact section
         elements.append(Paragraph("<b>ÇEVRESEL ETKİ</b>", self.styles['SectionTitle']))
