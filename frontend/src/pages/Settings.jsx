@@ -564,81 +564,118 @@ MADDE 6 - GENEL HÜKÜMLER
         <TabsContent value="bank" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="section-title">Banka Hesap Bilgileri</CardTitle>
-              <CardDescription>PDF tekliflerde görüntülenecek ödeme bilgileri</CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="section-title">Banka Hesap Bilgileri</CardTitle>
+                  <CardDescription>PDF tekliflerde görüntülenecek ödeme bilgileri (birden fazla hesap ekleyebilirsiniz)</CardDescription>
+                </div>
+                <Button type="button" onClick={addBankAccount} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Hesap Ekle
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSave} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bank_name">Banka Adı</Label>
-                    <Input
-                      id="bank_name"
-                      value={settings.bank_name || ''}
-                      onChange={(e) => setSettings({...settings, bank_name: e.target.value})}
-                      placeholder="Örn: Ziraat Bankası"
-                      data-testid="bank-name-input"
-                    />
+              <form onSubmit={handleSave} className="space-y-6">
+                {(!settings.bank_accounts || settings.bank_accounts.length === 0) ? (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                    <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground mb-3">Henüz banka hesabı eklenmemiş</p>
+                    <Button type="button" onClick={addBankAccount} variant="outline">
+                      <Plus className="h-4 w-4 mr-1" />
+                      İlk Hesabı Ekle
+                    </Button>
                   </div>
+                ) : (
+                  settings.bank_accounts.map((account, index) => (
+                    <div key={index} className="relative border rounded-lg p-4 space-y-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium text-sm text-muted-foreground">
+                          Banka Hesabı #{index + 1}
+                        </span>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => removeBankAccount(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Banka Adı</Label>
+                          <Input
+                            value={account.bank_name || ''}
+                            onChange={(e) => updateBankAccount(index, 'bank_name', e.target.value)}
+                            placeholder="Örn: Ziraat Bankası"
+                          />
+                        </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="bank_branch">Şube</Label>
-                    <Input
-                      id="bank_branch"
-                      value={settings.bank_branch || ''}
-                      onChange={(e) => setSettings({...settings, bank_branch: e.target.value})}
-                      placeholder="Örn: Kadıköy Şubesi"
-                      data-testid="bank-branch-input"
-                    />
+                        <div className="space-y-2">
+                          <Label>Şube</Label>
+                          <Input
+                            value={account.bank_branch || ''}
+                            onChange={(e) => updateBankAccount(index, 'bank_branch', e.target.value)}
+                            placeholder="Örn: Kadıköy Şubesi"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2 space-y-2">
+                          <Label>Hesap Sahibi</Label>
+                          <Input
+                            value={account.account_holder || ''}
+                            onChange={(e) => updateBankAccount(index, 'account_holder', e.target.value)}
+                            placeholder="Örn: Solar Enerji A.Ş."
+                          />
+                        </div>
+
+                        <div className="md:col-span-2 space-y-2">
+                          <Label>IBAN</Label>
+                          <Input
+                            value={account.iban || ''}
+                            onChange={(e) => updateBankAccount(index, 'iban', e.target.value)}
+                            placeholder="TR00 0000 0000 0000 0000 0000 00"
+                            className="font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>SWIFT Kodu (Opsiyonel)</Label>
+                          <Input
+                            value={account.swift || ''}
+                            onChange={(e) => updateBankAccount(index, 'swift', e.target.value)}
+                            placeholder="Örn: TCZBTR2A"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {settings.bank_accounts && settings.bank_accounts.length > 0 && (
+                  <div className="flex gap-2">
+                    <Button type="button" onClick={addBankAccount} variant="outline">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Başka Hesap Ekle
+                    </Button>
+                    <Button type="submit" disabled={saving}>
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Kaydediliyor...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Kaydet
+                        </>
+                      )}
+                    </Button>
                   </div>
-
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="bank_account_holder">Hesap Sahibi</Label>
-                    <Input
-                      id="bank_account_holder"
-                      value={settings.bank_account_holder || ''}
-                      onChange={(e) => setSettings({...settings, bank_account_holder: e.target.value})}
-                      placeholder="Örn: Solar Enerji A.Ş."
-                      data-testid="bank-holder-input"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="bank_iban">IBAN</Label>
-                    <Input
-                      id="bank_iban"
-                      value={settings.bank_iban || ''}
-                      onChange={(e) => setSettings({...settings, bank_iban: e.target.value})}
-                      placeholder="TR00 0000 0000 0000 0000 0000 00"
-                      data-testid="bank-iban-input"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bank_swift">SWIFT Kodu (Opsiyonel)</Label>
-                    <Input
-                      id="bank_swift"
-                      value={settings.bank_swift || ''}
-                      onChange={(e) => setSettings({...settings, bank_swift: e.target.value})}
-                      placeholder="Örn: TCZBTR2A"
-                      data-testid="bank-swift-input"
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" disabled={saving}>
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Kaydediliyor...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Kaydet
-                    </>
-                  )}
-                </Button>
+                )}
               </form>
             </CardContent>
           </Card>
