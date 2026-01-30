@@ -691,7 +691,16 @@ class QuotePDFGenerator:
             ('RIGHTPADDING', (1, 0), (1, -1), 10),
         ]))
         elements.append(env_table)
-        elements.append(Spacer(1, 25))
+        
+        # Environmental info note
+        env_note = Paragraph(
+            "<i>• CO₂ tasarrufu Türkiye şebeke emisyon faktörüne göre hesaplanmıştır.<br/>"
+            "• Bir ağaç yılda ortalama 22 kg CO₂ absorbe etmektedir.</i>",
+            ParagraphStyle('InfoNote', parent=self.styles['Notes'], fontSize=7, textColor=colors.HexColor('#64748b'), leading=10)
+        )
+        elements.append(Spacer(1, 5))
+        elements.append(env_note)
+        elements.append(Spacer(1, 20))
         
         # Auto-generated explanation text
         explanation_parts = []
