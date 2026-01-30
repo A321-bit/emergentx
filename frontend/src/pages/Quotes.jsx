@@ -312,6 +312,8 @@ const Quotes = () => {
     setProductSearch('');
     setSelectedProduct('');
     setSelectedQuantity(1);
+    setWizardCategoryFilter('all');
+    setWizardCustomerSearch('');
   };
 
   // Open wizard for new quote
