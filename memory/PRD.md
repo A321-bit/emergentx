@@ -1,5 +1,10 @@
 # Solar Energy Sales Management System - PRD
 
+## Son Güncelleme: 30 Ocak 2026
+
+### Son Eklenen Özellik
+- **Teklif Modülü - Sürükle-Bırak:** Ürünlerin sırasını değiştirmek için drag & drop özelliği eklendi (@dnd-kit)
+
 ## Problem Statement
 Comprehensive solar energy sales management system with admin/sales panels, product/stock management, customer tracking, quotes, and financial modules.
 
