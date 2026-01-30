@@ -708,58 +708,59 @@ class QuotePDFGenerator:
         return table
     
     def _create_totals_table(self, quote_data: dict):
-        """Create totals section"""
+        """Create totals section with smaller fonts and ₺ symbol"""
         
         subtotal = quote_data.get('subtotal_tl', 0)
-        shipping = quote_data.get('shipping_cost', 0)
         discount = quote_data.get('discount_amount_tl', 0)
         discount_rate = quote_data.get('discount_rate', 0)
         vat = quote_data.get('vat_amount_tl', 0)
         total = quote_data.get('total_tl', 0)
         vat_rate = quote_data.get('vat_rate', 20)
         
+        # Smaller style for totals
+        small_label = ParagraphStyle('SmallLabel', parent=self.styles['Notes'], fontSize=8, alignment=TA_RIGHT)
+        small_value = ParagraphStyle('SmallValue', parent=self.styles['Notes'], fontSize=8, fontName=FONT_BOLD, alignment=TA_RIGHT)
+        total_label = ParagraphStyle('TotalLabelBig', parent=self.styles['Notes'], fontSize=10, fontName=FONT_BOLD, alignment=TA_RIGHT)
+        total_value = ParagraphStyle('TotalValueBig', parent=self.styles['Notes'], fontSize=10, fontName=FONT_BOLD, textColor=PRIMARY_COLOR, alignment=TA_RIGHT)
+        
         rows = []
         
         rows.append([
-            Paragraph("Toplam:", self.styles['TotalLabel']),
-            Paragraph(format_currency(subtotal), self.styles['TotalValue'])
+            Paragraph("Ara Toplam:", small_label),
+            Paragraph(format_currency(subtotal), small_value)
         ])
         
-        if shipping > 0:
-            rows.append([
-                Paragraph("Nakliye & Montaj:", self.styles['TotalLabel']),
-                Paragraph(format_currency(shipping), self.styles['TotalValue'])
-            ])
+        # Note: Shipping is now shown in separate row below products table, not here
         
         if discount > 0:
-            discount_label = f"İndirim (%{discount_rate}):" if discount_rate > 0 else "İndirim:"
+            discount_label = f"İndirim (%{int(discount_rate)}):" if discount_rate > 0 else "İndirim:"
             rows.append([
-                Paragraph(discount_label, self.styles['TotalLabel']),
-                Paragraph(f"-{format_currency(discount)}", self.styles['TotalValue'])
+                Paragraph(discount_label, small_label),
+                Paragraph(f"-{format_currency(discount)}", small_value)
             ])
         
         rows.append([
-            Paragraph(f"KDV (%{int(vat_rate)}):", self.styles['TotalLabel']),
-            Paragraph(format_currency(vat), self.styles['TotalValue'])
+            Paragraph(f"KDV (%{int(vat_rate)}):", small_label),
+            Paragraph(format_currency(vat), small_value)
         ])
         
         rows.append([
-            Paragraph("<b>G.Toplam:</b>", self.styles['GrandTotal']),
-            Paragraph(f"<b>{format_currency(total)}</b>", self.styles['GrandTotal'])
+            Paragraph("GENEL TOPLAM:", total_label),
+            Paragraph(format_currency(total), total_value)
         ])
         
-        inner_table = Table(rows, colWidths=[100, 100])
+        inner_table = Table(rows, colWidths=[80, 90])
         inner_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ('LINEABOVE', (0, -1), (-1, -1), 2, PRIMARY_COLOR),
-            ('TOPPADDING', (0, -1), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LINEABOVE', (0, -1), (-1, -1), 1.5, PRIMARY_COLOR),
+            ('TOPPADDING', (0, -1), (-1, -1), 6),
         ]))
         
         wrapper_data = [['', inner_table]]
-        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 220, 220])
+        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 190, 190])
         wrapper.setStyle(TableStyle([
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
