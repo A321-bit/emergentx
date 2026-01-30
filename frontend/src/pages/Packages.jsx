@@ -827,15 +827,6 @@ const Packages = () => {
                   </Button>
                 </div>
               )}
-                    min="1"
-                    value={selectedQuantity}
-                    onChange={(e) => setSelectedQuantity(parseInt(e.target.value) || 1)}
-                  />
-                </div>
-                <Button type="button" onClick={handleAddProduct}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
               
               {/* Products Table */}
               {formData.items.length > 0 && (
