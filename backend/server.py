@@ -587,30 +587,85 @@ class Expense(ExpenseBase):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Package Model (Paketler - E-ticaret ürün paketleri)
+# Package Category Model (Paket Kategorileri)
+class PackageCategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None  # Icon name for UI
+    color: Optional[str] = None  # Color code for UI
+
+class PackageCategoryCreate(PackageCategoryBase):
+    pass
+
+class PackageCategory(PackageCategoryBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class PackageItemBase(BaseModel):
     product_id: str
     product_name: str
     quantity: int
-    unit_price: float
+    unit_cost: float = 0  # Maliyet (alış fiyatı)
+    unit_price: float = 0  # Satış fiyatı
     currency: str = "USD"
+    total_cost: float = 0
     total_price: float = 0
 
 class PackageBase(BaseModel):
     name: str
+    category_id: str  # Paket kategorisi
     description: Optional[str] = None
+    level: str = "basic"  # basic, plus, pro
+    
+    # Teknik özellikler
+    system_power_kwp: Optional[float] = None  # Sistem gücü (kWp)
+    battery_capacity_kwh: Optional[float] = None  # Batarya kapasitesi (kWh)
+    daily_production_kwh: Optional[float] = None  # Günlük üretim (kWh)
+    yearly_production_kwh: Optional[float] = None  # Yıllık üretim (kWh)
+    
+    # Uygunluk bilgisi
+    suitable_for: List[str] = []  # yazlik_ev, bahce_evi, ciftlik, sanayi, kesinti_bolgesi, yuksek_fatura
+    
+    # Ürün içeriği
     items: List[PackageItemBase] = []
-    total_price_usd: float = 0
-    total_price_tl: float = 0
+    
+    # Fiyatlandırma
+    total_cost_usd: float = 0  # Toplam maliyet USD
+    total_cost_tl: float = 0  # Toplam maliyet TL
+    total_price_usd: float = 0  # Toplam satış USD
+    total_price_tl: float = 0  # Toplam satış TL
+    profit_usd: float = 0  # Kar USD
+    profit_tl: float = 0  # Kar TL
+    profit_margin: float = 0  # Kar oranı %
     exchange_rate: float = 34.0
+    
+    # Durum
+    status: str = "active"  # active, inactive, campaign
 
-class PackageCreate(PackageBase):
-    pass
+class PackageCreate(BaseModel):
+    name: str
+    category_id: str
+    description: Optional[str] = None
+    level: str = "basic"
+    system_power_kwp: Optional[float] = None
+    battery_capacity_kwh: Optional[float] = None
+    daily_production_kwh: Optional[float] = None
+    yearly_production_kwh: Optional[float] = None
+    suitable_for: List[str] = []
+    items: List[dict] = []
+    status: str = "active"
 
 class Package(PackageBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    category_name: str = ""
+    available_stock: int = 0  # Kaç adet paket oluşturulabilir
     created_by: str = ""
     created_by_name: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== HR MODELS ====================
 
