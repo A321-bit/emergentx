@@ -225,6 +225,7 @@ class ProductBase(BaseModel):
     profit_margin: Optional[float] = None
     stock_quantity: int = 0
     unit: str = "adet"
+    power_watt: Optional[float] = None  # Güç değeri (W) - Panel, İnverter, Batarya için
 
 class ProductCreate(ProductBase):
     pass
@@ -239,6 +240,7 @@ class ProductUpdate(BaseModel):
     profit_margin: Optional[float] = None
     stock_quantity: Optional[int] = None
     unit: Optional[str] = None
+    power_watt: Optional[float] = None  # Güç değeri (W)
 
 class Product(ProductBase):
     model_config = ConfigDict(extra="ignore")
