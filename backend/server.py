@@ -2230,6 +2230,10 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
             "warranty_text": ""
         }
     
+    # Map logo_url to logo for PDF generator
+    if company_settings.get("logo_url"):
+        company_settings["logo"] = company_settings["logo_url"]
+    
     # Generate PDF
     try:
         pdf_buffer = generate_quote_pdf(
