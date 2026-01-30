@@ -30,7 +30,8 @@ import {
   Calendar,
   Banknote,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Wallet
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -38,7 +39,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState(['hr', 'packages']); // Default expanded
+  const [expandedMenus, setExpandedMenus] = useState(['users', 'packages', 'dealers', 'accounting']);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -47,11 +48,17 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   // Auto-expand menu if current path is in submenu
   useEffect(() => {
-    if (['/employees', '/attendance', '/payroll'].includes(location.pathname)) {
-      setExpandedMenus(prev => prev.includes('hr') ? prev : [...prev, 'hr']);
+    if (['/users', '/roles'].includes(location.pathname)) {
+      setExpandedMenus(prev => prev.includes('users') ? prev : [...prev, 'users']);
     }
     if (['/packages', '/package-categories'].includes(location.pathname)) {
       setExpandedMenus(prev => prev.includes('packages') ? prev : [...prev, 'packages']);
+    }
+    if (['/dealers', '/dealer-groups'].includes(location.pathname)) {
+      setExpandedMenus(prev => prev.includes('dealers') ? prev : [...prev, 'dealers']);
+    }
+    if (['/accounting', '/finance', '/employees', '/attendance', '/payroll'].includes(location.pathname)) {
+      setExpandedMenus(prev => prev.includes('accounting') ? prev : [...prev, 'accounting']);
     }
   }, [location.pathname]);
 
@@ -69,64 +76,18 @@ const Sidebar = ({ isOpen, onClose }) => {
     return perms.includes('all') || perms.includes(perm);
   };
 
-  // Build nav items based on permissions
-  const navItems = [];
-
-  if (hasPermission('dashboard_view')) {
-    navItems.push({ path: '/dashboard', icon: LayoutDashboard, label: 'Panel' });
-  }
+  // ===== KULLANICILAR ALT MENÜSÜ =====
+  const usersSubItems = [];
   if (hasPermission('users_view') || hasPermission('users_manage')) {
-    navItems.push({ path: '/users', icon: Users, label: 'Kullanıcılar' });
+    usersSubItems.push({ path: '/users', icon: Users, label: 'Kullanıcı Listesi' });
   }
   if (hasPermission('roles_manage')) {
-    navItems.push({ path: '/roles', icon: Shield, label: 'Roller & Yetkiler' });
+    usersSubItems.push({ path: '/roles', icon: Shield, label: 'Roller & Yetkiler' });
   }
-  if (hasPermission('categories_view') || hasPermission('categories_manage')) {
-    navItems.push({ path: '/categories', icon: Folder, label: 'Kategoriler' });
-  }
-  if (hasPermission('products_view') || hasPermission('products_manage')) {
-    navItems.push({ path: '/products', icon: Package, label: 'Ürünler' });
-  }
-  // Paketler artık ayrı menü olarak değil, expandable olarak eklenecek
-  if (hasPermission('stock_view') || hasPermission('stock_manage')) {
-    navItems.push({ path: '/stock', icon: Boxes, label: 'Stok' });
-  }
-  if (hasPermission('customers_view') || hasPermission('customers_manage')) {
-    navItems.push({ path: '/customers', icon: UserCircle, label: 'Müşteriler' });
-  }
-  if (hasPermission('customer_categories_manage') || hasPermission('customer_sources_manage')) {
-    navItems.push({ path: '/customer-settings', icon: Tags, label: 'Müşteri Ayarları' });
-  }
-  if (hasPermission('quotes_view') || hasPermission('quotes_manage')) {
-    navItems.push({ path: '/quotes', icon: FileText, label: 'Teklifler' });
-  }
-  if (hasPermission('dealer_groups_manage')) {
-    navItems.push({ path: '/dealer-groups', icon: UsersRound, label: 'Bayi Grupları' });
-  }
-  if (hasPermission('dealers_view') || hasPermission('dealers_manage')) {
-    navItems.push({ path: '/dealers', icon: Building2, label: 'Bayiler' });
-  }
-  if (hasPermission('finance_view') || hasPermission('finance_manage')) {
-    navItems.push({ path: '/sales', icon: ShoppingCart, label: 'Satışlar' });
-  }
-  if (hasPermission('finance_view') || hasPermission('finance_manage')) {
-    navItems.push({ path: '/accounting', icon: Calculator, label: 'Muhasebe' });
-  }
-  
-  // HR Menu with submenus
-  const hasHrAccess = hasPermission('hr_view') || hasPermission('hr_manage') || hasPermission('payroll_view') || hasPermission('payroll_manage');
-  
-  if (hasPermission('finance_view')) {
-    navItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
-  }
-  if (hasPermission('finance_view')) {
-    navItems.push({ path: '/reports', icon: BarChart3, label: 'Raporlar' });
-  }
-  if (hasPermission('settings_manage')) {
-    navItems.push({ path: '/settings', icon: Settings, label: 'Ayarlar' });
-  }
+  const hasUsersAccess = usersSubItems.length > 0;
+  const isUsersActive = ['/users', '/roles'].includes(location.pathname);
 
-  // Packages submenu items
+  // ===== PAKETLER ALT MENÜSÜ =====
   const packagesSubItems = [];
   if (hasPermission('products_view') || hasPermission('products_manage')) {
     packagesSubItems.push({ path: '/packages', icon: ShoppingBag, label: 'Tüm Paketler' });
@@ -134,23 +95,108 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('products_manage')) {
     packagesSubItems.push({ path: '/package-categories', icon: Folder, label: 'Paket Kategorileri' });
   }
-  
-  const hasPackagesAccess = hasPermission('products_view') || hasPermission('products_manage');
+  const hasPackagesAccess = packagesSubItems.length > 0;
   const isPackagesActive = ['/packages', '/package-categories'].includes(location.pathname);
 
-  // HR submenu items
-  const hrSubItems = [];
-  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
-    hrSubItems.push({ path: '/employees', icon: UserCog, label: 'Personel Listesi' });
+  // ===== BAYİLER ALT MENÜSÜ =====
+  const dealersSubItems = [];
+  if (hasPermission('dealers_view') || hasPermission('dealers_manage')) {
+    dealersSubItems.push({ path: '/dealers', icon: Building2, label: 'Bayi Listesi' });
+  }
+  if (hasPermission('dealer_groups_manage')) {
+    dealersSubItems.push({ path: '/dealer-groups', icon: UsersRound, label: 'Bayi Grupları' });
+  }
+  const hasDealersAccess = dealersSubItems.length > 0;
+  const isDealersActive = ['/dealers', '/dealer-groups'].includes(location.pathname);
+
+  // ===== MUHASEBE ALT MENÜSÜ =====
+  const accountingSubItems = [];
+  if (hasPermission('finance_view') || hasPermission('finance_manage')) {
+    accountingSubItems.push({ path: '/accounting', icon: Calculator, label: 'Gider/Gelir' });
+  }
+  if (hasPermission('finance_view')) {
+    accountingSubItems.push({ path: '/finance', icon: TrendingUp, label: 'Finans' });
   }
   if (hasPermission('hr_view') || hasPermission('hr_manage')) {
-    hrSubItems.push({ path: '/attendance', icon: Calendar, label: 'Puantaj' });
+    accountingSubItems.push({ path: '/employees', icon: UserCog, label: 'Personel Listesi' });
+  }
+  if (hasPermission('hr_view') || hasPermission('hr_manage')) {
+    accountingSubItems.push({ path: '/attendance', icon: Calendar, label: 'Puantaj' });
   }
   if (hasPermission('payroll_view') || hasPermission('payroll_manage')) {
-    hrSubItems.push({ path: '/payroll', icon: Banknote, label: 'Bordro' });
+    accountingSubItems.push({ path: '/payroll', icon: Banknote, label: 'Bordro' });
   }
+  const hasAccountingAccess = accountingSubItems.length > 0;
+  const isAccountingActive = ['/accounting', '/finance', '/employees', '/attendance', '/payroll'].includes(location.pathname);
 
-  const isHrActive = ['/employees', '/attendance', '/payroll'].includes(location.pathname);
+  // Render expandable menu helper
+  const renderExpandableMenu = (menuId, icon, label, subItems, isActive) => {
+    const Icon = icon;
+    const isExpanded = expandedMenus.includes(menuId);
+    
+    return (
+      <div key={menuId} className="space-y-1">
+        <button
+          onClick={() => toggleMenu(menuId)}
+          className={cn(
+            "sidebar-nav-item w-full justify-between",
+            isActive && "active"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <Icon className="h-5 w-5" />
+            <span>{label}</span>
+          </div>
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+        
+        {isExpanded && (
+          <div className="ml-4 pl-4 border-l border-border space-y-1">
+            {subItems.map((subItem) => {
+              const SubIcon = subItem.icon;
+              const isSubActive = location.pathname === subItem.path;
+              return (
+                <Link
+                  key={subItem.path}
+                  to={subItem.path}
+                  className={cn(
+                    "sidebar-nav-item text-sm",
+                    isSubActive && "active"
+                  )}
+                >
+                  <SubIcon className="h-4 w-4" />
+                  <span>{subItem.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render single nav item helper
+  const renderNavItem = (path, icon, label) => {
+    const Icon = icon;
+    const isActive = location.pathname === path;
+    return (
+      <Link
+        key={path}
+        to={path}
+        className={cn(
+          "sidebar-nav-item",
+          isActive && "active"
+        )}
+      >
+        <Icon className="h-5 w-5" />
+        <span>{label}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -173,7 +219,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             <Sun className="h-7 w-7 lg:h-8 lg:w-8 text-primary" />
             <span className="text-lg lg:text-xl font-bold font-outfit tracking-tight">SolarPro</span>
           </Link>
-          {/* Close button (mobile only) */}
           <Button
             variant="ghost"
             size="icon"
@@ -186,225 +231,97 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Navigation */}
         <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            {/* Insert Packages menu after Ürünler */}
-            if (item.path === '/stock' && hasPackagesAccess) {
-              return (
-                <React.Fragment key="packages-menu">
-                  {/* Packages Expandable Menu */}
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => toggleMenu('packages')}
-                      className={cn(
-                        "sidebar-nav-item w-full justify-between",
-                        isPackagesActive && "active"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <ShoppingBag className="h-5 w-5" />
-                        <span>Paketler</span>
-                      </div>
-                      {expandedMenus.includes('packages') ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                    
-                    {expandedMenus.includes('packages') && (
-                      <div className="ml-4 pl-4 border-l border-border space-y-1">
-                        {packagesSubItems.map((subItem) => {
-                          const SubIcon = subItem.icon;
-                          const isSubActive = location.pathname === subItem.path;
-                          return (
-                            <Link
-                              key={subItem.path}
-                              to={subItem.path}
-                              className={cn(
-                                "sidebar-nav-item text-sm",
-                                isSubActive && "active"
-                              )}
-                            >
-                              <SubIcon className="h-4 w-4" />
-                              <span>{subItem.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Original Stock item */}
-                  <Link
-                    to={item.path}
-                    className={cn(
-                      "sidebar-nav-item",
-                      isActive && "active"
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                </React.Fragment>
-              );
-            }
-            // Insert HR menu before Finans
-            if (item.path === '/finance' && hasHrAccess) {
-              return (
-                <React.Fragment key="hr-menu">
-                  {/* HR Expandable Menu */}
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => toggleMenu('hr')}
-                      className={cn(
-                        "sidebar-nav-item w-full justify-between",
-                        isHrActive && "active"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <UserCog className="h-5 w-5" />
-                        <span>Personel</span>
-                      </div>
-                      {expandedMenus.includes('hr') ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                    
-                    {/* Submenu */}
-                    {expandedMenus.includes('hr') && (
-                      <div className="ml-4 pl-3 border-l-2 border-border space-y-1">
-                        {hrSubItems.map((subItem) => {
-                          const SubIcon = subItem.icon;
-                          const isSubActive = location.pathname === subItem.path;
-                          
-                          return (
-                            <Link
-                              key={subItem.path}
-                              to={subItem.path}
-                              data-testid={`nav-${subItem.path.slice(1)}`}
-                              className={cn(
-                                "sidebar-nav-item text-sm py-2",
-                                isSubActive && "active"
-                              )}
-                            >
-                              <SubIcon className="h-4 w-4" />
-                              <span>{subItem.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Original Finance item */}
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    data-testid={`nav-${item.path.slice(1)}`}
-                    className={cn(
-                      "sidebar-nav-item",
-                      isActive && "active"
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                </React.Fragment>
-              );
-            }
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                data-testid={`nav-${item.path.slice(1)}`}
-                className={cn(
-                  "sidebar-nav-item",
-                  isActive && "active"
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+          
+          {/* Panel */}
+          {hasPermission('dashboard_view') && renderNavItem('/dashboard', LayoutDashboard, 'Panel')}
+          
+          {/* Kullanıcılar (Alt menü: Kullanıcı Listesi, Roller & Yetkiler) */}
+          {hasUsersAccess && renderExpandableMenu('users', Users, 'Kullanıcılar', usersSubItems, isUsersActive)}
+          
+          {/* Kategoriler */}
+          {(hasPermission('categories_view') || hasPermission('categories_manage')) && 
+            renderNavItem('/categories', Folder, 'Kategoriler')}
+          
+          {/* Ürünler */}
+          {(hasPermission('products_view') || hasPermission('products_manage')) && 
+            renderNavItem('/products', Package, 'Ürünler')}
+          
+          {/* Paketler (Alt menü) */}
+          {hasPackagesAccess && renderExpandableMenu('packages', ShoppingBag, 'Paketler', packagesSubItems, isPackagesActive)}
+          
+          {/* Stok */}
+          {(hasPermission('stock_view') || hasPermission('stock_manage')) && 
+            renderNavItem('/stock', Boxes, 'Stok')}
+          
+          {/* Müşteriler */}
+          {(hasPermission('customers_view') || hasPermission('customers_manage')) && 
+            renderNavItem('/customers', UserCircle, 'Müşteriler')}
+          
+          {/* Müşteri Ayarları */}
+          {(hasPermission('customer_categories_manage') || hasPermission('customer_sources_manage')) && 
+            renderNavItem('/customer-settings', Tags, 'Müşteri Ayarları')}
+          
+          {/* Teklifler */}
+          {(hasPermission('quotes_view') || hasPermission('quotes_manage')) && 
+            renderNavItem('/quotes', FileText, 'Teklifler')}
+          
+          {/* Bayiler (Alt menü: Bayi Listesi, Bayi Grupları) */}
+          {hasDealersAccess && renderExpandableMenu('dealers', Building2, 'Bayiler', dealersSubItems, isDealersActive)}
+          
+          {/* Satışlar */}
+          {(hasPermission('finance_view') || hasPermission('finance_manage')) && 
+            renderNavItem('/sales', ShoppingCart, 'Satışlar')}
+          
+          {/* Muhasebe (Alt menü: Gider/Gelir, Finans, Personel, Puantaj, Bordro) */}
+          {hasAccountingAccess && renderExpandableMenu('accounting', Calculator, 'Muhasebe', accountingSubItems, isAccountingActive)}
+          
+          {/* Raporlar */}
+          {hasPermission('finance_view') && renderNavItem('/reports', BarChart3, 'Raporlar')}
+          
+          {/* Ayarlar */}
+          {hasPermission('settings_manage') && renderNavItem('/settings', Settings, 'Ayarlar')}
+
         </nav>
 
-        {/* User section */}
-        <div className="p-3 lg:p-4 border-t border-border space-y-2 lg:space-y-3">
-          {/* Theme toggle */}
+        {/* User Info & Actions */}
+        <div className="p-3 lg:p-4 border-t border-border space-y-2">
+          {/* User Info */}
+          <div className="px-3 py-2">
+            <p className="text-sm font-medium truncate">{user?.name || 'Kullanıcı'}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          </div>
+          
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
-            size="sm"
+            className="w-full justify-start gap-3"
             onClick={toggleTheme}
-            className="w-full justify-start gap-2"
-            data-testid="theme-toggle"
           >
-            {theme === 'light' ? (
+            {theme === 'dark' ? (
               <>
-                <Moon className="h-4 w-4" />
-                <span>Koyu Tema</span>
+                <Sun className="h-5 w-5" />
+                <span>Açık Tema</span>
               </>
             ) : (
               <>
-                <Sun className="h-4 w-4" />
-                <span>Açık Tema</span>
+                <Moon className="h-5 w-5" />
+                <span>Koyu Tema</span>
               </>
             )}
           </Button>
-
-          {/* User info */}
-          <div className="px-3 py-2">
-            <p className="text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
-              <Shield className="h-3 w-3" />
-              {user?.role_name || 'Kullanıcı'}
-            </span>
-          </div>
-
+          
           {/* Logout */}
           <Button
             variant="ghost"
-            size="sm"
+            className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-500/10"
             onClick={logout}
-            className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-            data-testid="logout-btn"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             <span>Çıkış Yap</span>
           </Button>
         </div>
       </aside>
     </>
-  );
-};
-
-// Mobile Header Component
-export const MobileHeader = ({ onMenuClick }) => {
-  return (
-    <header className="sticky top-0 z-30 lg:hidden bg-card/95 backdrop-blur-xl border-b border-border px-4 py-3">
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onMenuClick}
-          data-testid="mobile-menu-btn"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <Sun className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold font-outfit">SolarPro</span>
-        </Link>
-        <div className="w-10" /> {/* Spacer for centering */}
-      </div>
-    </header>
   );
 };
 
