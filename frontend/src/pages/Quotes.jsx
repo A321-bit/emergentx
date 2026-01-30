@@ -513,30 +513,42 @@ const Quotes = () => {
                       <TableCell className="text-sm text-muted-foreground">{quote.created_by_name}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => { setViewingQuote(quote); setIsViewModalOpen(true); }}>
+                          <Button variant="ghost" size="icon" onClick={() => { setViewingQuote(quote); setIsViewModalOpen(true); }} title="Görüntüle">
                             <Eye className="h-4 w-4" />
                           </Button>
                           {canManage && !['satisa_dondu', 'iptal'].includes(quote.status) && (
                             <>
-                              <Button variant="ghost" size="icon" onClick={() => openEditQuote(quote)}>
+                              <Button variant="ghost" size="icon" onClick={() => openEditQuote(quote)} title="Düzenle">
                                 <Pencil className="h-4 w-4" />
                               </Button>
                               {quote.status !== 'olumsuz' && (
                                 <Select value={quote.status} onValueChange={(v) => handleStatusChange(quote.id, v)}>
-                                  <SelectTrigger className="w-8 h-8 p-0 border-0">
-                                    <SelectValue />
+                                  <SelectTrigger className="w-8 h-8 p-0 border-0 focus:ring-0" title="Durum Değiştir">
+                                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", statusInfo.color)}>
+                                      <StatusIcon className="h-3 w-3 text-white" />
+                                    </div>
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    {QUOTE_STATUS_OPTIONS.map(opt => (
-                                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                    ))}
+                                  <SelectContent align="end" side="left" className="min-w-[140px]">
+                                    {QUOTE_STATUS_OPTIONS.map(opt => {
+                                      const OptIcon = opt.icon;
+                                      return (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                          <div className="flex items-center gap-2">
+                                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center", opt.color)}>
+                                              <OptIcon className="h-2.5 w-2.5 text-white" />
+                                            </div>
+                                            <span>{opt.label}</span>
+                                          </div>
+                                        </SelectItem>
+                                      );
+                                    })}
                                   </SelectContent>
                                 </Select>
                               )}
                             </>
                           )}
                           {canManage && quote.status === 'gonderildi' && (
-                            <Button variant="ghost" size="icon" className="text-green-600" onClick={() => handleConvertToSale(quote.id)}>
+                            <Button variant="ghost" size="icon" className="text-green-600" onClick={() => handleConvertToSale(quote.id)} title="Satışa Dönüştür">
                               <ShoppingCart className="h-4 w-4" />
                             </Button>
                           )}
