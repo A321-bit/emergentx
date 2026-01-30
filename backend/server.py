@@ -3076,11 +3076,79 @@ async def get_accounting_summary(current_user: dict = Depends(require_permission
         "net_profit": net_profit
     }
 
+# ==================== PACKAGE CATEGORIES API ====================
+
+@api_router.get("/package-categories")
+async def get_package_categories(current_user: dict = Depends(require_permission("products_view"))):
+    categories = await db.package_categories.find({"is_active": True}, {"_id": 0}).sort("name", 1).to_list(1000)
+    return categories
+
+@api_router.post("/package-categories")
+async def create_package_category(category: PackageCategoryCreate, current_user: dict = Depends(require_permission("products_manage"))):
+    existing = await db.package_categories.find_one({"name": category.name, "is_active": True}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu isimde kategori zaten var")
+    
+    cat_dict = category.model_dump()
+    cat_dict["id"] = str(uuid.uuid4())
+    cat_dict["is_active"] = True
+    cat_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.package_categories.insert_one(cat_dict.copy())
+    if "_id" in cat_dict:
+        del cat_dict["_id"]
+    return cat_dict
+
+@api_router.put("/package-categories/{category_id}")
+async def update_package_category(category_id: str, category: PackageCategoryCreate, current_user: dict = Depends(require_permission("products_manage"))):
+    existing = await db.package_categories.find_one({"id": category_id, "is_active": True}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    
+    update_data = category.model_dump()
+    await db.package_categories.update_one({"id": category_id}, {"$set": update_data})
+    
+    updated = await db.package_categories.find_one({"id": category_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/package-categories/{category_id}")
+async def delete_package_category(category_id: str, current_user: dict = Depends(require_permission("products_manage"))):
+    # Check if category has packages
+    pkg_count = await db.packages.count_documents({"category_id": category_id, "is_active": True})
+    if pkg_count > 0:
+        raise HTTPException(status_code=400, detail=f"Bu kategoride {pkg_count} paket var. Önce paketleri silin veya taşıyın.")
+    
+    result = await db.package_categories.update_one({"id": category_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    return {"message": "Kategori silindi"}
+
 # ==================== PACKAGES API ====================
 
 @api_router.get("/packages")
-async def get_packages(current_user: dict = Depends(require_permission("products_view"))):
-    packages = await db.packages.find({"is_active": True}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def get_packages(category_id: Optional[str] = None, status: Optional[str] = None, current_user: dict = Depends(require_permission("products_view"))):
+    query = {"is_active": True}
+    if category_id:
+        query["category_id"] = category_id
+    if status:
+        query["status"] = status
+    
+    packages = await db.packages.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    # Check if user can see cost/profit info
+    can_see_profit = "all" in current_user.get("permissions", []) or "products_prices_view" in current_user.get("permissions", [])
+    
+    if not can_see_profit:
+        for pkg in packages:
+            pkg.pop("total_cost_usd", None)
+            pkg.pop("total_cost_tl", None)
+            pkg.pop("profit_usd", None)
+            pkg.pop("profit_tl", None)
+            pkg.pop("profit_margin", None)
+            for item in pkg.get("items", []):
+                item.pop("unit_cost", None)
+                item.pop("total_cost", None)
+    
     return packages
 
 @api_router.get("/packages/{package_id}")
@@ -3088,47 +3156,114 @@ async def get_package(package_id: str, current_user: dict = Depends(require_perm
     package = await db.packages.find_one({"id": package_id, "is_active": True}, {"_id": 0})
     if not package:
         raise HTTPException(status_code=404, detail="Paket bulunamadı")
+    
+    # Check if user can see cost/profit info
+    can_see_profit = "all" in current_user.get("permissions", []) or "products_prices_view" in current_user.get("permissions", [])
+    
+    if not can_see_profit:
+        package.pop("total_cost_usd", None)
+        package.pop("total_cost_tl", None)
+        package.pop("profit_usd", None)
+        package.pop("profit_tl", None)
+        package.pop("profit_margin", None)
+        for item in package.get("items", []):
+            item.pop("unit_cost", None)
+            item.pop("total_cost", None)
+    
     return package
 
 @api_router.post("/packages")
 async def create_package(package: PackageCreate, current_user: dict = Depends(require_permission("products_manage"))):
+    # Verify category exists
+    category = await db.package_categories.find_one({"id": package.category_id, "is_active": True}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Paket kategorisi bulunamadı")
+    
     # Get exchange rate
     exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
     usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
-    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
     
-    # Calculate total prices
+    # Calculate totals
+    total_cost_usd = 0
     total_price_usd = 0
-    items_with_totals = []
+    items_processed = []
+    min_available = float('inf')
     
     for item in package.items:
-        item_dict = item.model_dump()
-        item_total = item.unit_price * item.quantity
-        item_dict["total_price"] = item_total
+        product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
         
-        # Convert to USD if needed
-        currency = item.currency.upper()
-        if currency == "USD":
-            total_price_usd += item_total
-        elif currency == "EUR":
-            total_price_usd += item_total * eur_rate / usd_rate
-        else:  # TRY
-            total_price_usd += item_total / usd_rate
+        quantity = item.get("quantity", 1)
+        product_currency = product.get("currency", "USD")
         
-        items_with_totals.append(item_dict)
+        # Get cost and price from product
+        unit_cost = product.get("purchase_price", 0)
+        unit_price = item.get("unit_price") or product.get("sale_price", 0)
+        
+        # Convert to USD
+        if product_currency == "TRY":
+            unit_cost_usd = unit_cost / usd_rate
+            unit_price_usd = unit_price / usd_rate
+        else:
+            unit_cost_usd = unit_cost
+            unit_price_usd = unit_price
+        
+        total_cost = unit_cost_usd * quantity
+        total_price = unit_price_usd * quantity
+        
+        total_cost_usd += total_cost
+        total_price_usd += total_price
+        
+        # Calculate available stock for this package
+        stock = product.get("stock_quantity", 0)
+        available_for_this = stock // quantity if quantity > 0 else 0
+        min_available = min(min_available, available_for_this)
+        
+        items_processed.append({
+            "product_id": product["id"],
+            "product_name": product["name"],
+            "quantity": quantity,
+            "unit_cost": round(unit_cost_usd, 2),
+            "unit_price": round(unit_price_usd, 2),
+            "currency": "USD",
+            "total_cost": round(total_cost, 2),
+            "total_price": round(total_price, 2),
+            "stock_quantity": stock
+        })
     
-    total_price_tl = total_price_usd * usd_rate
+    # Calculate profit
+    profit_usd = total_price_usd - total_cost_usd
+    profit_margin = (profit_usd / total_cost_usd * 100) if total_cost_usd > 0 else 0
     
-    package_dict = package.model_dump()
-    package_dict["id"] = str(uuid.uuid4())
-    package_dict["items"] = items_with_totals
-    package_dict["total_price_usd"] = round(total_price_usd, 2)
-    package_dict["total_price_tl"] = round(total_price_tl, 2)
-    package_dict["exchange_rate"] = usd_rate
-    package_dict["created_by"] = current_user["id"]
-    package_dict["created_by_name"] = current_user.get("name", current_user.get("email", ""))
-    package_dict["is_active"] = True
-    package_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    package_dict = {
+        "id": str(uuid.uuid4()),
+        "name": package.name,
+        "category_id": package.category_id,
+        "category_name": category["name"],
+        "description": package.description,
+        "level": package.level,
+        "system_power_kwp": package.system_power_kwp,
+        "battery_capacity_kwh": package.battery_capacity_kwh,
+        "daily_production_kwh": package.daily_production_kwh,
+        "yearly_production_kwh": package.yearly_production_kwh,
+        "suitable_for": package.suitable_for,
+        "items": items_processed,
+        "total_cost_usd": round(total_cost_usd, 2),
+        "total_cost_tl": round(total_cost_usd * usd_rate, 2),
+        "total_price_usd": round(total_price_usd, 2),
+        "total_price_tl": round(total_price_usd * usd_rate, 2),
+        "profit_usd": round(profit_usd, 2),
+        "profit_tl": round(profit_usd * usd_rate, 2),
+        "profit_margin": round(profit_margin, 2),
+        "exchange_rate": usd_rate,
+        "status": package.status,
+        "available_stock": int(min_available) if min_available != float('inf') else 0,
+        "created_by": current_user["id"],
+        "created_by_name": current_user.get("name", ""),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
     await db.packages.insert_one(package_dict.copy())
     if "_id" in package_dict:
@@ -3142,40 +3277,105 @@ async def update_package(package_id: str, package: PackageCreate, current_user: 
     if not existing:
         raise HTTPException(status_code=404, detail="Paket bulunamadı")
     
+    # Verify category exists
+    category = await db.package_categories.find_one({"id": package.category_id, "is_active": True}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Paket kategorisi bulunamadı")
+    
     # Get exchange rate
     exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
     usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
-    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
     
-    # Calculate total prices
+    # Calculate totals
+    total_cost_usd = 0
     total_price_usd = 0
-    items_with_totals = []
+    items_processed = []
+    min_available = float('inf')
     
     for item in package.items:
-        item_dict = item.model_dump()
-        item_total = item.unit_price * item.quantity
-        item_dict["total_price"] = item_total
+        product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
         
-        currency = item.currency.upper()
-        if currency == "USD":
-            total_price_usd += item_total
-        elif currency == "EUR":
-            total_price_usd += item_total * eur_rate / usd_rate
+        quantity = item.get("quantity", 1)
+        product_currency = product.get("currency", "USD")
+        
+        unit_cost = product.get("purchase_price", 0)
+        unit_price = item.get("unit_price") or product.get("sale_price", 0)
+        
+        if product_currency == "TRY":
+            unit_cost_usd = unit_cost / usd_rate
+            unit_price_usd = unit_price / usd_rate
         else:
-            total_price_usd += item_total / usd_rate
+            unit_cost_usd = unit_cost
+            unit_price_usd = unit_price
         
-        items_with_totals.append(item_dict)
+        total_cost = unit_cost_usd * quantity
+        total_price = unit_price_usd * quantity
+        
+        total_cost_usd += total_cost
+        total_price_usd += total_price
+        
+        stock = product.get("stock_quantity", 0)
+        available_for_this = stock // quantity if quantity > 0 else 0
+        min_available = min(min_available, available_for_this)
+        
+        items_processed.append({
+            "product_id": product["id"],
+            "product_name": product["name"],
+            "quantity": quantity,
+            "unit_cost": round(unit_cost_usd, 2),
+            "unit_price": round(unit_price_usd, 2),
+            "currency": "USD",
+            "total_cost": round(total_cost, 2),
+            "total_price": round(total_price, 2),
+            "stock_quantity": stock
+        })
     
-    total_price_tl = total_price_usd * usd_rate
+    profit_usd = total_price_usd - total_cost_usd
+    profit_margin = (profit_usd / total_cost_usd * 100) if total_cost_usd > 0 else 0
     
-    update_data = package.model_dump()
-    update_data["items"] = items_with_totals
-    update_data["total_price_usd"] = round(total_price_usd, 2)
-    update_data["total_price_tl"] = round(total_price_tl, 2)
-    update_data["exchange_rate"] = usd_rate
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data = {
+        "name": package.name,
+        "category_id": package.category_id,
+        "category_name": category["name"],
+        "description": package.description,
+        "level": package.level,
+        "system_power_kwp": package.system_power_kwp,
+        "battery_capacity_kwh": package.battery_capacity_kwh,
+        "daily_production_kwh": package.daily_production_kwh,
+        "yearly_production_kwh": package.yearly_production_kwh,
+        "suitable_for": package.suitable_for,
+        "items": items_processed,
+        "total_cost_usd": round(total_cost_usd, 2),
+        "total_cost_tl": round(total_cost_usd * usd_rate, 2),
+        "total_price_usd": round(total_price_usd, 2),
+        "total_price_tl": round(total_price_usd * usd_rate, 2),
+        "profit_usd": round(profit_usd, 2),
+        "profit_tl": round(profit_usd * usd_rate, 2),
+        "profit_margin": round(profit_margin, 2),
+        "exchange_rate": usd_rate,
+        "status": package.status,
+        "available_stock": int(min_available) if min_available != float('inf') else 0,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
     
     await db.packages.update_one({"id": package_id}, {"$set": update_data})
+    
+    updated = await db.packages.find_one({"id": package_id}, {"_id": 0})
+    return updated
+
+@api_router.put("/packages/{package_id}/status")
+async def update_package_status(package_id: str, status: str, current_user: dict = Depends(require_permission("products_manage"))):
+    if status not in ["active", "inactive", "campaign"]:
+        raise HTTPException(status_code=400, detail="Geçersiz durum")
+    
+    result = await db.packages.update_one(
+        {"id": package_id, "is_active": True},
+        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Paket bulunamadı")
     
     updated = await db.packages.find_one({"id": package_id}, {"_id": 0})
     return updated
