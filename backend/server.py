@@ -316,77 +316,63 @@ class Customer(CustomerBase):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Quote Models
+# ==================== QUOTE MODELS (Gelişmiş Teklif Sistemi) ====================
+
 class QuoteItem(BaseModel):
     product_id: str
     product_name: str
     quantity: int
-    unit_price_usd: float = 0  # USD birim fiyatı
-    unit_price_tl: float = 0   # TL birim fiyatı
-    total_price_usd: float = 0  # USD toplam
-    total_price_tl: float = 0   # TL toplam
-    # Legacy support
-    unit_price: float = 0
-    total_price: float = 0
+    unit_price_usd: float = 0
+    unit_price_tl: float = 0
+    total_price_usd: float = 0
+    total_price_tl: float = 0
+    unit_price: float = 0  # Legacy (TL)
+    total_price: float = 0  # Legacy (TL)
     unit: str = "adet"
     datasheet_url: Optional[str] = None
-    currency: str = "USD"  # Ürünün para birimi
-
-class QuoteBase(BaseModel):
-    customer_id: str
-    customer_name: str
-    items: List[QuoteItem]
-    subtotal_usd: float = 0
-    subtotal_tl: float = 0
-    subtotal: float = 0  # Legacy
-    discount_type: str = "percent"  # percent or amount
-    discount_rate: float = 0
-    discount_amount_usd: float = 0
-    discount_amount_tl: float = 0
-    discount_amount: float = 0  # Legacy
-    vat_rate: float = 20  # KDV oranı
-    vat_amount_usd: float = 0
-    vat_amount_tl: float = 0
-    vat_amount: float = 0  # Legacy
-    total_usd: float = 0
-    total_tl: float = 0
-    total: float = 0  # Legacy (TL)
-    exchange_rate: float = 34.0  # Kullanılan kur
-    currency: str = "TRY"  # Ana gösterim para birimi
-    validity_days: int = 15
-    notes: Optional[str] = None
-    delivery_time: Optional[str] = None  # Teslim süresi
-    payment_terms: Optional[str] = None  # Ödeme şartları
-    warranty_info: Optional[str] = None  # Garanti bilgisi
+    currency: str = "USD"
+    description: Optional[str] = None
+    sort_order: int = 0  # Sıralama için
 
 class QuoteCreate(BaseModel):
+    # Adım 1: Müşteri & Satış Bilgileri
     customer_id: str
-    items: List[dict]
+    customer_status: str = "bilgi_amacli"  # olumlu, bilgi_amacli, yuksek_potansiyel, dusuk_potansiyel
+    quote_date: Optional[str] = None
+    validity_days: int = 15
+    
+    # Adım 2: Ürünler
+    items: List[dict] = []
+    
+    # Adım 3: Fiyat & İskonto
+    shipping_cost: float = 0  # Nakliye & Montaj (KDV dahil)
     discount_type: str = "percent"
     discount_rate: float = 0
-    discount_amount: float = 0  # TL cinsinden indirim tutarı
+    discount_amount: float = 0
     vat_rate: float = 20
-    currency: str = "TRY"
-    validity_days: int = 15
-    notes: Optional[str] = None
-    delivery_time: Optional[str] = None
-    payment_terms: Optional[str] = None
-    warranty_info: Optional[str] = None
+    
+    # Adım 4: Notlar & Takip
+    customer_notes: Optional[str] = None  # Müşteri notları
+    internal_notes: Optional[str] = None  # İç not (sadece personel görür)
+    callback_required: bool = False  # Tekrar aranacak mı?
+    callback_date: Optional[str] = None  # Arama tarihi
+    callback_time: Optional[str] = None  # Arama saati
+    
     status: str = "taslak"
 
 class QuoteStatusUpdate(BaseModel):
     status: str
+    notes: Optional[str] = None
 
-class Quote(QuoteBase):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    quote_number: str = ""
-    status: str = "taslak"  # taslak, teklif_gonderildi, onaylandi, reddedildi, satisa_dondu
-    created_by: str = ""
-    created_by_name: str = ""
-    dealer_id: Optional[str] = None
-    is_active: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    valid_until: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+class QuoteCallbackUpdate(BaseModel):
+    callback_date: str
+    callback_time: str
+    notes: Optional[str] = None
+
+class QuoteDiscountUpdate(BaseModel):
+    discount_type: str = "percent"
+    discount_rate: float = 0
+    discount_amount: float = 0
 
 # Dealer Models
 class DealerBase(BaseModel):
