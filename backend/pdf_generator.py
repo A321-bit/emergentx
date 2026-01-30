@@ -526,12 +526,40 @@ class QuotePDFGenerator:
         monthly_production = daily_production * 30
         yearly_production = daily_production * 365
         
-        # Financial calculations (average electricity price ~3 TL/kWh)
-        electricity_price = 3.0
-        yearly_savings = yearly_production * electricity_price
+        # Check if Off-Grid system
+        category_name = quote_data.get('customer_category_name', '').lower()
+        is_off_grid = 'off' in category_name or ('grid' not in category_name and 'sulama' in category_name)
+        
+        # Financial calculations
+        if is_off_grid:
+            # Off-Grid: Calculate based on generator fuel cost
+            # Generator uses ~0.35 L diesel per kWh
+            # Diesel price ~45 TL/L in Turkey
+            diesel_per_kwh = 0.35  # liters
+            diesel_price = 45.0  # TL per liter
+            generator_cost_per_kwh = diesel_per_kwh * diesel_price  # ~15.75 TL/kWh
+            yearly_savings = yearly_production * generator_cost_per_kwh
+            savings_label = "Jeneratör Mazot Tasarrufu"
+            savings_note_text = (
+                "<i>• Tasarruf hesaplamaları jeneratör mazot tüketimine göre yapılmıştır (0.35 L/kWh).<br/>"
+                "• Güncel mazot fiyatı baz alınmıştır. Yakıt fiyat artışları tasarrufu artıracaktır.</i>"
+            )
+        else:
+            # On-Grid / Hybrid: Calculate based on electricity price
+            electricity_price = 3.0  # TL/kWh
+            yearly_savings = yearly_production * electricity_price
+            savings_label = "Elektrik Faturası Tasarrufu"
+            savings_note_text = (
+                "<i>• Tasarruf hesaplamaları güncel elektrik tarifelerine göre yapılmıştır.<br/>"
+                "• Elektrik fiyatlarındaki artışlar tasarruf miktarını olumlu etkileyecektir.</i>"
+            )
         
         # Environmental impact
-        co2_per_kwh = 0.5  # kg CO2 per kWh (Turkey grid average)
+        if is_off_grid:
+            # Generator CO2: ~2.7 kg CO2 per liter diesel
+            co2_per_kwh = diesel_per_kwh * 2.7  # ~0.95 kg CO2/kWh from generator
+        else:
+            co2_per_kwh = 0.5  # kg CO2 per kWh (Turkey grid average)
         yearly_co2_saved = yearly_production * co2_per_kwh
         trees_equivalent = yearly_co2_saved / 22  # 1 tree absorbs ~22kg CO2/year
         
