@@ -59,7 +59,23 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/settings/company`);
-      setSettings(prev => ({ ...prev, ...response.data }));
+      // Ensure bank_accounts is always an array
+      const data = response.data;
+      if (!data.bank_accounts || !Array.isArray(data.bank_accounts)) {
+        // Migrate old single bank format to array
+        if (data.bank_name || data.bank_iban) {
+          data.bank_accounts = [{
+            bank_name: data.bank_name || '',
+            bank_branch: data.bank_branch || '',
+            account_holder: data.bank_account_holder || '',
+            iban: data.bank_iban || '',
+            swift: data.bank_swift || ''
+          }];
+        } else {
+          data.bank_accounts = [];
+        }
+      }
+      setSettings(prev => ({ ...prev, ...data }));
     } catch (error) {
       toast.error('Ayarlar yüklenemedi');
     } finally {
