@@ -841,6 +841,84 @@ const Products = () => {
                 />
               </div>
 
+              {/* Segment ve Eşleştirme - Sadece Panel/İnverter/Batarya için */}
+              <div className="space-y-2">
+                <Label htmlFor="price_segment">
+                  Fiyat Segmenti
+                  <span className="text-xs text-muted-foreground ml-1">(Off-Grid için)</span>
+                </Label>
+                <Select
+                  value={formData.price_segment}
+                  onValueChange={(v) => setFormData({...formData, price_segment: v})}
+                >
+                  <SelectTrigger id="price_segment" data-testid="product-segment-select">
+                    <SelectValue placeholder="Segment seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Seçilmedi</SelectItem>
+                    {priceSegments.map(seg => (
+                      <SelectItem key={seg.value} value={seg.value}>
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "w-2 h-2 rounded-full",
+                            seg.color === 'green' && "bg-green-500",
+                            seg.color === 'yellow' && "bg-yellow-500",
+                            seg.color === 'blue' && "bg-blue-500"
+                          )} />
+                          {seg.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="matching_group">
+                  Eşleştirme Grubu
+                  <span className="text-xs text-muted-foreground ml-1">(Aynı güçteki ürünleri grupla)</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.matching_group}
+                    onValueChange={(v) => setFormData({...formData, matching_group: v})}
+                  >
+                    <SelectTrigger id="matching_group" className="flex-1" data-testid="product-matching-select">
+                      <SelectValue placeholder="Grup seçin veya yeni oluşturun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Yok</SelectItem>
+                      {matchingGroups.map(group => (
+                        <SelectItem key={group} value={group}>{group}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Yeni grup adı"
+                    className="w-32"
+                    onBlur={(e) => {
+                      if (e.target.value.trim()) {
+                        setFormData({...formData, matching_group: e.target.value.trim()});
+                        if (!matchingGroups.includes(e.target.value.trim())) {
+                          setMatchingGroups([...matchingGroups, e.target.value.trim()]);
+                        }
+                        e.target.value = '';
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        e.preventDefault();
+                        setFormData({...formData, matching_group: e.target.value.trim()});
+                        if (!matchingGroups.includes(e.target.value.trim())) {
+                          setMatchingGroups([...matchingGroups, e.target.value.trim()]);
+                        }
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="description">Açıklama</Label>
                 <Input
