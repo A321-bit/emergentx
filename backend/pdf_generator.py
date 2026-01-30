@@ -1,6 +1,7 @@
 """
 Solar Energy Sales System - Professional PDF Quote Generator
 A4 format with fixed margins and proper page handling
+Turkish character support with DejaVu Sans font
 """
 
 from reportlab.lib import colors
@@ -10,6 +11,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
 from reportlab.pdfgen import canvas
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from PyPDF2 import PdfReader, PdfWriter
 from io import BytesIO
 from pathlib import Path
@@ -18,6 +21,17 @@ import os
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Register Turkish-compatible fonts
+try:
+    pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'))
+    FONT_NORMAL = 'DejaVuSans'
+    FONT_BOLD = 'DejaVuSans-Bold'
+except:
+    logger.warning("DejaVu fonts not found, falling back to Helvetica")
+    FONT_NORMAL = 'Helvetica'
+    FONT_BOLD = 'Helvetica-Bold'
 
 # A4 Page Settings
 PAGE_WIDTH, PAGE_HEIGHT = A4  # 210mm x 297mm
@@ -30,12 +44,12 @@ MARGIN_RIGHT = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT  # ~180mm
 CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-# Column widths for product table (percentages of content width)
-COL_PRODUCT = 0.40 * CONTENT_WIDTH  # Product Name: 40%
-COL_QTY = 0.10 * CONTENT_WIDTH       # Quantity: 10%
-COL_UNIT = 0.15 * CONTENT_WIDTH      # Unit Price: 15%
-COL_SUBTOTAL = 0.15 * CONTENT_WIDTH  # Subtotal: 15%
-COL_DESC = 0.20 * CONTENT_WIDTH      # Description: 20%
+# Column widths for product table (4 columns only)
+# Ürün Adı: 50%, Adet: 12%, Birim Fiyat: 19%, Toplam: 19%
+COL_PRODUCT = 0.50 * CONTENT_WIDTH
+COL_QTY = 0.12 * CONTENT_WIDTH
+COL_UNIT_PRICE = 0.19 * CONTENT_WIDTH
+COL_TOTAL = 0.19 * CONTENT_WIDTH
 
 # Colors
 PRIMARY_COLOR = colors.HexColor('#f59e0b')  # Amber/Orange
@@ -52,13 +66,13 @@ def format_currency(value, currency='TRY'):
 
 
 def create_styles():
-    """Create custom paragraph styles"""
+    """Create custom paragraph styles with Turkish font support"""
     styles = getSampleStyleSheet()
     
     styles.add(ParagraphStyle(
         name='CompanyName',
         fontSize=16,
-        fontName='Helvetica-Bold',
+        fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         leading=20,
     ))
@@ -66,7 +80,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='CompanyInfo',
         fontSize=9,
-        fontName='Helvetica',
+        fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
         leading=12,
     ))
@@ -74,7 +88,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='SectionTitle',
         fontSize=12,
-        fontName='Helvetica-Bold',
+        fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         spaceBefore=10,
         spaceAfter=5,
@@ -83,7 +97,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='TableCell',
         fontSize=9,
-        fontName='Helvetica',
+        fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
         leading=12,
     ))
@@ -91,7 +105,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='TableHeader',
         fontSize=9,
-        fontName='Helvetica-Bold',
+        fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         leading=12,
     ))
@@ -99,7 +113,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='TotalLabel',
         fontSize=10,
-        fontName='Helvetica',
+        fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
         alignment=TA_RIGHT,
     ))
@@ -107,7 +121,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='TotalValue',
         fontSize=10,
-        fontName='Helvetica-Bold',
+        fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         alignment=TA_RIGHT,
     ))
@@ -115,7 +129,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='GrandTotal',
         fontSize=14,
-        fontName='Helvetica-Bold',
+        fontName=FONT_BOLD,
         textColor=PRIMARY_COLOR,
         alignment=TA_RIGHT,
     ))
@@ -123,7 +137,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='Notes',
         fontSize=9,
-        fontName='Helvetica',
+        fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
         leading=12,
     ))
@@ -131,7 +145,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='CoverTitle',
         fontSize=28,
-        fontName='Helvetica-Bold',
+        fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         alignment=TA_CENTER,
         leading=34,
@@ -140,7 +154,7 @@ def create_styles():
     styles.add(ParagraphStyle(
         name='CoverSubtitle',
         fontSize=14,
-        fontName='Helvetica',
+        fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
         alignment=TA_CENTER,
         leading=18,
@@ -150,7 +164,7 @@ def create_styles():
 
 
 class QuotePDFGenerator:
-    """Generate professional A4 PDF quotes"""
+    """Generate professional A4 PDF quotes with Turkish support"""
     
     def __init__(self, upload_dir: str):
         self.upload_dir = Path(upload_dir)
@@ -159,13 +173,6 @@ class QuotePDFGenerator:
     def generate(self, quote_data: dict, company_settings: dict) -> BytesIO:
         """
         Generate complete PDF with cover, quote details, and datasheets
-        
-        Args:
-            quote_data: Quote information including items, customer, totals
-            company_settings: Company information and logo path
-        
-        Returns:
-            BytesIO buffer containing the complete PDF
         """
         pdf_parts = []
         
@@ -186,7 +193,7 @@ class QuotePDFGenerator:
         return self._merge_pdfs(pdf_parts)
     
     def _create_cover_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create cover page - either from uploaded PDF or auto-generated"""
+        """Create cover page - either from uploaded PDF/image or auto-generated"""
         
         # Check for uploaded cover PDF
         cover_path = quote_data.get('cover_pdf_path')
@@ -199,14 +206,13 @@ class QuotePDFGenerator:
                 except Exception as e:
                     logger.warning(f"Could not load cover PDF: {e}")
         
-        # Check for uploaded cover image (jpg, png, jpeg)
+        # Check for uploaded cover image
         cover_image_path = company_settings.get('quote_cover_image') or quote_data.get('cover_image_path')
         
-        # Auto-generate cover page
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
-        # If cover image exists, use it as background
+        # If cover image exists, use it as full-page background
         if cover_image_path:
             img_path = self.upload_dir / cover_image_path.replace('/uploads/', '').replace('uploads/', '')
             if img_path.exists():
@@ -218,8 +224,7 @@ class QuotePDFGenerator:
                 except Exception as e:
                     logger.warning(f"Could not load cover image: {e}")
         
-        # Generate text-based cover
-        # Background
+        # Auto-generate cover page
         c.setFillColor(colors.white)
         c.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, fill=True)
         
@@ -240,19 +245,19 @@ class QuotePDFGenerator:
         
         # Company name in header
         c.setFillColor(colors.white)
-        c.setFont('Helvetica-Bold', 18)
+        c.setFont(FONT_BOLD, 18)
         company_name = company_settings.get('company_name', 'Solar Enerji')
         c.drawString(MARGIN_LEFT + 70, PAGE_HEIGHT - 50, company_name)
         
-        # Main title area (center of page)
+        # Main title area
         y_center = PAGE_HEIGHT / 2 + 50
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont('Helvetica-Bold', 36)
+        c.setFont(FONT_BOLD, 36)
         c.drawCentredString(PAGE_WIDTH / 2, y_center, "TEKLİF")
         
         # Quote number
-        c.setFont('Helvetica', 18)
+        c.setFont(FONT_NORMAL, 18)
         quote_number = quote_data.get('quote_number', '')
         c.drawCentredString(PAGE_WIDTH / 2, y_center - 40, f"No: {quote_number}")
         
@@ -262,12 +267,12 @@ class QuotePDFGenerator:
         c.line(PAGE_WIDTH/2 - 100, y_center - 60, PAGE_WIDTH/2 + 100, y_center - 60)
         
         # Customer name
-        c.setFont('Helvetica-Bold', 16)
+        c.setFont(FONT_BOLD, 16)
         customer_name = quote_data.get('customer_name', '')
         c.drawCentredString(PAGE_WIDTH / 2, y_center - 100, customer_name)
         
         # Date
-        c.setFont('Helvetica', 12)
+        c.setFont(FONT_NORMAL, 12)
         quote_date = quote_data.get('created_at', '')
         if quote_date:
             try:
@@ -287,13 +292,13 @@ class QuotePDFGenerator:
         validity_days = quote_data.get('validity_days', 15)
         c.drawCentredString(PAGE_WIDTH / 2, y_center - 150, f"Geçerlilik: {validity_days} Gün")
         
-        # Bottom decorative bar
+        # Bottom bar
         c.setFillColor(PRIMARY_COLOR)
         c.rect(0, 0, PAGE_WIDTH, 40, fill=True)
         
-        # Contact info in footer
+        # Contact info
         c.setFillColor(colors.white)
-        c.setFont('Helvetica', 9)
+        c.setFont(FONT_NORMAL, 9)
         contact_info = []
         if company_settings.get('phone'):
             contact_info.append(f"Tel: {company_settings['phone']}")
@@ -308,7 +313,7 @@ class QuotePDFGenerator:
         return buffer
     
     def _create_quote_pages(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create main quote detail pages using Platypus for automatic page breaks"""
+        """Create main quote detail pages"""
         
         buffer = BytesIO()
         doc = SimpleDocTemplate(
@@ -322,7 +327,7 @@ class QuotePDFGenerator:
         
         elements = []
         
-        # Header with company and customer info
+        # Header
         header_table = self._create_header(quote_data, company_settings)
         elements.append(header_table)
         elements.append(Spacer(1, 15))
@@ -340,12 +345,12 @@ class QuotePDFGenerator:
         elements.append(products_table)
         elements.append(Spacer(1, 15))
         
-        # Totals section
+        # Totals
         totals_table = self._create_totals_table(quote_data)
         elements.append(totals_table)
         elements.append(Spacer(1, 20))
         
-        # Notes section
+        # Notes
         customer_notes = quote_data.get('customer_notes', '')
         if customer_notes:
             elements.append(Paragraph("NOTLAR", self.styles['SectionTitle']))
@@ -354,22 +359,20 @@ class QuotePDFGenerator:
             elements.append(Paragraph(notes_text, self.styles['Notes']))
             elements.append(Spacer(1, 15))
         
-        # Warranty text
+        # Warranty
         warranty_text = company_settings.get('warranty_text', '')
         if warranty_text:
             elements.append(Paragraph("GARANTİ KOŞULLARI", self.styles['SectionTitle']))
             elements.append(Spacer(1, 5))
             elements.append(Paragraph(warranty_text, self.styles['Notes']))
         
-        # Build PDF
         doc.build(elements)
         buffer.seek(0)
         return buffer
     
     def _create_header(self, quote_data: dict, company_settings: dict):
-        """Create header with company logo/info and customer info"""
+        """Create header with company and customer info"""
         
-        # Company column
         company_content = []
         
         # Logo
@@ -416,7 +419,6 @@ class QuotePDFGenerator:
         if customer_info_parts:
             customer_content.append(Paragraph("<br/>".join(customer_info_parts), self.styles['CompanyInfo']))
         
-        # Create two-column layout
         header_data = [[company_content, customer_content]]
         header_table = Table(header_data, colWidths=[CONTENT_WIDTH * 0.5, CONTENT_WIDTH * 0.5])
         header_table.setStyle(TableStyle([
@@ -464,15 +466,14 @@ class QuotePDFGenerator:
         return info_table
     
     def _create_products_table(self, items: list):
-        """Create products table with fixed column widths"""
+        """Create products table with 4 columns: Ürün Adı, Adet, Birim Fiyat, Toplam"""
         
-        # Header row
+        # Header row - 4 columns only
         header = [
             Paragraph("<b>Ürün Adı</b>", self.styles['TableHeader']),
             Paragraph("<b>Adet</b>", self.styles['TableHeader']),
             Paragraph("<b>Birim Fiyat</b>", self.styles['TableHeader']),
-            Paragraph("<b>Ara Toplam</b>", self.styles['TableHeader']),
-            Paragraph("<b>Açıklama</b>", self.styles['TableHeader']),
+            Paragraph("<b>Toplam</b>", self.styles['TableHeader']),
         ]
         
         table_data = [header]
@@ -484,29 +485,26 @@ class QuotePDFGenerator:
             unit = item.get('unit', 'adet')
             unit_price = item.get('unit_price_tl', 0)
             total_price = item.get('total_price_tl', 0)
-            description = item.get('description', '')
             
             row = [
                 Paragraph(product_name, self.styles['TableCell']),
                 Paragraph(f"{quantity} {unit}", self.styles['TableCell']),
                 Paragraph(format_currency(unit_price), self.styles['TableCell']),
                 Paragraph(format_currency(total_price), self.styles['TableCell']),
-                Paragraph(description or '-', self.styles['TableCell']),
             ]
             table_data.append(row)
         
-        # Create table with fixed widths
-        table = Table(table_data, colWidths=[COL_PRODUCT, COL_QTY, COL_UNIT, COL_SUBTOTAL, COL_DESC])
+        # Create table with 4 columns
+        table = Table(table_data, colWidths=[COL_PRODUCT, COL_QTY, COL_UNIT_PRICE, COL_TOTAL])
         
-        # Style the table
         style = TableStyle([
             # Header styling
             ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_COLOR),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (-1, 0), FONT_BOLD),
             
             # General styling
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 1), (-1, -1), FONT_NORMAL),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
@@ -521,15 +519,15 @@ class QuotePDFGenerator:
             # Alternating row colors
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, HEADER_BG]),
             
-            # Right align numbers
-            ('ALIGN', (1, 1), (3, -1), 'RIGHT'),
+            # Right align numbers (columns 1, 2, 3)
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
         ])
         
         table.setStyle(style)
         return table
     
     def _create_totals_table(self, quote_data: dict):
-        """Create totals section aligned to the right"""
+        """Create totals section"""
         
         subtotal = quote_data.get('subtotal_tl', 0)
         shipping = quote_data.get('shipping_cost', 0)
@@ -567,9 +565,6 @@ class QuotePDFGenerator:
             Paragraph(f"<b>{format_currency(total)}</b>", self.styles['GrandTotal'])
         ])
         
-        # Create table aligned to right
-        totals_data = [[Spacer(1, 1), rows]]
-        
         inner_table = Table(rows, colWidths=[80, 100])
         inner_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
@@ -580,7 +575,6 @@ class QuotePDFGenerator:
             ('TOPPADDING', (0, -1), (-1, -1), 8),
         ]))
         
-        # Wrap in outer table for right alignment
         wrapper_data = [['', inner_table]]
         wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 200, 200])
         wrapper.setStyle(TableStyle([
@@ -600,7 +594,6 @@ class QuotePDFGenerator:
             if not datasheet_url:
                 continue
             
-            # Extract filename from URL
             filename = datasheet_url.replace('/uploads/', '').replace('uploads/', '')
             full_path = self.upload_dir / filename
             
@@ -641,16 +634,6 @@ class QuotePDFGenerator:
 
 
 def generate_quote_pdf(quote_data: dict, company_settings: dict, upload_dir: str) -> BytesIO:
-    """
-    Main function to generate a quote PDF
-    
-    Args:
-        quote_data: Complete quote data with items, customer info, totals
-        company_settings: Company information including logo path
-        upload_dir: Path to the uploads directory
-    
-    Returns:
-        BytesIO buffer containing the complete PDF
-    """
+    """Main function to generate a quote PDF"""
     generator = QuotePDFGenerator(upload_dir)
     return generator.generate(quote_data, company_settings)
