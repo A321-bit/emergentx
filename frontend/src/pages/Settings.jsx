@@ -24,6 +24,7 @@ const Settings = () => {
     logo_url: null,
     quote_cover_image: null,
     quote_terms: '',
+    contract_terms: '',
     bank_name: '',
     bank_branch: '',
     bank_account_holder: '',
