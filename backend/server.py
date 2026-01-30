@@ -2049,6 +2049,7 @@ async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dic
         "customer_email": customer.get("email", ""),
         "customer_address": customer.get("address", ""),
         "customer_status": quote_data.customer_status,
+        "electricity_subscription_type": quote_data.electricity_subscription_type,  # EPDK abonelik tipi
         "items": items,
         "subtotal_usd": round(subtotal_usd, 2),
         "subtotal_tl": round(subtotal_tl, 2),
