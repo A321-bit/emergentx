@@ -507,6 +507,36 @@ const Quotes = () => {
     }
   };
 
+  // Download PDF
+  const handleDownloadPDF = async (quoteId, quoteNumber) => {
+    try {
+      toast.loading('PDF oluşturuluyor...', { id: 'pdf-loading' });
+      
+      const response = await axios.get(`${API_URL}/api/quotes/${quoteId}/pdf`, {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      // Create download link
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Teklif_${quoteNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF indirildi', { id: 'pdf-loading' });
+    } catch (error) {
+      toast.error('PDF oluşturulamadı', { id: 'pdf-loading' });
+      console.error('PDF download error:', error);
+    }
+  };
+
   // Filtered products for search
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
