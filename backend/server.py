@@ -2361,6 +2361,94 @@ async def delete_quote(quote_id: str, current_user: dict = Depends(require_permi
     return {"message": "Teklif iptal edildi"}
 
 
+async def calculate_segment_items(items: list, db) -> dict:
+    """Calculate items for each price segment (ekonomik, standart, premium)"""
+    
+    # Get exchange rate
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    
+    # Categories that have segment variations (panel, inverter, battery)
+    segment_categories = ['panel', 'inverter', 'invertör', 'batarya', 'akü', 'battery']
+    
+    # Build result for each segment
+    segments_result = {
+        "ekonomik": {"items": [], "subtotal_tl": 0},
+        "standart": {"items": [], "subtotal_tl": 0},
+        "premium": {"items": [], "subtotal_tl": 0}
+    }
+    
+    for item in items:
+        product = await db.products.find_one({"id": item.get("product_id"), "is_active": True}, {"_id": 0})
+        if not product:
+            continue
+        
+        category_name = (product.get("category_name") or "").lower()
+        is_segment_product = any(cat in category_name for cat in segment_categories)
+        
+        quantity = item.get("quantity", 1)
+        
+        if is_segment_product and product.get("matching_group"):
+            # Find matched products for each segment
+            matching_group = product["matching_group"]
+            matched_products = await db.products.find(
+                {"matching_group": matching_group, "is_active": True},
+                {"_id": 0}
+            ).to_list(10)
+            
+            for segment in ["ekonomik", "standart", "premium"]:
+                # Find product for this segment
+                segment_product = next(
+                    (p for p in matched_products if p.get("price_segment") == segment),
+                    product  # fallback to original if no match
+                )
+                
+                # Calculate price
+                currency = segment_product.get("currency", "USD")
+                base_price = segment_product.get("sale_price", 0)
+                if currency == "USD":
+                    unit_price_tl = base_price * usd_rate
+                else:
+                    unit_price_tl = base_price
+                
+                total_price_tl = unit_price_tl * quantity
+                
+                segments_result[segment]["items"].append({
+                    "product_id": segment_product["id"],
+                    "product_name": segment_product["name"],
+                    "quantity": quantity,
+                    "unit": item.get("unit", "adet"),
+                    "unit_price_tl": round(unit_price_tl, 2),
+                    "total_price_tl": round(total_price_tl, 2),
+                    "power_watt": segment_product.get("power_watt"),
+                    "is_segment_product": True
+                })
+                segments_result[segment]["subtotal_tl"] += total_price_tl
+        else:
+            # Non-segment product - same for all segments
+            unit_price_tl = item.get("unit_price_tl") or item.get("total_price_tl", 0) / max(quantity, 1)
+            total_price_tl = item.get("total_price_tl", unit_price_tl * quantity)
+            
+            for segment in ["ekonomik", "standart", "premium"]:
+                segments_result[segment]["items"].append({
+                    "product_id": item.get("product_id"),
+                    "product_name": item.get("product_name"),
+                    "quantity": quantity,
+                    "unit": item.get("unit", "adet"),
+                    "unit_price_tl": round(unit_price_tl, 2),
+                    "total_price_tl": round(total_price_tl, 2),
+                    "power_watt": item.get("power_watt"),
+                    "is_segment_product": False
+                })
+                segments_result[segment]["subtotal_tl"] += total_price_tl
+    
+    # Round subtotals
+    for segment in segments_result:
+        segments_result[segment]["subtotal_tl"] = round(segments_result[segment]["subtotal_tl"], 2)
+    
+    return segments_result
+
+
 @api_router.get("/quotes/{quote_id}/pdf")
 async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depends(require_permission("quotes_view"))):
     """Generate professional PDF for a quote"""
