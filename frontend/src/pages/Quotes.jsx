@@ -1374,6 +1374,71 @@ const Quotes = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* EPDK Subscription Type Selection Modal */}
+      <Dialog open={isSubscriptionModalOpen} onOpenChange={(open) => {
+        if (!open && pendingCustomerId) {
+          // User cancelled - reset pending customer
+          setPendingCustomerId(null);
+        }
+        setIsSubscriptionModalOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-yellow-500">⚡</span>
+              Elektrik Abonelik Türü Seçin
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              On-Grid ve Hibrit sistemlerde tasarruf hesaplamaları için elektrik abonelik türü seçmeniz gerekmektedir.
+              Bu bilgi PDF teklifindeki tahmini tasarruf hesaplamalarında kullanılacaktır.
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {epdkSubscriptionTypes.map((type) => (
+                <button
+                  key={type.type_code}
+                  type="button"
+                  onClick={() => handleSubscriptionConfirm(type.type_code)}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-lg border-2 text-left transition-all",
+                    "hover:border-primary hover:bg-primary/5",
+                    formData.electricity_subscription_type === type.type_code 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border"
+                  )}
+                  data-testid={`subscription-${type.type_code}`}
+                >
+                  <div>
+                    <p className="font-medium">{type.type_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Varsayılan: {type.default_price?.toFixed(2)} TL/kWh
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-primary">
+                      {type.default_price?.toFixed(2)} ₺
+                    </span>
+                    <p className="text-xs text-muted-foreground">/kWh</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setPendingCustomerId(null);
+                setIsSubscriptionModalOpen(false);
+              }}
+            >
+              İptal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
