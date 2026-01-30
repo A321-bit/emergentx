@@ -220,6 +220,7 @@ const Quotes = () => {
   // EPDK subscription modal
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [epdkSubscriptionTypes, setEpdkSubscriptionTypes] = useState([]);
+  const [savedEnergyPrices, setSavedEnergyPrices] = useState({ electricity_rates: [] });  // Ayarlardan kaydedilen fiyatlar
   const [pendingCustomerId, setPendingCustomerId] = useState(null);
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('quotes_manage');
