@@ -484,6 +484,257 @@ class QuotePDFGenerator:
         ]))
         return table
     
+    def _create_power_calculation_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
+        """Create power calculation page with graphics and explanations"""
+        
+        items = quote_data.get('items', [])
+        
+        # Calculate power values from items
+        total_panel_watt = 0
+        total_inverter_watt = 0
+        total_battery_watt = 0
+        
+        for item in items:
+            power = item.get('power_watt', 0) or 0
+            quantity = item.get('quantity', 1)
+            category = (item.get('category_name') or '').lower()
+            product_name = (item.get('product_name') or '').lower()
+            
+            # Determine category by name or category
+            if any(x in category or x in product_name for x in ['panel', 'güneş', 'solar', 'mono', 'poli']):
+                total_panel_watt += power * quantity
+            elif any(x in category or x in product_name for x in ['inverter', 'invertör', 'evirici']):
+                total_inverter_watt += power * quantity
+            elif any(x in category or x in product_name for x in ['batarya', 'akü', 'battery', 'depolama', 'lityum']):
+                total_battery_watt += power * quantity
+        
+        # If no power data, don't create page
+        if total_panel_watt == 0 and total_inverter_watt == 0 and total_battery_watt == 0:
+            return None
+        
+        # Convert to kW
+        panel_kw = total_panel_watt / 1000
+        inverter_kw = total_inverter_watt / 1000
+        battery_kwh = total_battery_watt / 1000  # Assuming Wh for battery
+        
+        # Calculate estimates
+        daily_sun_hours = 5  # Average for Turkey
+        daily_production = panel_kw * daily_sun_hours  # kWh
+        monthly_production = daily_production * 30
+        yearly_production = daily_production * 365
+        
+        # Financial calculations (average electricity price ~3 TL/kWh)
+        electricity_price = 3.0
+        yearly_savings = yearly_production * electricity_price
+        
+        # Environmental impact
+        co2_per_kwh = 0.5  # kg CO2 per kWh (Turkey grid average)
+        yearly_co2_saved = yearly_production * co2_per_kwh
+        trees_equivalent = yearly_co2_saved / 22  # 1 tree absorbs ~22kg CO2/year
+        
+        # Create PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            topMargin=MARGIN_TOP,
+            bottomMargin=MARGIN_BOTTOM,
+            leftMargin=MARGIN_LEFT,
+            rightMargin=MARGIN_RIGHT
+        )
+        
+        elements = []
+        
+        # Title
+        category_name = quote_data.get('customer_category_name', 'Solar')
+        elements.append(Paragraph(f"<b>{category_name} Sistem Analizi</b>", self.styles['QuoteTitle']))
+        elements.append(Spacer(1, 15))
+        
+        # System capacity summary box
+        summary_style = ParagraphStyle('SummaryText', parent=self.styles['Notes'], fontSize=10, leading=14)
+        
+        # Create capacity cards
+        capacity_data = []
+        
+        if panel_kw > 0:
+            capacity_data.append([
+                self._create_capacity_card("☀️ PANEL GÜCÜ", f"{panel_kw:.1f} kW", "#f59e0b"),
+            ])
+        if inverter_kw > 0:
+            capacity_data.append([
+                self._create_capacity_card("⚡ İNVERTER", f"{inverter_kw:.1f} kW", "#3b82f6"),
+            ])
+        if battery_kwh > 0:
+            capacity_data.append([
+                self._create_capacity_card("🔋 BATARYA", f"{battery_kwh:.1f} kWh", "#10b981"),
+            ])
+        
+        if capacity_data:
+            # Horizontal layout for capacity cards
+            card_row = []
+            if panel_kw > 0:
+                card_row.append(self._create_capacity_card("PANEL GÜCÜ", f"{panel_kw:.1f} kW", "#f59e0b"))
+            if inverter_kw > 0:
+                card_row.append(self._create_capacity_card("İNVERTER", f"{inverter_kw:.1f} kW", "#3b82f6"))
+            if battery_kwh > 0:
+                card_row.append(self._create_capacity_card("BATARYA", f"{battery_kwh:.1f} kWh", "#10b981"))
+            
+            num_cards = len(card_row)
+            card_width = CONTENT_WIDTH / num_cards if num_cards > 0 else CONTENT_WIDTH
+            
+            capacity_table = Table([card_row], colWidths=[card_width] * num_cards)
+            capacity_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ]))
+            elements.append(capacity_table)
+            elements.append(Spacer(1, 20))
+        
+        # Production estimates section
+        elements.append(Paragraph("<b>TAHMİNİ ÜRETİM DEĞERLERİ</b>", self.styles['SectionTitle']))
+        elements.append(Spacer(1, 10))
+        
+        production_data = [
+            ["Günlük Ortalama Üretim", f"{daily_production:.1f} kWh"],
+            ["Aylık Ortalama Üretim", f"{monthly_production:.0f} kWh"],
+            ["Yıllık Tahmini Üretim", f"{yearly_production:.0f} kWh"],
+        ]
+        
+        prod_table = Table(production_data, colWidths=[CONTENT_WIDTH * 0.6, CONTENT_WIDTH * 0.4])
+        prod_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), HEADER_BG),
+            ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+            ('FONTNAME', (0, 0), (0, -1), FONT_NORMAL),
+            ('FONTNAME', (1, 0), (1, -1), FONT_BOLD),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('RIGHTPADDING', (1, 0), (1, -1), 10),
+        ]))
+        elements.append(prod_table)
+        elements.append(Spacer(1, 20))
+        
+        # Financial savings section
+        elements.append(Paragraph("<b>TAHMİNİ TASARRUF</b>", self.styles['SectionTitle']))
+        elements.append(Spacer(1, 10))
+        
+        savings_data = [
+            ["Yıllık Tahmini Tasarruf", f"₺{yearly_savings:,.0f}".replace(',', '.')],
+            ["5 Yıllık Tahmini Tasarruf", f"₺{yearly_savings * 5:,.0f}".replace(',', '.')],
+            ["10 Yıllık Tahmini Tasarruf", f"₺{yearly_savings * 10:,.0f}".replace(',', '.')],
+        ]
+        
+        savings_table = Table(savings_data, colWidths=[CONTENT_WIDTH * 0.6, CONTENT_WIDTH * 0.4])
+        savings_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#ecfdf5')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#10b981')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#10b981')),
+            ('FONTNAME', (0, 0), (0, -1), FONT_NORMAL),
+            ('FONTNAME', (1, 0), (1, -1), FONT_BOLD),
+            ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#059669')),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('RIGHTPADDING', (1, 0), (1, -1), 10),
+        ]))
+        elements.append(savings_table)
+        elements.append(Spacer(1, 20))
+        
+        # Environmental impact section
+        elements.append(Paragraph("<b>ÇEVRESEL ETKİ</b>", self.styles['SectionTitle']))
+        elements.append(Spacer(1, 10))
+        
+        env_data = [
+            ["Yıllık CO₂ Tasarrufu", f"{yearly_co2_saved:.0f} kg"],
+            ["Ağaç Eşdeğeri", f"{trees_equivalent:.0f} ağaç/yıl"],
+        ]
+        
+        env_table = Table(env_data, colWidths=[CONTENT_WIDTH * 0.6, CONTENT_WIDTH * 0.4])
+        env_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0fdf4')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#22c55e')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#22c55e')),
+            ('FONTNAME', (0, 0), (0, -1), FONT_NORMAL),
+            ('FONTNAME', (1, 0), (1, -1), FONT_BOLD),
+            ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#16a34a')),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('RIGHTPADDING', (1, 0), (1, -1), 10),
+        ]))
+        elements.append(env_table)
+        elements.append(Spacer(1, 25))
+        
+        # Auto-generated explanation text
+        explanation_parts = []
+        
+        if panel_kw > 0:
+            explanation_parts.append(
+                f"Bu sistem {panel_kw:.1f} kW panel gücü ile günde ortalama {daily_production:.1f} kWh, "
+                f"yılda yaklaşık {yearly_production:.0f} kWh enerji üretebilir."
+            )
+        
+        if battery_kwh > 0:
+            explanation_parts.append(
+                f"{battery_kwh:.1f} kWh batarya kapasitesi ile gece kullanımınızı veya "
+                f"şebeke kesintilerinde ihtiyacınızı karşılayabilirsiniz."
+            )
+        
+        if inverter_kw > 0:
+            explanation_parts.append(
+                f"{inverter_kw:.1f} kW inverter ile aynı anda {inverter_kw * 1000:.0f}W'a kadar "
+                f"cihaz çalıştırabilirsiniz."
+            )
+        
+        if explanation_parts:
+            elements.append(Paragraph("<b>SİSTEM AÇIKLAMASI</b>", self.styles['SectionTitle']))
+            elements.append(Spacer(1, 8))
+            explanation_text = " ".join(explanation_parts)
+            elements.append(Paragraph(explanation_text, self.styles['Notes']))
+        
+        # Disclaimer
+        elements.append(Spacer(1, 20))
+        disclaimer = Paragraph(
+            "<i>* Hesaplamalar Türkiye ortalaması güneşlenme süreleri ve mevcut elektrik tarifeleri "
+            "baz alınarak yapılmıştır. Gerçek değerler bölgeye, mevsime ve kullanım alışkanlıklarına "
+            "göre farklılık gösterebilir.</i>",
+            ParagraphStyle('Disclaimer', parent=self.styles['Notes'], fontSize=7, textColor=colors.gray)
+        )
+        elements.append(disclaimer)
+        
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer
+    
+    def _create_capacity_card(self, title: str, value: str, color: str):
+        """Create a capacity info card"""
+        card_color = colors.HexColor(color)
+        
+        card_data = [
+            [Paragraph(f"<b>{title}</b>", ParagraphStyle('CardTitle', fontSize=9, fontName=FONT_BOLD, textColor=colors.white, alignment=TA_CENTER))],
+            [Paragraph(f"<b>{value}</b>", ParagraphStyle('CardValue', fontSize=16, fontName=FONT_BOLD, textColor=card_color, alignment=TA_CENTER))],
+        ]
+        
+        card = Table(card_data, colWidths=[55 * mm])
+        card.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, 0), card_color),
+            ('BACKGROUND', (0, 1), (0, 1), colors.white),
+            ('BOX', (0, 0), (-1, -1), 2, card_color),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        return card
+    
     def _create_contract_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
         """Create contract terms page if contract_terms exists"""
         
