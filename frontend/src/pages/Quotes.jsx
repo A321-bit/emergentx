@@ -321,7 +321,8 @@ const Quotes = () => {
       callback_date: '',
       callback_time: '',
       status: 'taslak',
-      electricity_subscription_type: ''
+      electricity_subscription_type: '',
+      include_segment_options: false
     });
     setWizardStep(1);
     setEditingQuote(null);
