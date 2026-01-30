@@ -530,27 +530,37 @@ class QuotePDFGenerator:
         category_name = quote_data.get('customer_category_name', '').lower()
         is_off_grid = 'off' in category_name or ('grid' not in category_name and 'sulama' in category_name)
         
+        # Get energy prices from company settings
+        diesel_price = company_settings.get('diesel_price_per_liter', 45.0) or 45.0
+        diesel_per_kwh = company_settings.get('diesel_consumption_per_kwh', 0.35) or 0.35
+        
+        # Get electricity rate (default to mesken/konut rate)
+        electricity_rates = company_settings.get('electricity_rates', [])
+        electricity_price = 3.0  # default
+        if electricity_rates:
+            # Try to find mesken rate first, then use first available
+            mesken_rate = next((r for r in electricity_rates if r.get('type_code') == 'mesken'), None)
+            if mesken_rate:
+                electricity_price = mesken_rate.get('price_per_kwh', 3.0)
+            elif electricity_rates:
+                electricity_price = electricity_rates[0].get('price_per_kwh', 3.0)
+        
         # Financial calculations
         if is_off_grid:
             # Off-Grid: Calculate based on generator fuel cost
-            # Generator uses ~0.35 L diesel per kWh
-            # Diesel price ~45 TL/L in Turkey
-            diesel_per_kwh = 0.35  # liters
-            diesel_price = 45.0  # TL per liter
-            generator_cost_per_kwh = diesel_per_kwh * diesel_price  # ~15.75 TL/kWh
+            generator_cost_per_kwh = diesel_per_kwh * diesel_price
             yearly_savings = yearly_production * generator_cost_per_kwh
             savings_label = "Jeneratör Mazot Tasarrufu"
             savings_note_text = (
-                "<i>• Tasarruf hesaplamaları jeneratör mazot tüketimine göre yapılmıştır (0.35 L/kWh).<br/>"
-                "• Güncel mazot fiyatı baz alınmıştır. Yakıt fiyat artışları tasarrufu artıracaktır.</i>"
+                f"<i>• Tasarruf hesaplamaları jeneratör mazot tüketimine göre yapılmıştır ({diesel_per_kwh} L/kWh).<br/>"
+                f"• Mazot fiyatı: {diesel_price:.2f} TL/L olarak hesaplanmıştır.</i>"
             )
         else:
             # On-Grid / Hybrid: Calculate based on electricity price
-            electricity_price = 3.0  # TL/kWh
             yearly_savings = yearly_production * electricity_price
             savings_label = "Elektrik Faturası Tasarrufu"
             savings_note_text = (
-                "<i>• Tasarruf hesaplamaları güncel elektrik tarifelerine göre yapılmıştır.<br/>"
+                f"<i>• Tasarruf hesaplamaları {electricity_price:.2f} TL/kWh elektrik tarifesine göre yapılmıştır.<br/>"
                 "• Elektrik fiyatlarındaki artışlar tasarruf miktarını olumlu etkileyecektir.</i>"
             )
         
