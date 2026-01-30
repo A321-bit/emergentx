@@ -2,61 +2,88 @@
 
 ## Son Güncelleme: 30 Ocak 2026
 
-### Son Eklenen Özellik
-- **Teklif Modülü - Sürükle-Bırak:** Ürünlerin sırasını değiştirmek için drag & drop özelliği eklendi (@dnd-kit)
+### SON EKLENEN ÖZELLİKLER
 
-## Problem Statement
-Comprehensive solar energy sales management system with admin/sales panels, product/stock management, customer tracking, quotes, and financial modules.
+#### 30 Ocak 2026 - PDF Teklif Motoru
+- **Teklif Modülü - Sürükle-Bırak:** Ürünlerin sırasını değiştirmek için drag & drop özelliği (@dnd-kit)
+- **PDF Teklif Motoru:**
+  - A4 formatında profesyonel PDF oluşturma (210mm x 297mm)
+  - Kapak sayfası (yüklenen resim veya otomatik)
+  - Detay sayfası (firma logosu, müşteri bilgileri, ürün tablosu)
+  - Otomatik sayfa taşması
+  - Datasheet entegrasyonu (ürün PDF'leri eklenir)
+  - İndirme butonları (liste ve modal'da)
 
-## Core Modules (Implemented)
-1. **User & Role Management** ✅
-2. **Product & Category Management** ✅
-3. **Stock Management** ✅
-4. **Customer Management** ✅
-5. **Dealer Management** ✅
-6. **Quote Management** ✅ (Enhanced with USD/TL)
-7. **Sales Tracking** ✅
-8. **Reports Module** ✅
-9. **Advanced Packages Module** ✅ (Completely rebuilt Jan 2025)
-10. **Personnel & Payroll** (Phases 1-2 ✅)
-11. **Accounting/Expenses** ✅
+---
 
-## Advanced Packages Module (Jan 2025)
-- Dynamic category system with icons/colors
-- Package levels: Basic, Plus, Pro
-- Technical specs: kWp, kWh, daily/yearly production
-- "Suitable For" tags: home, farm, industrial, etc.
-- Cost/profit calculation (role-based visibility)
-- Stock integration with availability count
-- Status management: Active, Inactive, Campaign
+## UYGULAMA GENEL BAKIŞ
 
-## Recent Changes (Jan 2025)
+### Proje Amacı
+Solar enerji satış yönetim sistemi - müşteri, ürün, teklif, satış, personel ve muhasebe modüllerini içeren kapsamlı bir ERP çözümü.
 
-### Expense Bug Fix
-- Fixed `current_user["user_id"]` → `current_user["id"]` in create_expense
+### Kullanılan Teknolojiler
+- **Backend:** FastAPI, Python 3.11, MongoDB
+- **Frontend:** React, Tailwind CSS, shadcn/ui
+- **PDF:** ReportLab, PyPDF2
+- **Drag & Drop:** @dnd-kit
 
-### Quote Module Enhancement
-- Added dual currency support (USD/TL)
-- Auto exchange rate conversion from settings
-- Both currencies stored and displayed
-- Edit permissions expanded (all except "satisa_dondu")
-- Status change dropdown added
+### Kullanıcı Bilgileri
+- **Admin:** admin@solar.com / admin123
 
-## Known Issues
-- **P0**: PDF generation - images don't load (backend static file routing)
+---
 
-## Backlog
-- **P1**: Personnel Phase 3 (Advance/Bonus management)
-- **P1**: Personnel Phase 4-5 (Expenses, PDF payroll)
-- **P2**: XML B2B product import
-- **P3**: WhatsApp quote sending
-- **P3**: PayTR payment integration
+## MODÜL DURUMU
 
-## Tech Stack
-- Backend: FastAPI, MongoDB
-- Frontend: React, Tailwind, shadcn/ui
-- Auth: JWT
+### ✅ Tamamlanan Modüller
+1. **Kullanıcı Yönetimi** - Tam CRUD, rol ve yetki sistemi
+2. **Ürün Yönetimi** - Tam CRUD, kategori, resim, datasheet
+3. **Müşteri Yönetimi** - Tam CRUD, kategori, kaynak
+4. **Stok Yönetimi** - Giriş/çıkış, izleme
+5. **Teklif Yönetimi** - 4 adımlı wizard, PDF çıktı, sürükle-bırak
+6. **Satış Yönetimi** - Tekliften satışa dönüştürme
+7. **Bayi Yönetimi** - Tam CRUD, gruplar, iskontolar
+8. **Paket Yönetimi** - Kategori sistemi, ürün içerik
+9. **Raporlama** - Satış, müşteri, ürün raporları
 
-## Credentials
-- Email: admin@solar.com
-- Password: admin123
+### 🔄 Devam Eden Modüller
+1. **Personel & Bordro** - Devam yönetimi var, avans/prim/PDF bordro bekliyor
+2. **Muhasebe** - Gider/gelir girişi var, detaylı muhasebe bekliyor
+
+### ❌ Planlanmış Modüller
+1. XML B2B Entegrasyonu
+2. WhatsApp Teklif Gönderimi
+3. PayTR Taksit Entegrasyonu
+
+---
+
+## API ENDPOINT'LERI
+
+### Ana Endpoint'ler
+- `POST /api/auth/login` - Giriş
+- `GET /api/quotes` - Teklif listesi
+- `POST /api/quotes` - Yeni teklif
+- `GET /api/quotes/{id}/pdf` - PDF indir
+- `GET /api/products` - Ürün listesi
+- `GET /api/customers` - Müşteri listesi
+- `GET /api/settings/company` - Şirket ayarları
+
+---
+
+## DOSYA YAPISI
+
+```
+/app/
+├── backend/
+│   ├── server.py          # Ana API dosyası (~4700 satır)
+│   ├── pdf_generator.py   # PDF oluşturma modülü
+│   └── uploads/           # Yüklenen dosyalar
+├── frontend/
+│   └── src/
+│       ├── pages/
+│       │   ├── Quotes.jsx # Teklif yönetimi
+│       │   ├── Packages.jsx
+│       │   └── ...
+│       └── components/
+└── memory/
+    └── PRD.md
+```
