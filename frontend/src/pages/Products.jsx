@@ -98,12 +98,18 @@ const Products = () => {
 
   const fetchData = async () => {
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
+      const [productsRes, categoriesRes, segmentsRes] = await Promise.all([
         axios.get(`${API_URL}/api/products`),
-        axios.get(`${API_URL}/api/categories`)
+        axios.get(`${API_URL}/api/categories`),
+        axios.get(`${API_URL}/api/products/price-segments`).catch(() => ({ data: [] }))
       ]);
       setProducts(productsRes.data);
       setCategories(categoriesRes.data);
+      setPriceSegments(segmentsRes.data || []);
+      
+      // Extract unique matching groups from products
+      const groups = [...new Set(productsRes.data.filter(p => p.matching_group).map(p => p.matching_group))];
+      setMatchingGroups(groups);
     } catch (error) {
       toast.error('Veriler yüklenemedi');
     } finally {
