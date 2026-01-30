@@ -2,56 +2,60 @@
 
 ## Son Güncelleme: 30 Ocak 2026
 
-### SON EKLENEN ÖZELLİKLER
+---
 
-#### 30 Ocak 2026 - Off-Grid 3 Segment Sistemi
-- **Ürün Segmentasyonu:**
-  - Ürünlere "Fiyat Segmenti" alanı eklendi: Ekonomik / Standart / Premium
-  - Ürünlere "Eşleştirme Grubu" alanı eklendi (aynı güçteki ürünleri gruplamak için)
-  - Ürün listesinde segment badge'leri: 🟢 Eko / 🟡 Std / 🔵 Prm
-- **Teklif Oluşturma:**
-  - Off-Grid müşteri seçildiğinde "3 Farklı Seçenek Sunulsun mu?" modalı
-  - Evet seçilirse formda turuncu badge gösteriliyor
-- **PDF Çıktısı:**
-  - 3 farklı fiyat tablosu alt alta (Ekonomik/Standart/Premium)
-  - Her segment için ayrı toplam
-  - Tek güç hesaplama sayfası (ortak değerler)
+## ✅ TAMAMLANAN ÖZELLİKLER
 
-#### 30 Ocak 2026 - Enerji Fiyatları Ayarları
-- **Enerji Fiyatları Sekmesi:** Ayarlar sayfasına yeni bir sekme eklendi
-  - EPDK Elektrik Abonelik Türleri (6 tür):
-    - Mesken (Konut)
-    - Ticarethane
-    - Sanayi (Tek Zamanlı)
-    - Sanayi (Çok Zamanlı)
-    - Tarımsal Sulama
-    - Genel Aydınlatma
-  - Her tür için birim fiyat (TL/kWh) ayarı
-  - Jeneratör / Mazot Maliyetleri:
-    - Mazot litre fiyatı (TL/L)
-    - Jeneratör tüketimi (L/kWh)
-    - Hesaplanan maliyet gösterimi
-  - Örnek tasarruf karşılaştırması (10.000 kWh için)
-- **PDF Entegrasyonu:** PDF'teki tasarruf hesaplamaları artık ayarlardan çekilen değerleri kullanıyor
-- **Teklif Oluşturma Entegrasyonu:**
-  - On-Grid veya Hibrit müşteri seçildiğinde EPDK abonelik tipi seçim penceresi açılıyor
-  - Seçilen abonelik tipi teklife kaydediliyor (`electricity_subscription_type`)
-  - PDF'te "Sanayi (Tek Zamanlı) tarifesine göre (2.80 TL/kWh) yapılmıştır" şeklinde gösteriliyor
+### 30 Ocak 2026 - Off-Grid 3 Segment Sistemi (Temel)
+- Ürünlere "Fiyat Segmenti" (Ekonomik/Standart/Premium) ve "Eşleştirme Grubu" alanları eklendi
+- Off-Grid müşteri seçildiğinde "3 Farklı Seçenek Sunulsun mu?" modalı
+- PDF'te 3 farklı fiyat tablosu desteği (temel altyapı hazır)
+- *İleride geliştirilecek*
 
-#### 30 Ocak 2026 - Güç Hesaplama Modülü Düzeltmesi
-- **Güç Hesaplama Sayfası:** On-Grid, Off-Grid ve Sulama teklifleri için PDF'e otomatik güç hesaplama sayfası ekleniyor
-  - Panel gücü (kW)
-  - İnverter kapasitesi (kW)
-  - Batarya kapasitesi (kWh)
-  - Tahmini üretim değerleri (günlük, aylık, yıllık kWh)
-  - Tahmini tasarruf hesaplaması (₺)
-  - Çevresel etki (CO₂ tasarrufu, ağaç eşdeğeri)
-  - Sistem açıklaması (otomatik oluşturulan metin)
-  - **Her bölümün altında bilgilendirici açıklamalar:**
-    - Üretim: "Şehir bazlı ortalama güneşlenme verilerine göre hesaplanmıştır"
-    - Tasarruf: "Güncel elektrik tarifelerine göre yapılmıştır"
-    - Çevresel: "Türkiye şebeke emisyon faktörüne göre hesaplanmıştır"
-- **Hata Düzeltmesi:** Türkçe karakter sorunu (İ/i) ve ürün sınıflandırma mantığı düzeltildi
+### 30 Ocak 2026 - Enerji Fiyatları Ayarları
+- EPDK Elektrik Abonelik Türleri (6 tür) - fiyatlar ayarlardan yönetiliyor
+- Jeneratör/Mazot maliyetleri (Off-Grid için)
+- On-Grid/Hibrit tekliflerde abonelik tipi seçimi
+- PDF'te dinamik tarife gösterimi
+
+### 30 Ocak 2026 - Güç Hesaplama Modülü
+- On-Grid, Off-Grid, Sulama teklifleri için otomatik güç hesaplama sayfası
+- Panel/İnverter/Batarya sınıflandırması
+- Tahmini üretim, tasarruf ve çevresel etki hesaplamaları
+- Bilgilendirici açıklamalar
+
+### Önceki Oturumlar
+- Profesyonel PDF Teklif Motoru (kapak, detay, sözleşme, datasheet)
+- Sürükle-bırak ürün sıralaması
+- Çoklu banka hesabı yönetimi
+- Müşteri kategorileri ve filtreleme
+- Paketler modülü
+
+---
+
+## 📋 GELECEKTEKİ GELİŞTİRMELER (BACKLOG)
+
+### P1 - Yakın Vadeli
+- Off-Grid 3 Segment PDF çıktısı geliştirmeleri
+- Personel & Bordro Modülü (Avans, Prim, PDF)
+- XML B2B Entegrasyonu
+
+### P2 - Orta Vadeli
+- WhatsApp üzerinden teklif gönderimi
+- PayTR entegrasyonu
+- Muhasebe modülü detaylandırma
+
+---
+
+## 🔧 TEKNİK NOTLAR
+
+**Backend:** FastAPI + MongoDB + ReportLab (PDF)
+**Frontend:** React + Shadcn/UI + @dnd-kit
+**Kimlik Doğrulama:** JWT
+
+**Test Hesabı:**
+- Email: admin@solar.com
+- Password: admin123
 
 #### 30 Ocak 2026 - PDF Teklif Motoru
 - **Teklif Modülü - Sürükle-Bırak:** Ürünlerin sırasını değiştirmek için drag & drop özelliği (@dnd-kit)
