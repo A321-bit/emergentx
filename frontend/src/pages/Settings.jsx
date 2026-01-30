@@ -101,6 +101,50 @@ const Settings = () => {
     }
   };
 
+  const fetchEpdkTypes = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/epdk-subscription-types`);
+      setEpdkTypes(response.data);
+    } catch (error) {
+      console.error('EPDK abonelik türleri yüklenemedi');
+    }
+  };
+
+  const fetchEnergyPrices = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/energy-prices`);
+      setEnergyPrices(response.data);
+    } catch (error) {
+      console.error('Enerji fiyatları yüklenemedi');
+    }
+  };
+
+  const handleSaveEnergyPrices = async (e) => {
+    e.preventDefault();
+    setSavingEnergy(true);
+    
+    try {
+      const response = await axios.put(`${API_URL}/api/settings/energy-prices`, energyPrices);
+      setEnergyPrices(response.data);
+      toast.success('Enerji fiyatları kaydedildi');
+    } catch (error) {
+      toast.error('Enerji fiyatları kaydedilemedi');
+    } finally {
+      setSavingEnergy(false);
+    }
+  };
+
+  const updateElectricityRate = (typeCode, newPrice) => {
+    setEnergyPrices(prev => ({
+      ...prev,
+      electricity_rates: prev.electricity_rates.map(rate => 
+        rate.type_code === typeCode 
+          ? { ...rate, price_per_kwh: parseFloat(newPrice) || 0 }
+          : rate
+      )
+    }));
+  };
+
   const handleSaveExchangeRates = async (e) => {
     e.preventDefault();
     setSavingRates(true);
