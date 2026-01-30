@@ -342,6 +342,7 @@ class QuoteCreate(BaseModel):
     customer_status: str = "bilgi_amacli"  # olumlu, bilgi_amacli, yuksek_potansiyel, dusuk_potansiyel
     quote_date: Optional[str] = None
     validity_days: int = 15
+    electricity_subscription_type: Optional[str] = None  # EPDK abonelik tipi (On-Grid/Hibrit için)
     
     # Adım 2: Ürünler
     items: List[dict] = []
