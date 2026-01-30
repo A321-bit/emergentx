@@ -4,12 +4,25 @@
 
 ### SON EKLENEN ÖZELLİKLER
 
+#### 30 Ocak 2026 - Güç Hesaplama Modülü Düzeltmesi
+- **Güç Hesaplama Sayfası:** On-Grid, Off-Grid ve Sulama teklifleri için PDF'e otomatik güç hesaplama sayfası ekleniyor
+  - Panel gücü (kW)
+  - İnverter kapasitesi (kW)
+  - Batarya kapasitesi (kWh)
+  - Tahmini üretim değerleri (günlük, aylık, yıllık kWh)
+  - Tahmini tasarruf hesaplaması (₺)
+  - Çevresel etki (CO₂ tasarrufu, ağaç eşdeğeri)
+  - Sistem açıklaması (otomatik oluşturulan metin)
+- **Hata Düzeltmesi:** Türkçe karakter sorunu (İ/i) ve ürün sınıflandırma mantığı düzeltildi
+
 #### 30 Ocak 2026 - PDF Teklif Motoru
 - **Teklif Modülü - Sürükle-Bırak:** Ürünlerin sırasını değiştirmek için drag & drop özelliği (@dnd-kit)
 - **PDF Teklif Motoru:**
   - A4 formatında profesyonel PDF oluşturma (210mm x 297mm)
   - Kapak sayfası (yüklenen resim veya otomatik)
   - Detay sayfası (firma logosu, müşteri bilgileri, ürün tablosu)
+  - Güç hesaplama sayfası (On-Grid/Off-Grid/Sulama için)
+  - Sözleşme sayfası (ayarlardan düzenlenebilir)
   - Otomatik sayfa taşması
   - Datasheet entegrasyonu (ürün PDF'leri eklenir)
   - İndirme butonları (liste ve modal'da)
