@@ -341,13 +341,20 @@ const Quotes = () => {
     // Check if On-Grid or Hibrit - needs electricity subscription type
     const needsSubscription = categoryName.includes('on') || categoryName.includes('hibrit') || categoryName.includes('hybrid');
     
+    // Check if Off-Grid - offer 3 segment options
+    const isOffGrid = categoryName.includes('off');
+    
     if (needsSubscription && !editingQuote) {
       // Store pending customer and open subscription modal
       setPendingCustomerId(customerId);
       setIsSubscriptionModalOpen(true);
+    } else if (isOffGrid && !editingQuote) {
+      // Off-Grid - ask about 3 segment options
+      setPendingCustomerId(customerId);
+      setIsSegmentOptionsModalOpen(true);
     } else {
-      // Off-Grid or other - select directly
-      setFormData(prev => ({ ...prev, customer_id: customerId, electricity_subscription_type: '' }));
+      // Other categories - select directly
+      setFormData(prev => ({ ...prev, customer_id: customerId, electricity_subscription_type: '', include_segment_options: false }));
     }
   };
 
@@ -362,6 +369,20 @@ const Quotes = () => {
       setPendingCustomerId(null);
     }
     setIsSubscriptionModalOpen(false);
+  };
+
+  // Confirm segment options selection (Off-Grid)
+  const handleSegmentOptionsConfirm = (includeOptions) => {
+    if (pendingCustomerId) {
+      setFormData(prev => ({
+        ...prev,
+        customer_id: pendingCustomerId,
+        include_segment_options: includeOptions,
+        electricity_subscription_type: ''
+      }));
+      setPendingCustomerId(null);
+    }
+    setIsSegmentOptionsModalOpen(false);
   };
 
   // Open wizard for new quote
