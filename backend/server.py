@@ -2189,6 +2189,71 @@ async def delete_quote(quote_id: str, current_user: dict = Depends(require_permi
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     return {"message": "Teklif iptal edildi"}
 
+
+@api_router.get("/quotes/{quote_id}/pdf")
+async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depends(require_permission("quotes_view"))):
+    """Generate professional PDF for a quote"""
+    
+    # Get quote
+    quote = await db.quotes.find_one({"id": quote_id, "is_active": True}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    # Get customer details
+    customer = await db.customers.find_one({"id": quote.get("customer_id")}, {"_id": 0})
+    if customer:
+        quote["customer_name"] = customer.get("name", "")
+        quote["customer_phone"] = customer.get("phone", "")
+        quote["customer_email"] = customer.get("email", "")
+        quote["customer_address"] = customer.get("address", "")
+    
+    # Get product datasheets for items
+    items = quote.get("items", [])
+    for item in items:
+        product_id = item.get("product_id")
+        if product_id:
+            product = await db.products.find_one({"id": product_id}, {"_id": 0})
+            if product:
+                item["datasheet_url"] = product.get("datasheet_url")
+                item["description"] = product.get("description", "")
+    
+    quote["items"] = items
+    
+    # Get company settings
+    company_settings = await db.company_settings.find_one({"id": "company_settings"}, {"_id": 0})
+    if not company_settings:
+        company_settings = {
+            "company_name": "Solar Enerji A.Ş.",
+            "phone": "",
+            "email": "",
+            "address": "",
+            "warranty_text": ""
+        }
+    
+    # Generate PDF
+    try:
+        pdf_buffer = generate_quote_pdf(
+            quote_data=quote,
+            company_settings=company_settings,
+            upload_dir=str(UPLOAD_DIR)
+        )
+        
+        # Create filename
+        quote_number = quote.get("quote_number", quote_id)
+        filename = f"Teklif_{quote_number}.pdf"
+        
+        return Response(
+            content=pdf_buffer.getvalue(),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        logger.error(f"PDF generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"PDF oluşturma hatası: {str(e)}")
+
+
 # ==================== DEALER ROUTES ====================
 
 @api_router.post("/dealers", response_model=dict)
