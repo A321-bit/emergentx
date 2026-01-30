@@ -349,7 +349,8 @@ const Products = () => {
       vat_rate: '20',
       profit_margin: '',
       stock_quantity: '0',
-      unit: 'adet'
+      unit: 'adet',
+      power_watt: ''
     });
   };
 
