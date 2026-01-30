@@ -1749,24 +1749,33 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         if not product:
             raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
         
-        product_currency = product.get("currency", "USD")
-        base_price = item.get("unit_price") or item.get("unit_price_tl") or product.get("sale_price", 0)
+        # Frontend'den gelen fiyatları kullan (zaten hesaplanmış)
+        # Eğer frontend'den gelmediyse ürün fiyatından hesapla
+        if "unit_price_tl" in item and item["unit_price_tl"]:
+            unit_price_tl = float(item["unit_price_tl"])
+            unit_price_usd = float(item.get("unit_price_usd", 0)) or (unit_price_tl / usd_rate)
+        elif "unit_price_usd" in item and item["unit_price_usd"]:
+            unit_price_usd = float(item["unit_price_usd"])
+            unit_price_tl = unit_price_usd * usd_rate
+        else:
+            # Ürün fiyatından hesapla
+            product_currency = product.get("currency", "USD")
+            base_price = product.get("sale_price", 0)
+            if product_currency == "USD":
+                unit_price_usd = base_price
+                unit_price_tl = base_price * usd_rate
+            else:
+                unit_price_tl = base_price
+                unit_price_usd = base_price / usd_rate
         
-        # Fiyatları USD ve TL olarak hesapla
-        if product_currency == "USD":
-            unit_price_usd = base_price
-            unit_price_tl = base_price * usd_rate
-        else:  # TRY
-            unit_price_tl = base_price
-            unit_price_usd = base_price / usd_rate
-        
-        total_price_usd = unit_price_usd * item["quantity"]
-        total_price_tl = unit_price_tl * item["quantity"]
+        quantity = int(item.get("quantity", 1))
+        total_price_usd = unit_price_usd * quantity
+        total_price_tl = unit_price_tl * quantity
         
         items.append({
             "product_id": product["id"],
             "product_name": product["name"],
-            "quantity": item["quantity"],
+            "quantity": quantity,
             "unit_price_usd": round(unit_price_usd, 2),
             "unit_price_tl": round(unit_price_tl, 2),
             "total_price_usd": round(total_price_usd, 2),
@@ -1775,7 +1784,7 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
             "total_price": round(total_price_tl, 2),
             "unit": product.get("unit", "adet"),
             "datasheet_url": product.get("datasheet_url"),
-            "currency": product_currency,
+            "currency": product.get("currency", "USD"),
             "description": item.get("description", ""),
             "sort_order": item.get("sort_order", idx)
         })
