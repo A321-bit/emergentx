@@ -903,14 +903,14 @@ const Products = () => {
                 </Label>
                 <div className="flex gap-2">
                   <Select
-                    value={formData.matching_group}
-                    onValueChange={(v) => setFormData({...formData, matching_group: v})}
+                    value={formData.matching_group || '_none'}
+                    onValueChange={(v) => setFormData({...formData, matching_group: v === '_none' ? '' : v})}
                   >
                     <SelectTrigger id="matching_group" className="flex-1" data-testid="product-matching-select">
                       <SelectValue placeholder="Grup seçin veya yeni oluşturun" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Yok</SelectItem>
+                      <SelectItem value="_none">Yok</SelectItem>
                       {matchingGroups.map(group => (
                         <SelectItem key={group} value={group}>{group}</SelectItem>
                       ))}
