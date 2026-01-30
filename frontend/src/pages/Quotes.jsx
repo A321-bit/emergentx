@@ -88,6 +88,81 @@ const WIZARD_STEPS = [
   { id: 4, title: 'Notlar & Takip', icon: Bell },
 ];
 
+// Sürükle-bırak için Sortable Item Bileşeni
+const SortableItem = ({ item, index, formatTRY, onQuantityUpdate, onRemove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.product_id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && "bg-accent shadow-lg")}
+    >
+      <TableCell>
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-accent"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </TableCell>
+      <TableCell className="font-medium">{item.product_name}</TableCell>
+      <TableCell>
+        <div className="flex items-center justify-center gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => onQuantityUpdate(index, item.quantity - 1)}
+          >
+            -
+          </Button>
+          <span className="w-8 text-center">{item.quantity}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => onQuantityUpdate(index, item.quantity + 1)}
+          >
+            +
+          </Button>
+        </div>
+      </TableCell>
+      <TableCell className="text-right">{formatTRY(item.unit_price_tl)}</TableCell>
+      <TableCell className="text-right font-semibold">{formatTRY(item.total_price_tl)}</TableCell>
+      <TableCell>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-red-500"
+          onClick={() => onRemove(index)}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+};
+
 const Quotes = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
