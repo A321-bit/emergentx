@@ -1238,6 +1238,16 @@ const Quotes = () => {
                   <p className="text-sm bg-amber-100 dark:bg-amber-900/20 p-2 rounded">{viewingQuote.internal_notes}</p>
                 </div>
               )}
+              
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={() => handleDownloadPDF(viewingQuote.id, viewingQuote.quote_number)}
+                  className="w-full bg-amber-500 hover:bg-amber-600"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  PDF Olarak İndir
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
