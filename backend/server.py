@@ -2223,7 +2223,7 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
             if category:
                 quote["customer_category_name"] = category.get("name", "")
     
-    # Get product datasheets for items
+    # Get product datasheets for items (and power_watt)
     items = quote.get("items", [])
     for item in items:
         product_id = item.get("product_id")
@@ -2232,6 +2232,8 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
             if product:
                 item["datasheet_url"] = product.get("datasheet_url")
                 item["description"] = product.get("description", "")
+                item["power_watt"] = product.get("power_watt")
+                item["category_name"] = product.get("category_name", "")
     
     quote["items"] = items
     
