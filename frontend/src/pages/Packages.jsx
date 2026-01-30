@@ -220,6 +220,7 @@ const Packages = () => {
       const updatedItems = [...formData.items];
       updatedItems[existingIndex].quantity += selectedQuantity;
       setFormData({ ...formData, items: updatedItems });
+      toast.success(`${product.name} miktarı güncellendi`);
     } else {
       const newItem = {
         product_id: product.id,
@@ -229,9 +230,12 @@ const Packages = () => {
         stock_quantity: product.stock_quantity || 0
       };
       setFormData({ ...formData, items: [...formData.items, newItem] });
+      toast.success(`${product.name} eklendi`);
     }
     
+    // Clear selection after adding
     setSelectedProduct('');
+    setProductSearch('');
     setSelectedQuantity(1);
   };
 
