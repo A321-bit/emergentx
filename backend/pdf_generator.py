@@ -618,7 +618,16 @@ class QuotePDFGenerator:
             ('RIGHTPADDING', (1, 0), (1, -1), 10),
         ]))
         elements.append(prod_table)
-        elements.append(Spacer(1, 20))
+        
+        # Production info note
+        prod_note = Paragraph(
+            "<i>• Üretim değerleri şehir bazlı ortalama güneşlenme verilerine göre hesaplanmıştır.<br/>"
+            "• Gerçek üretim değerleri kurulum açısı, yönü ve gölgelenme durumuna göre değişebilir.</i>",
+            ParagraphStyle('InfoNote', parent=self.styles['Notes'], fontSize=7, textColor=colors.HexColor('#64748b'), leading=10)
+        )
+        elements.append(Spacer(1, 5))
+        elements.append(prod_note)
+        elements.append(Spacer(1, 15))
         
         # Financial savings section
         elements.append(Paragraph("<b>TAHMİNİ TASARRUF</b>", self.styles['SectionTitle']))
