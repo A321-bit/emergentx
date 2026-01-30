@@ -2,6 +2,7 @@
 Solar Energy Sales System - Professional PDF Quote Generator
 A4 format with fixed margins and proper page handling
 Turkish character support with DejaVu Sans font
+Updated table layout: Miktar | Birim | Ürün | Birim Fiyat | Toplam Fiyat
 """
 
 from reportlab.lib import colors
@@ -44,12 +45,13 @@ MARGIN_RIGHT = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT  # ~180mm
 CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-# Column widths for product table (4 columns only)
-# Ürün Adı: 50%, Adet: 12%, Birim Fiyat: 19%, Toplam: 19%
-COL_PRODUCT = 0.50 * CONTENT_WIDTH
-COL_QTY = 0.12 * CONTENT_WIDTH
-COL_UNIT_PRICE = 0.19 * CONTENT_WIDTH
-COL_TOTAL = 0.19 * CONTENT_WIDTH
+# Column widths for product table (5 columns as per example PDF)
+# Miktar | Birim | Ürün | Birim Fiyat | Toplam Fiyat
+COL_MIKTAR = 0.08 * CONTENT_WIDTH      # Miktar: 8%
+COL_BIRIM = 0.10 * CONTENT_WIDTH       # Birim: 10%
+COL_URUN = 0.44 * CONTENT_WIDTH        # Ürün: 44%
+COL_BIRIM_FIYAT = 0.19 * CONTENT_WIDTH # Birim Fiyat: 19%
+COL_TOPLAM_FIYAT = 0.19 * CONTENT_WIDTH # Toplam Fiyat: 19%
 
 # Colors
 PRIMARY_COLOR = colors.HexColor('#f59e0b')  # Amber/Orange
@@ -61,7 +63,7 @@ TEXT_COLOR = colors.HexColor('#1e293b')
 def format_currency(value, currency='TRY'):
     """Format number as Turkish currency"""
     if currency == 'TRY':
-        return f"₺{value:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+        return f"{value:,.2f} TL".replace(',', 'X').replace('.', ',').replace('X', '.')
     return f"${value:,.2f}"
 
 
@@ -100,14 +102,34 @@ def create_styles():
         fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
         leading=12,
+        wordWrap='CJK',  # Better word wrapping for long product names
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='TableCellCenter',
+        fontSize=9,
+        fontName=FONT_NORMAL,
+        textColor=TEXT_COLOR,
+        leading=12,
+        alignment=TA_CENTER,
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='TableCellRight',
+        fontSize=9,
+        fontName=FONT_NORMAL,
+        textColor=TEXT_COLOR,
+        leading=12,
+        alignment=TA_RIGHT,
     ))
     
     styles.add(ParagraphStyle(
         name='TableHeader',
         fontSize=9,
         fontName=FONT_BOLD,
-        textColor=TEXT_COLOR,
+        textColor=colors.white,
         leading=12,
+        alignment=TA_CENTER,
     ))
     
     styles.add(ParagraphStyle(
@@ -143,21 +165,23 @@ def create_styles():
     ))
     
     styles.add(ParagraphStyle(
-        name='CoverTitle',
-        fontSize=28,
+        name='ContractTitle',
+        fontSize=14,
         fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         alignment=TA_CENTER,
-        leading=34,
+        spaceBefore=10,
+        spaceAfter=15,
     ))
     
     styles.add(ParagraphStyle(
-        name='CoverSubtitle',
-        fontSize=14,
+        name='ContractText',
+        fontSize=10,
         fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
-        alignment=TA_CENTER,
-        leading=18,
+        leading=14,
+        spaceBefore=3,
+        spaceAfter=3,
     ))
     
     return styles
@@ -171,9 +195,7 @@ class QuotePDFGenerator:
         self.styles = create_styles()
     
     def generate(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """
-        Generate complete PDF with cover, quote details, and datasheets
-        """
+        """Generate complete PDF with cover, quote details, contract, and datasheets"""
         pdf_parts = []
         
         # Part 1: Cover page
@@ -185,7 +207,12 @@ class QuotePDFGenerator:
         quote_pdf = self._create_quote_pages(quote_data, company_settings)
         pdf_parts.append(quote_pdf)
         
-        # Part 3: Product datasheets
+        # Part 3: Contract terms page (if exists)
+        contract_pdf = self._create_contract_page(quote_data, company_settings)
+        if contract_pdf:
+            pdf_parts.append(contract_pdf)
+        
+        # Part 4: Product datasheets
         datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
         pdf_parts.extend(datasheet_pdfs)
         
@@ -350,7 +377,16 @@ class QuotePDFGenerator:
         elements.append(totals_table)
         elements.append(Spacer(1, 20))
         
-        # Notes
+        # Quote terms (short notes)
+        quote_terms = company_settings.get('quote_terms', '')
+        if quote_terms:
+            elements.append(Paragraph("TEKLİF ŞARTLARI", self.styles['SectionTitle']))
+            elements.append(Spacer(1, 5))
+            terms_text = quote_terms.replace('\n', '<br/>')
+            elements.append(Paragraph(terms_text, self.styles['Notes']))
+            elements.append(Spacer(1, 15))
+        
+        # Customer notes
         customer_notes = quote_data.get('customer_notes', '')
         if customer_notes:
             elements.append(Paragraph("NOTLAR", self.styles['SectionTitle']))
@@ -365,6 +401,73 @@ class QuotePDFGenerator:
             elements.append(Paragraph("GARANTİ KOŞULLARI", self.styles['SectionTitle']))
             elements.append(Spacer(1, 5))
             elements.append(Paragraph(warranty_text, self.styles['Notes']))
+        
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer
+    
+    def _create_contract_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
+        """Create contract terms page if contract_terms exists"""
+        
+        contract_terms = company_settings.get('contract_terms', '')
+        if not contract_terms or not contract_terms.strip():
+            return None
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            topMargin=MARGIN_TOP,
+            bottomMargin=MARGIN_BOTTOM,
+            leftMargin=MARGIN_LEFT,
+            rightMargin=MARGIN_RIGHT
+        )
+        
+        elements = []
+        
+        # Company logo at top
+        logo_path = company_settings.get('logo')
+        if logo_path:
+            full_logo_path = self.upload_dir / logo_path.replace('/uploads/', '').replace('uploads/', '')
+            if full_logo_path.exists():
+                try:
+                    img = Image(str(full_logo_path), width=40, height=30)
+                    img.hAlign = 'LEFT'
+                    elements.append(img)
+                    elements.append(Spacer(1, 10))
+                except Exception as e:
+                    logger.warning(f"Could not load logo: {e}")
+        
+        # Contract title
+        elements.append(Paragraph("SÖZLEŞME KOŞULLARI", self.styles['ContractTitle']))
+        elements.append(Spacer(1, 10))
+        
+        # Split contract text by lines and add as paragraphs
+        lines = contract_terms.split('\n')
+        for line in lines:
+            if line.strip():
+                elements.append(Paragraph(line, self.styles['ContractText']))
+            else:
+                elements.append(Spacer(1, 6))
+        
+        # Add quote reference at bottom
+        elements.append(Spacer(1, 30))
+        quote_number = quote_data.get('quote_number', '')
+        quote_date = quote_data.get('created_at', '')
+        if quote_date:
+            try:
+                if isinstance(quote_date, str):
+                    dt = datetime.fromisoformat(quote_date.replace('Z', '+00:00'))
+                else:
+                    dt = quote_date
+                formatted_date = dt.strftime('%d.%m.%Y')
+            except:
+                formatted_date = str(quote_date)[:10]
+        else:
+            formatted_date = datetime.now().strftime('%d.%m.%Y')
+        
+        ref_text = f"<b>Teklif No:</b> {quote_number} &nbsp;&nbsp;&nbsp; <b>Tarih:</b> {formatted_date}"
+        elements.append(Paragraph(ref_text, self.styles['Notes']))
         
         doc.build(elements)
         buffer.seek(0)
@@ -466,14 +569,15 @@ class QuotePDFGenerator:
         return info_table
     
     def _create_products_table(self, items: list):
-        """Create products table with 4 columns: Ürün Adı, Adet, Birim Fiyat, Toplam"""
+        """Create products table with 5 columns: Miktar | Birim | Ürün | Birim Fiyat | Toplam Fiyat"""
         
-        # Header row - 4 columns only
+        # Header row - 5 columns
         header = [
-            Paragraph("<b>Ürün Adı</b>", self.styles['TableHeader']),
-            Paragraph("<b>Adet</b>", self.styles['TableHeader']),
+            Paragraph("<b>Miktar</b>", self.styles['TableHeader']),
+            Paragraph("<b>Birim</b>", self.styles['TableHeader']),
+            Paragraph("<b>Ürün</b>", self.styles['TableHeader']),
             Paragraph("<b>Birim Fiyat</b>", self.styles['TableHeader']),
-            Paragraph("<b>Toplam</b>", self.styles['TableHeader']),
+            Paragraph("<b>Toplam Fiyat</b>", self.styles['TableHeader']),
         ]
         
         table_data = [header]
@@ -482,20 +586,21 @@ class QuotePDFGenerator:
         for item in items:
             product_name = item.get('product_name', '-')
             quantity = item.get('quantity', 0)
-            unit = item.get('unit', 'adet')
+            unit = item.get('unit', 'Adet')
             unit_price = item.get('unit_price_tl', 0)
             total_price = item.get('total_price_tl', 0)
             
             row = [
-                Paragraph(product_name, self.styles['TableCell']),
-                Paragraph(f"{quantity} {unit}", self.styles['TableCell']),
-                Paragraph(format_currency(unit_price), self.styles['TableCell']),
-                Paragraph(format_currency(total_price), self.styles['TableCell']),
+                Paragraph(str(quantity), self.styles['TableCellCenter']),
+                Paragraph(unit, self.styles['TableCellCenter']),
+                Paragraph(product_name, self.styles['TableCell']),  # Long names will wrap
+                Paragraph(format_currency(unit_price), self.styles['TableCellRight']),
+                Paragraph(format_currency(total_price), self.styles['TableCellRight']),
             ]
             table_data.append(row)
         
-        # Create table with 4 columns
-        table = Table(table_data, colWidths=[COL_PRODUCT, COL_QTY, COL_UNIT_PRICE, COL_TOTAL])
+        # Create table with 5 columns
+        table = Table(table_data, colWidths=[COL_MIKTAR, COL_BIRIM, COL_URUN, COL_BIRIM_FIYAT, COL_TOPLAM_FIYAT])
         
         style = TableStyle([
             # Header styling
@@ -506,11 +611,11 @@ class QuotePDFGenerator:
             # General styling
             ('FONTNAME', (0, 1), (-1, -1), FONT_NORMAL),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
             
             # Borders
             ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
@@ -519,8 +624,9 @@ class QuotePDFGenerator:
             # Alternating row colors
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, HEADER_BG]),
             
-            # Right align numbers (columns 1, 2, 3)
-            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+            # Align columns
+            ('ALIGN', (0, 0), (1, -1), 'CENTER'),  # Miktar and Birim centered
+            ('ALIGN', (3, 1), (-1, -1), 'RIGHT'),  # Prices right aligned
         ])
         
         table.setStyle(style)
@@ -532,6 +638,7 @@ class QuotePDFGenerator:
         subtotal = quote_data.get('subtotal_tl', 0)
         shipping = quote_data.get('shipping_cost', 0)
         discount = quote_data.get('discount_amount_tl', 0)
+        discount_rate = quote_data.get('discount_rate', 0)
         vat = quote_data.get('vat_amount_tl', 0)
         total = quote_data.get('total_tl', 0)
         vat_rate = quote_data.get('vat_rate', 20)
@@ -539,7 +646,7 @@ class QuotePDFGenerator:
         rows = []
         
         rows.append([
-            Paragraph("Ara Toplam:", self.styles['TotalLabel']),
+            Paragraph("Toplam:", self.styles['TotalLabel']),
             Paragraph(format_currency(subtotal), self.styles['TotalValue'])
         ])
         
@@ -550,22 +657,23 @@ class QuotePDFGenerator:
             ])
         
         if discount > 0:
+            discount_label = f"İndirim (%{discount_rate}):" if discount_rate > 0 else "İndirim:"
             rows.append([
-                Paragraph("İskonto:", self.styles['TotalLabel']),
+                Paragraph(discount_label, self.styles['TotalLabel']),
                 Paragraph(f"-{format_currency(discount)}", self.styles['TotalValue'])
             ])
         
         rows.append([
-            Paragraph(f"KDV (%{vat_rate}):", self.styles['TotalLabel']),
+            Paragraph(f"KDV (%{int(vat_rate)}):", self.styles['TotalLabel']),
             Paragraph(format_currency(vat), self.styles['TotalValue'])
         ])
         
         rows.append([
-            Paragraph("<b>GENEL TOPLAM:</b>", self.styles['GrandTotal']),
+            Paragraph("<b>G.Toplam:</b>", self.styles['GrandTotal']),
             Paragraph(f"<b>{format_currency(total)}</b>", self.styles['GrandTotal'])
         ])
         
-        inner_table = Table(rows, colWidths=[80, 100])
+        inner_table = Table(rows, colWidths=[100, 100])
         inner_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
@@ -576,7 +684,7 @@ class QuotePDFGenerator:
         ]))
         
         wrapper_data = [['', inner_table]]
-        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 200, 200])
+        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 220, 220])
         wrapper.setStyle(TableStyle([
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
