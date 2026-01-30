@@ -730,8 +730,6 @@ class QuotePDFGenerator:
             Paragraph(format_currency(subtotal), small_value)
         ])
         
-        # Note: Shipping is now shown in separate row below products table, not here
-        
         if discount > 0:
             discount_label = f"İndirim (%{int(discount_rate)}):" if discount_rate > 0 else "İndirim:"
             rows.append([
@@ -749,7 +747,8 @@ class QuotePDFGenerator:
             Paragraph(format_currency(total), total_value)
         ])
         
-        inner_table = Table(rows, colWidths=[80, 90])
+        # Wider columns to prevent text wrapping
+        inner_table = Table(rows, colWidths=[95, 110])
         inner_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
@@ -760,7 +759,7 @@ class QuotePDFGenerator:
         ]))
         
         wrapper_data = [['', inner_table]]
-        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 190, 190])
+        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 220, 220])
         wrapper.setStyle(TableStyle([
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
