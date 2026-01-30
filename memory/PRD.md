@@ -13,6 +13,10 @@
   - Tahmini tasarruf hesaplaması (₺)
   - Çevresel etki (CO₂ tasarrufu, ağaç eşdeğeri)
   - Sistem açıklaması (otomatik oluşturulan metin)
+  - **Her bölümün altında bilgilendirici açıklamalar:**
+    - Üretim: "Şehir bazlı ortalama güneşlenme verilerine göre hesaplanmıştır"
+    - Tasarruf: "Güncel elektrik tarifelerine göre yapılmıştır"
+    - Çevresel: "Türkiye şebeke emisyon faktörüne göre hesaplanmıştır"
 - **Hata Düzeltmesi:** Türkçe karakter sorunu (İ/i) ve ürün sınıflandırma mantığı düzeltildi
 
 #### 30 Ocak 2026 - PDF Teklif Motoru
