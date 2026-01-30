@@ -872,13 +872,13 @@ const Products = () => {
                 </Label>
                 <Select
                   value={formData.price_segment}
-                  onValueChange={(v) => setFormData({...formData, price_segment: v})}
+                  onValueChange={(v) => setFormData({...formData, price_segment: v === '_none' ? '' : v})}
                 >
                   <SelectTrigger id="price_segment" data-testid="product-segment-select">
                     <SelectValue placeholder="Segment seçin" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Seçilmedi</SelectItem>
+                    <SelectItem value="_none">Seçilmedi</SelectItem>
                     {priceSegments.map(seg => (
                       <SelectItem key={seg.value} value={seg.value}>
                         <div className="flex items-center gap-2">
