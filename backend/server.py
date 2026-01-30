@@ -372,6 +372,10 @@ class QuoteCreate(BaseModel):
     callback_date: Optional[str] = None  # Arama tarihi
     callback_time: Optional[str] = None  # Arama saati
     
+    # Off-Grid segment options
+    include_segment_options: bool = False  # Off-Grid için 3 farklı segment seçeneği göster
+    segment_items: Optional[dict] = None  # {"ekonomik": [...], "standart": [...], "premium": [...]}
+    
     status: str = "taslak"
 
 class QuoteStatusUpdate(BaseModel):
