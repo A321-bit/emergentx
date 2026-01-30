@@ -20,6 +20,10 @@
     - Hesaplanan maliyet gösterimi
   - Örnek tasarruf karşılaştırması (10.000 kWh için)
 - **PDF Entegrasyonu:** PDF'teki tasarruf hesaplamaları artık ayarlardan çekilen değerleri kullanıyor
+- **Teklif Oluşturma Entegrasyonu:**
+  - On-Grid veya Hibrit müşteri seçildiğinde EPDK abonelik tipi seçim penceresi açılıyor
+  - Seçilen abonelik tipi teklife kaydediliyor (`electricity_subscription_type`)
+  - PDF'te "Sanayi (Tek Zamanlı) tarifesine göre (2.80 TL/kWh) yapılmıştır" şeklinde gösteriliyor
 
 #### 30 Ocak 2026 - Güç Hesaplama Modülü Düzeltmesi
 - **Güç Hesaplama Sayfası:** On-Grid, Off-Grid ve Sulama teklifleri için PDF'e otomatik güç hesaplama sayfası ekleniyor
