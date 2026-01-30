@@ -4,6 +4,23 @@
 
 ### SON EKLENEN ÖZELLİKLER
 
+#### 30 Ocak 2026 - Enerji Fiyatları Ayarları
+- **Enerji Fiyatları Sekmesi:** Ayarlar sayfasına yeni bir sekme eklendi
+  - EPDK Elektrik Abonelik Türleri (6 tür):
+    - Mesken (Konut)
+    - Ticarethane
+    - Sanayi (Tek Zamanlı)
+    - Sanayi (Çok Zamanlı)
+    - Tarımsal Sulama
+    - Genel Aydınlatma
+  - Her tür için birim fiyat (TL/kWh) ayarı
+  - Jeneratör / Mazot Maliyetleri:
+    - Mazot litre fiyatı (TL/L)
+    - Jeneratör tüketimi (L/kWh)
+    - Hesaplanan maliyet gösterimi
+  - Örnek tasarruf karşılaştırması (10.000 kWh için)
+- **PDF Entegrasyonu:** PDF'teki tasarruf hesaplamaları artık ayarlardan çekilen değerleri kullanıyor
+
 #### 30 Ocak 2026 - Güç Hesaplama Modülü Düzeltmesi
 - **Güç Hesaplama Sayfası:** On-Grid, Off-Grid ve Sulama teklifleri için PDF'e otomatik güç hesaplama sayfası ekleniyor
   - Panel gücü (kW)
