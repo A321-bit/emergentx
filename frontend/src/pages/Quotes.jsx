@@ -249,7 +249,7 @@ const Quotes = () => {
 
   const fetchData = async () => {
     try {
-      const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes, categoriesRes, epdkRes] = await Promise.all([
+      const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes, categoriesRes, epdkRes, energyPricesRes] = await Promise.all([
         axios.get(`${API_URL}/api/quotes`),
         axios.get(`${API_URL}/api/customers`),
         axios.get(`${API_URL}/api/products`),
