@@ -688,10 +688,9 @@ class QuotePDFGenerator:
         ]))
         elements.append(savings_table)
         
-        # Savings info note
+        # Savings info note (dynamic based on system type)
         savings_note = Paragraph(
-            "<i>• Tasarruf hesaplamaları güncel elektrik tarifelerine göre yapılmıştır.<br/>"
-            "• Elektrik fiyatlarındaki artışlar tasarruf miktarını olumlu etkileyecektir.</i>",
+            savings_note_text,
             ParagraphStyle('InfoNote', parent=self.styles['Notes'], fontSize=7, textColor=colors.HexColor('#64748b'), leading=10)
         )
         elements.append(Spacer(1, 5))
@@ -699,7 +698,8 @@ class QuotePDFGenerator:
         elements.append(Spacer(1, 15))
         
         # Environmental impact section
-        elements.append(Paragraph("<b>ÇEVRESEL ETKİ</b>", self.styles['SectionTitle']))
+        env_title = "ÇEVRESEL ETKİ (Jeneratör Emisyon Tasarrufu)" if is_off_grid else "ÇEVRESEL ETKİ"
+        elements.append(Paragraph(f"<b>{env_title}</b>", self.styles['SectionTitle']))
         elements.append(Spacer(1, 10))
         
         env_data = [
