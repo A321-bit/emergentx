@@ -644,13 +644,13 @@ class QuotePDFGenerator:
         return info_table
     
     def _create_products_table(self, items: list):
-        """Create products table with 5 columns: Miktar | Birim | Ürün | Birim Fiyat | Toplam Fiyat"""
+        """Create products table with 5 columns: Miktar | Birim | Ürün Açıklaması | Birim Fiyat | Toplam Fiyat"""
         
         # Header row - 5 columns
         header = [
             Paragraph("<b>Miktar</b>", self.styles['TableHeader']),
             Paragraph("<b>Birim</b>", self.styles['TableHeader']),
-            Paragraph("<b>Ürün</b>", self.styles['TableHeader']),
+            Paragraph("<b>Ürün Açıklaması</b>", self.styles['TableHeader']),
             Paragraph("<b>Birim Fiyat</b>", self.styles['TableHeader']),
             Paragraph("<b>Toplam Fiyat</b>", self.styles['TableHeader']),
         ]
