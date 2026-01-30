@@ -25,6 +25,7 @@ import Accounting from "./pages/Accounting";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import Packages from "./pages/Packages";
+import PackageCategories from "./pages/PackageCategories";
 import Employees from "./pages/Employees";
 import Attendance from "./pages/Attendance";
 import Payroll from "./pages/Payroll";
@@ -54,6 +55,7 @@ function App() {
               <Route path="/finance" element={<Finance />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/packages" element={<Packages />} />
+              <Route path="/package-categories" element={<PackageCategories />} />
               <Route path="/employees" element={<Employees />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/payroll" element={<Payroll />} />
