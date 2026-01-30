@@ -2210,6 +2210,8 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
         quote["customer_phone"] = customer.get("phone", "")
         quote["customer_email"] = customer.get("email", "")
         quote["customer_address"] = customer.get("address", "")
+        quote["customer_city"] = customer.get("city", "")
+        quote["customer_district"] = customer.get("district", "")
     
     # Get product datasheets for items
     items = quote.get("items", [])
