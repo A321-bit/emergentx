@@ -208,13 +208,19 @@ const Quotes = () => {
     callback_required: false,
     callback_date: '',
     callback_time: '',
-    status: 'taslak'
+    status: 'taslak',
+    electricity_subscription_type: ''  // EPDK abonelik tipi (On-Grid/Hibrit için)
   });
   
   // Product selection
   const [productSearch, setProductSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  
+  // EPDK subscription modal
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [epdkSubscriptionTypes, setEpdkSubscriptionTypes] = useState([]);
+  const [pendingCustomerId, setPendingCustomerId] = useState(null);
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('quotes_manage');
   const isAdmin = user?.permissions?.includes('all');
