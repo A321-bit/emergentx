@@ -419,11 +419,14 @@ class CompanySettings(BaseModel):
     quote_cover_image: Optional[str] = None  # Teklif kapak görseli
     quote_terms: Optional[str] = None  # Teklif şartları
     contract_terms: Optional[str] = None  # Sözleşme metni (ayrı sayfa olarak PDF'e eklenir)
-    bank_name: Optional[str] = None  # Banka adı
-    bank_branch: Optional[str] = None  # Şube
-    bank_account_holder: Optional[str] = None  # Hesap sahibi
-    bank_iban: Optional[str] = None  # IBAN
-    bank_swift: Optional[str] = None  # SWIFT kodu
+    # Multiple bank accounts support
+    bank_accounts: Optional[List[dict]] = None  # Array of bank account objects
+    # Legacy single bank fields (for backward compatibility)
+    bank_name: Optional[str] = None
+    bank_branch: Optional[str] = None
+    bank_account_holder: Optional[str] = None
+    bank_iban: Optional[str] = None
+    bank_swift: Optional[str] = None
 
 # Exchange Rate Settings (Kur Ayarları)
 class ExchangeRateSettings(BaseModel):
