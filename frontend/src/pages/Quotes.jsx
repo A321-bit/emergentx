@@ -892,40 +892,45 @@ const Quotes = () => {
                 {/* Items Table */}
                 {formData.items.length > 0 && (
                   <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-8"></TableHead>
-                          <TableHead>Ürün</TableHead>
-                          <TableHead className="w-24 text-center">Adet</TableHead>
-                          <TableHead className="text-right">Birim Fiyat</TableHead>
-                          <TableHead className="text-right">Toplam</TableHead>
-                          <TableHead className="w-10"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {formData.items.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell><GripVertical className="h-4 w-4 text-muted-foreground cursor-move" /></TableCell>
-                            <TableCell className="font-medium">{item.product_name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-1">
-                                <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, item.quantity - 1)}>-</Button>
-                                <span className="w-8 text-center">{item.quantity}</span>
-                                <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, item.quantity + 1)}>+</Button>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">{formatTRY(item.unit_price_tl)}</TableCell>
-                            <TableCell className="text-right font-semibold">{formatTRY(item.total_price_tl)}</TableCell>
-                            <TableCell>
-                              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => handleRemoveItem(index)}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
+                    <p className="text-xs text-muted-foreground px-3 py-2 bg-accent/50 border-b flex items-center gap-1">
+                      <GripVertical className="h-3 w-3" />
+                      Ürünleri sürükleyerek sıralarını değiştirebilirsiniz
+                    </p>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-10"></TableHead>
+                            <TableHead>Ürün</TableHead>
+                            <TableHead className="w-24 text-center">Adet</TableHead>
+                            <TableHead className="text-right">Birim Fiyat</TableHead>
+                            <TableHead className="text-right">Toplam</TableHead>
+                            <TableHead className="w-10"></TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          <SortableContext
+                            items={formData.items.map(item => item.product_id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {formData.items.map((item, index) => (
+                              <SortableItem
+                                key={item.product_id}
+                                item={item}
+                                index={index}
+                                formatTRY={formatTRY}
+                                onQuantityUpdate={handleUpdateQuantity}
+                                onRemove={handleRemoveItem}
+                              />
+                            ))}
+                          </SortableContext>
+                        </TableBody>
+                      </Table>
+                    </DndContext>
                   </div>
                 )}
                 
