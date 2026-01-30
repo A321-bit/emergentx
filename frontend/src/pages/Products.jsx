@@ -143,7 +143,8 @@ const Products = () => {
       vat_rate: parseFloat(formData.vat_rate) || 20,
       profit_margin: formData.profit_margin ? parseFloat(formData.profit_margin) : null,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
-      unit: formData.unit
+      unit: formData.unit,
+      power_watt: formData.power_watt ? parseFloat(formData.power_watt) : null
     };
 
     try {
