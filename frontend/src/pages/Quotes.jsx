@@ -948,7 +948,17 @@ const Quotes = () => {
                       <div className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-md border border-yellow-200 dark:border-yellow-800">
                         <span className="text-yellow-600">⚡</span>
                         <span className="text-sm">
-                          Abonelik: <strong>{epdkSubscriptionTypes.find(t => t.type_code === formData.electricity_subscription_type)?.type_name || formData.electricity_subscription_type}</strong>
+                          Abonelik: <strong>
+                            {(savedEnergyPrices.electricity_rates?.find(t => t.type_code === formData.electricity_subscription_type) 
+                              || epdkSubscriptionTypes.find(t => t.type_code === formData.electricity_subscription_type)
+                            )?.type_name || formData.electricity_subscription_type}
+                          </strong>
+                          {' '}
+                          <span className="text-muted-foreground">
+                            ({(savedEnergyPrices.electricity_rates?.find(t => t.type_code === formData.electricity_subscription_type)?.price_per_kwh 
+                              || epdkSubscriptionTypes.find(t => t.type_code === formData.electricity_subscription_type)?.default_price
+                            )?.toFixed(2)} TL/kWh)
+                          </span>
                         </span>
                         <Button 
                           type="button" 
