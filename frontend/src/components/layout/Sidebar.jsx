@@ -35,6 +35,21 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
+// Mobile Header Component
+export const MobileHeader = ({ onMenuClick }) => {
+  return (
+    <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-card/95 backdrop-blur-xl">
+      <div className="flex items-center gap-2">
+        <Sun className="h-6 w-6 text-primary" />
+        <span className="text-lg font-bold font-outfit">SolarPro</span>
+      </div>
+      <Button variant="ghost" size="icon" onClick={onMenuClick}>
+        <Menu className="h-5 w-5" />
+      </Button>
+    </div>
+  );
+};
+
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
