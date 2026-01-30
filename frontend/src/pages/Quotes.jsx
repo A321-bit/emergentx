@@ -699,6 +699,15 @@ const Quotes = () => {
                           <Button variant="ghost" size="icon" onClick={() => { setViewingQuote(quote); setIsViewModalOpen(true); }} title="Görüntüle">
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDownloadPDF(quote.id, quote.quote_number)} 
+                            title="PDF İndir"
+                            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                           {canManage && !['satisa_dondu', 'iptal'].includes(quote.status) && (
                             <>
                               <Button variant="ghost" size="icon" onClick={() => openEditQuote(quote)} title="Düzenle">
