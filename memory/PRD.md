@@ -4,6 +4,19 @@
 
 ### SON EKLENEN ÖZELLİKLER
 
+#### 30 Ocak 2026 - Off-Grid 3 Segment Sistemi
+- **Ürün Segmentasyonu:**
+  - Ürünlere "Fiyat Segmenti" alanı eklendi: Ekonomik / Standart / Premium
+  - Ürünlere "Eşleştirme Grubu" alanı eklendi (aynı güçteki ürünleri gruplamak için)
+  - Ürün listesinde segment badge'leri: 🟢 Eko / 🟡 Std / 🔵 Prm
+- **Teklif Oluşturma:**
+  - Off-Grid müşteri seçildiğinde "3 Farklı Seçenek Sunulsun mu?" modalı
+  - Evet seçilirse formda turuncu badge gösteriliyor
+- **PDF Çıktısı:**
+  - 3 farklı fiyat tablosu alt alta (Ekonomik/Standart/Premium)
+  - Her segment için ayrı toplam
+  - Tek güç hesaplama sayfası (ortak değerler)
+
 #### 30 Ocak 2026 - Enerji Fiyatları Ayarları
 - **Enerji Fiyatları Sekmesi:** Ayarlar sayfasına yeni bir sekme eklendi
   - EPDK Elektrik Abonelik Türleri (6 tür):
