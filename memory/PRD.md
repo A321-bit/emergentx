@@ -1,10 +1,15 @@
 # Solar Energy Sales Management System - PRD
 
-## Son Güncelleme: 30 Ocak 2026
+## Son Güncelleme: 31 Ocak 2026
 
 ---
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
+
+### 31 Ocak 2026 - Güvenlik Düzeltmesi (Deployment Readiness)
+- JWT_SECRET hardcoded fallback değeri kaldırıldı
+- Güçlü rastgele JWT_SECRET oluşturuldu ve .env dosyasına eklendi
+- JWT_SECRET artık zorunlu environment variable (güvenlik açığı kapatıldı)
 
 ### 30 Ocak 2026 - Off-Grid 3 Segment Sistemi (Temel)
 - Ürünlere "Fiyat Segmenti" (Ekonomik/Standart/Premium) ve "Eşleştirme Grubu" alanları eklendi
