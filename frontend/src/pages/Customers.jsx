@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -27,7 +28,7 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Pencil, Trash2, Search, User, Building2, Tags, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, User, Building2, Tags, MapPin, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { formatDate, cn } from '../lib/utils';
@@ -36,6 +37,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Customers = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [sources, setSources] = useState([]);
