@@ -702,6 +702,57 @@ class QuotePDFGenerator:
         
         return wrapper
     
+    def _create_bank_accounts_table(self, bank_accounts: list):
+        """Create bank accounts table for PDF"""
+        
+        # Header
+        header = [
+            Paragraph("<b>Banka</b>", self.styles['TableHeader']),
+            Paragraph("<b>Şube</b>", self.styles['TableHeader']),
+            Paragraph("<b>Hesap Sahibi</b>", self.styles['TableHeader']),
+            Paragraph("<b>IBAN</b>", self.styles['TableHeader']),
+        ]
+        
+        table_data = [header]
+        
+        for account in bank_accounts:
+            row = [
+                Paragraph(account.get('bank_name', '-'), self.styles['TableCell']),
+                Paragraph(account.get('bank_branch', '-'), self.styles['TableCell']),
+                Paragraph(account.get('account_holder', '-'), self.styles['TableCell']),
+                Paragraph(account.get('iban', '-'), self.styles['TableCell']),
+            ]
+            table_data.append(row)
+        
+        # Column widths: Banka 20%, Şube 15%, Hesap Sahibi 25%, IBAN 40%
+        col_widths = [0.20 * CONTENT_WIDTH, 0.15 * CONTENT_WIDTH, 0.25 * CONTENT_WIDTH, 0.40 * CONTENT_WIDTH]
+        
+        table = Table(table_data, colWidths=col_widths)
+        table.setStyle(TableStyle([
+            # Header styling
+            ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_COLOR),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), FONT_BOLD),
+            
+            # General styling
+            ('FONTNAME', (0, 1), (-1, -1), FONT_NORMAL),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            
+            # Borders
+            ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+            
+            # Alternating row colors
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, HEADER_BG]),
+        ]))
+        
+        return table
+    
     def _collect_datasheets(self, items: list) -> list:
         """Collect datasheet PDFs from items in order"""
         
