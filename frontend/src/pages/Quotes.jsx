@@ -168,6 +168,7 @@ const Quotes = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [quotes, setQuotes] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [customerCategories, setCustomerCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,6 +180,10 @@ const Quotes = () => {
   const [customerStatusFilter, setCustomerStatusFilter] = useState('all');
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showUpcomingCallbacks, setShowUpcomingCallbacks] = useState(false);
+  
+  // Wizard customer filter
+  const [wizardCategoryFilter, setWizardCategoryFilter] = useState('all');
+  const [wizardCustomerSearch, setWizardCustomerSearch] = useState('');
   
   // Modal states
   const [isWizardOpen, setIsWizardOpen] = useState(false);
