@@ -1272,9 +1272,6 @@ async def calculate_segment_prices(
     exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
     usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
     
-    # Categories that have segment variations (panel, inverter, battery)
-    segment_categories = ['panel', 'inverter', 'invertör', 'batarya', 'akü', 'battery']
-    
     # Build result for each segment
     segments_result = {
         "ekonomik": {"items": [], "subtotal_tl": 0},
@@ -1287,12 +1284,10 @@ async def calculate_segment_prices(
         if not product:
             continue
         
-        category_name = (product.get("category_name") or "").lower()
-        is_segment_product = any(cat in category_name for cat in segment_categories)
-        
         quantity = item.get("quantity", 1)
         
-        if is_segment_product and product.get("matching_group"):
+        # If product has matching_group, it's a segment product - find alternatives
+        if product.get("matching_group"):
             # Find matched products for each segment
             matching_group = product["matching_group"]
             matched_products = await db.products.find(
