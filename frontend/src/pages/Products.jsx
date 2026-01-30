@@ -364,7 +364,9 @@ const Products = () => {
       profit_margin: '',
       stock_quantity: '0',
       unit: 'adet',
-      power_watt: ''
+      power_watt: '',
+      price_segment: '',
+      matching_group: ''
     });
   };
 
