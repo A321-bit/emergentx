@@ -558,7 +558,24 @@ const Products = () => {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <span className="font-medium text-sm">{product.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{product.name}</span>
+                        {product.price_segment && (
+                          <span className={cn(
+                            "px-1.5 py-0.5 rounded text-xs font-medium",
+                            product.price_segment === 'ekonomik' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                            product.price_segment === 'standart' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+                            product.price_segment === 'premium' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          )}>
+                            {product.price_segment === 'ekonomik' ? '🟢 Eko' : 
+                             product.price_segment === 'standart' ? '🟡 Std' : 
+                             product.price_segment === 'premium' ? '🔵 Prm' : ''}
+                          </span>
+                        )}
+                      </div>
+                      {product.matching_group && (
+                        <span className="text-xs text-muted-foreground">Grup: {product.matching_group}</span>
+                      )}
                       {product.datasheet_url && (
                         <a 
                           href={`${API_URL}${product.datasheet_url}`}
