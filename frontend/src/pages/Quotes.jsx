@@ -385,7 +385,9 @@ const Quotes = () => {
         unit: product.unit || 'adet',
         datasheet_url: product.datasheet_url,
         currency: productCurrency,
-        sort_order: formData.items.length
+        sort_order: formData.items.length,
+        power_watt: product.power_watt || null,
+        category_name: product.category_name || ''
       };
       setFormData({ ...formData, items: [...formData.items, newItem] });
     }
