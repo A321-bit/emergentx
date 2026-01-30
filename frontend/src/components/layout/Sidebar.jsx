@@ -38,7 +38,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState(['hr']); // HR menu expanded by default
+  const [expandedMenus, setExpandedMenus] = useState(['hr', 'packages']); // Default expanded
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -49,6 +49,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (['/employees', '/attendance', '/payroll'].includes(location.pathname)) {
       setExpandedMenus(prev => prev.includes('hr') ? prev : [...prev, 'hr']);
+    }
+    if (['/packages', '/package-categories'].includes(location.pathname)) {
+      setExpandedMenus(prev => prev.includes('packages') ? prev : [...prev, 'packages']);
     }
   }, [location.pathname]);
 
@@ -84,9 +87,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('products_view') || hasPermission('products_manage')) {
     navItems.push({ path: '/products', icon: Package, label: 'Ürünler' });
   }
-  if (hasPermission('products_view') || hasPermission('products_manage')) {
-    navItems.push({ path: '/packages', icon: ShoppingBag, label: 'Paketler' });
-  }
+  // Paketler artık ayrı menü olarak değil, expandable olarak eklenecek
   if (hasPermission('stock_view') || hasPermission('stock_manage')) {
     navItems.push({ path: '/stock', icon: Boxes, label: 'Stok' });
   }
