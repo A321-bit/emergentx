@@ -597,7 +597,11 @@ class QuotePDFGenerator:
         elements.append(Paragraph("<b>TAHMİNİ ÜRETİM DEĞERLERİ</b>", self.styles['SectionTitle']))
         elements.append(Spacer(1, 10))
         
+        # Hourly production = panel power (kW)
+        hourly_production = panel_kw
+        
         production_data = [
+            [f"Saatlik Üretim (Panel Gücü: {panel_kw:.1f} kW)", f"{hourly_production:.1f} kWh"],
             ["Günlük Ortalama Üretim", f"{daily_production:.1f} kWh"],
             ["Aylık Ortalama Üretim", f"{monthly_production:.0f} kWh"],
             ["Yıllık Tahmini Üretim", f"{yearly_production:.0f} kWh"],
