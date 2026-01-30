@@ -385,7 +385,8 @@ const Quotes = () => {
       callback_required: quote.callback_required || false,
       callback_date: quote.callback_date || '',
       callback_time: quote.callback_time || '',
-      status: quote.status || 'taslak'
+      status: quote.status || 'taslak',
+      electricity_subscription_type: quote.electricity_subscription_type || ''
     });
     setWizardStep(1);
     setIsWizardOpen(true);
