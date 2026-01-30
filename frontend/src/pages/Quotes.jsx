@@ -354,6 +354,18 @@ const Quotes = () => {
     }
   };
 
+  // Delete quote
+  const handleDelete = async (quoteId) => {
+    if (!window.confirm('Bu teklifi silmek istediğinize emin misiniz?')) return;
+    try {
+      await axios.delete(`${API_URL}/api/quotes/${quoteId}`);
+      toast.success('Teklif silindi');
+      fetchData();
+    } catch (error) {
+      toast.error('Silme işlemi başarısız');
+    }
+  };
+
   // Filtered products for search
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
