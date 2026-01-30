@@ -126,6 +126,18 @@ const Sidebar = ({ isOpen, onClose }) => {
     navItems.push({ path: '/settings', icon: Settings, label: 'Ayarlar' });
   }
 
+  // Packages submenu items
+  const packagesSubItems = [];
+  if (hasPermission('products_view') || hasPermission('products_manage')) {
+    packagesSubItems.push({ path: '/packages', icon: ShoppingBag, label: 'Tüm Paketler' });
+  }
+  if (hasPermission('products_manage')) {
+    packagesSubItems.push({ path: '/package-categories', icon: Folder, label: 'Paket Kategorileri' });
+  }
+  
+  const hasPackagesAccess = hasPermission('products_view') || hasPermission('products_manage');
+  const isPackagesActive = ['/packages', '/package-categories'].includes(location.pathname);
+
   // HR submenu items
   const hrSubItems = [];
   if (hasPermission('hr_view') || hasPermission('hr_manage')) {
@@ -178,6 +190,67 @@ const Sidebar = ({ isOpen, onClose }) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             
+            {/* Insert Packages menu after Ürünler */}
+            if (item.path === '/stock' && hasPackagesAccess) {
+              return (
+                <React.Fragment key="packages-menu">
+                  {/* Packages Expandable Menu */}
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => toggleMenu('packages')}
+                      className={cn(
+                        "sidebar-nav-item w-full justify-between",
+                        isPackagesActive && "active"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <ShoppingBag className="h-5 w-5" />
+                        <span>Paketler</span>
+                      </div>
+                      {expandedMenus.includes('packages') ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                    
+                    {expandedMenus.includes('packages') && (
+                      <div className="ml-4 pl-4 border-l border-border space-y-1">
+                        {packagesSubItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = location.pathname === subItem.path;
+                          return (
+                            <Link
+                              key={subItem.path}
+                              to={subItem.path}
+                              className={cn(
+                                "sidebar-nav-item text-sm",
+                                isSubActive && "active"
+                              )}
+                            >
+                              <SubIcon className="h-4 w-4" />
+                              <span>{subItem.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Original Stock item */}
+                  <Link
+                    to={item.path}
+                    className={cn(
+                      "sidebar-nav-item",
+                      isActive && "active"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                </React.Fragment>
+              );
+            }
             // Insert HR menu before Finans
             if (item.path === '/finance' && hasHrAccess) {
               return (
