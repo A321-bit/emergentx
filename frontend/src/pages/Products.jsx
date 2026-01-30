@@ -155,7 +155,9 @@ const Products = () => {
       profit_margin: formData.profit_margin ? parseFloat(formData.profit_margin) : null,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
       unit: formData.unit,
-      power_watt: formData.power_watt ? parseFloat(formData.power_watt) : null
+      power_watt: formData.power_watt ? parseFloat(formData.power_watt) : null,
+      price_segment: formData.price_segment || null,
+      matching_group: formData.matching_group || null
     };
 
     try {
