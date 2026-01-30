@@ -662,13 +662,13 @@ class QuotePDFGenerator:
         elements.append(Spacer(1, 15))
         
         # Financial savings section
-        elements.append(Paragraph("<b>TAHMİNİ TASARRUF</b>", self.styles['SectionTitle']))
+        elements.append(Paragraph(f"<b>TAHMİNİ TASARRUF ({savings_label})</b>", self.styles['SectionTitle']))
         elements.append(Spacer(1, 10))
         
         savings_data = [
             ["Yıllık Tahmini Tasarruf", f"₺{yearly_savings:,.0f}".replace(',', '.')],
+            ["3 Yıllık Tahmini Tasarruf", f"₺{yearly_savings * 3:,.0f}".replace(',', '.')],
             ["5 Yıllık Tahmini Tasarruf", f"₺{yearly_savings * 5:,.0f}".replace(',', '.')],
-            ["10 Yıllık Tahmini Tasarruf", f"₺{yearly_savings * 10:,.0f}".replace(',', '.')],
         ]
         
         savings_table = Table(savings_data, colWidths=[CONTENT_WIDTH * 0.6, CONTENT_WIDTH * 0.4])
