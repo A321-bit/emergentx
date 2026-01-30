@@ -752,7 +752,7 @@ const Packages = () => {
                 </div>
                 
                 {/* Option 2: Search by typing */}
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <Label className="text-sm font-medium">Yazarak Ara</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -779,7 +779,7 @@ const Packages = () => {
                     )}
                   </div>
                   {productSearch && !selectedProduct && filteredProducts.length > 0 && (
-                    <div className="border rounded-lg max-h-40 overflow-y-auto bg-background shadow-lg absolute z-50 w-full">
+                    <div className="border rounded-lg max-h-40 overflow-y-auto bg-background shadow-lg absolute z-50 left-0 right-0 top-full mt-1">
                       {filteredProducts.slice(0, 10).map(product => (
                         <button
                           key={product.id}
@@ -798,7 +798,7 @@ const Packages = () => {
                       ))}
                     </div>
                   )}
-                  {productSearch && filteredProducts.length === 0 && (
+                  {productSearch && !selectedProduct && filteredProducts.length === 0 && (
                     <p className="text-sm text-muted-foreground">Ürün bulunamadı</p>
                   )}
                 </div>
