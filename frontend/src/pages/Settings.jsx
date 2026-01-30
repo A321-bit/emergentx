@@ -405,7 +405,7 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="section-title">Teklif Şartları</CardTitle>
-              <CardDescription>PDF teklifin son sayfasında görüntülenecek şartlar ve koşullar</CardDescription>
+              <CardDescription>PDF teklifin ürünler sayfasından sonra görüntülenecek şartlar</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-4">
@@ -415,13 +415,10 @@ const Settings = () => {
                     id="quote_terms"
                     value={settings.quote_terms || ''}
                     onChange={(e) => setSettings({...settings, quote_terms: e.target.value})}
-                    rows={8}
+                    rows={6}
                     placeholder={`1. Teklif geçerlilik süresi belirtilen tarihe kadardır.
 2. Fiyatlara KDV dahildir.
-3. Teslimat süresi sipariş onayından itibaren 7-14 iş günüdür.
-4. Montaj hizmeti fiyata dahil değildir.
-5. Ödeme koşulları: %50 sipariş onayında, %50 teslimat öncesi.
-6. Garanti süresi 2 yıldır.`}
+3. Teslimat süresi sipariş onayından itibaren 7-14 iş günüdür.`}
                     data-testid="quote-terms-input"
                   />
                 </div>
@@ -435,6 +432,67 @@ const Settings = () => {
                     rows={2}
                     placeholder="Tüm ürünlerimiz 2 yıl garanti kapsamındadır."
                     data-testid="warranty-text-input"
+                  />
+                </div>
+
+                <Button type="submit" disabled={saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Kaydediliyor...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Kaydet
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Contract Terms */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">Sözleşme Metni</CardTitle>
+              <CardDescription>PDF teklifin sonunda ayrı sayfa olarak görüntülenecek sözleşme metni</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contract_terms">Sözleşme Koşulları</Label>
+                  <Textarea
+                    id="contract_terms"
+                    value={settings.contract_terms || ''}
+                    onChange={(e) => setSettings({...settings, contract_terms: e.target.value})}
+                    rows={15}
+                    placeholder={`SATIŞ SÖZLEŞMESİ
+
+MADDE 1 - TARAFLAR
+Satıcı: [Şirket Adı]
+Alıcı: [Müşteri Adı]
+
+MADDE 2 - SÖZLEŞMENİN KONUSU
+Bu sözleşme, satıcı tarafından alıcıya satılacak olan güneş enerjisi sistemi ve ekipmanlarının teslimat koşullarını düzenler.
+
+MADDE 3 - FİYAT VE ÖDEME
+3.1 Toplam bedel teklifte belirtilen tutardır.
+3.2 Ödeme koşulları: %50 sipariş onayında, %50 teslimat öncesi.
+
+MADDE 4 - TESLİMAT
+4.1 Teslimat süresi sipariş onayından itibaren 7-14 iş günüdür.
+4.2 Teslimat adresi alıcının belirttiği adrestir.
+
+MADDE 5 - GARANTİ
+5.1 Tüm ürünler 2 yıl üretici garantisi kapsamındadır.
+5.2 Kullanım hatalarından kaynaklanan arızalar garanti kapsamı dışındadır.
+
+MADDE 6 - GENEL HÜKÜMLER
+6.1 Bu sözleşme Türkiye Cumhuriyeti kanunlarına tabidir.
+6.2 Uyuşmazlıklarda İstanbul Mahkemeleri yetkilidir.`}
+                    data-testid="contract-terms-input"
+                    className="font-mono text-sm"
                   />
                 </div>
 
