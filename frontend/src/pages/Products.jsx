@@ -813,6 +813,22 @@ const Products = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="power_watt">
+                  Güç (W)
+                  <span className="text-xs text-muted-foreground ml-1">(Panel/İnverter/Batarya için)</span>
+                </Label>
+                <Input
+                  id="power_watt"
+                  type="number"
+                  min="0"
+                  placeholder="Örn: 600"
+                  value={formData.power_watt}
+                  onChange={(e) => setFormData({...formData, power_watt: e.target.value})}
+                  data-testid="product-power-input"
+                />
+              </div>
+
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="description">Açıklama</Label>
                 <Input
