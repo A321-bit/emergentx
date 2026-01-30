@@ -717,21 +717,65 @@ const Packages = () => {
                 Paket İçeriği
               </h4>
               
-              {/* Add Product */}
-              <div className="flex gap-2 items-end">
-                <div className="flex-1 space-y-2">
-                  <Label>Ürün Ara</Label>
+              {/* Add Product - Two Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-accent/30 rounded-lg">
+                {/* Option 1: Select from dropdown */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Listeden Seç</Label>
+                  <Select 
+                    value={selectedProduct} 
+                    onValueChange={(v) => {
+                      setSelectedProduct(v);
+                      setProductSearch('');
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Ürün seçin..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {products.map(product => (
+                        <SelectItem key={product.id} value={product.id}>
+                          <div className="flex justify-between items-center w-full gap-4">
+                            <span>{product.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Stok: {product.stock_quantity}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Option 2: Search by typing */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Yazarak Ara</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Ürün adı veya SKU..."
                       value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
+                      onChange={(e) => {
+                        setProductSearch(e.target.value);
+                        if (!e.target.value) setSelectedProduct('');
+                      }}
                       className="pl-9"
                     />
+                    {productSearch && selectedProduct && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProductSearch('');
+                          setSelectedProduct('');
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
-                  {productSearch && (
-                    <div className="border rounded-lg max-h-40 overflow-y-auto">
+                  {productSearch && !selectedProduct && filteredProducts.length > 0 && (
+                    <div className="border rounded-lg max-h-40 overflow-y-auto bg-background shadow-lg absolute z-50 w-full">
                       {filteredProducts.slice(0, 10).map(product => (
                         <button
                           key={product.id}
@@ -740,12 +784,9 @@ const Packages = () => {
                             setSelectedProduct(product.id);
                             setProductSearch(product.name);
                           }}
-                          className={cn(
-                            "w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center",
-                            selectedProduct === product.id && "bg-accent"
-                          )}
+                          className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center border-b last:border-b-0"
                         >
-                          <span className="text-sm">{product.name}</span>
+                          <span className="text-sm font-medium">{product.name}</span>
                           <span className="text-xs text-muted-foreground">
                             Stok: {product.stock_quantity}
                           </span>
@@ -753,11 +794,39 @@ const Packages = () => {
                       ))}
                     </div>
                   )}
+                  {productSearch && filteredProducts.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Ürün bulunamadı</p>
+                  )}
                 </div>
-                <div className="w-24 space-y-2">
-                  <Label>Adet</Label>
-                  <Input
-                    type="number"
+              </div>
+              
+              {/* Selected product info & quantity */}
+              {selectedProduct && (
+                <div className="flex items-center gap-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">
+                      Seçilen: {products.find(p => p.id === selectedProduct)?.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Stok: {products.find(p => p.id === selectedProduct)?.stock_quantity} adet
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm">Adet:</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={selectedQuantity}
+                      onChange={(e) => setSelectedQuantity(parseInt(e.target.value) || 1)}
+                      className="w-20"
+                    />
+                  </div>
+                  <Button type="button" onClick={handleAddProduct} size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Ekle
+                  </Button>
+                </div>
+              )}
                     min="1"
                     value={selectedQuantity}
                     onChange={(e) => setSelectedQuantity(parseInt(e.target.value) || 1)}
