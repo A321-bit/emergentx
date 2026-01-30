@@ -313,7 +313,8 @@ const Quotes = () => {
       callback_required: false,
       callback_date: '',
       callback_time: '',
-      status: 'taslak'
+      status: 'taslak',
+      electricity_subscription_type: ''
     });
     setWizardStep(1);
     setEditingQuote(null);
@@ -322,6 +323,42 @@ const Quotes = () => {
     setSelectedQuantity(1);
     setWizardCategoryFilter('all');
     setWizardCustomerSearch('');
+    setPendingCustomerId(null);
+  };
+
+  // Handle customer selection - check if needs subscription type
+  const handleCustomerSelect = (customerId) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) return;
+    
+    // Get category name
+    const category = customerCategories.find(cat => cat.id === customer.customer_category_id);
+    const categoryName = category?.name?.toLowerCase() || '';
+    
+    // Check if On-Grid or Hibrit - needs electricity subscription type
+    const needsSubscription = categoryName.includes('on') || categoryName.includes('hibrit') || categoryName.includes('hybrid');
+    
+    if (needsSubscription && !editingQuote) {
+      // Store pending customer and open subscription modal
+      setPendingCustomerId(customerId);
+      setIsSubscriptionModalOpen(true);
+    } else {
+      // Off-Grid or other - select directly
+      setFormData(prev => ({ ...prev, customer_id: customerId, electricity_subscription_type: '' }));
+    }
+  };
+
+  // Confirm subscription selection
+  const handleSubscriptionConfirm = (subscriptionType) => {
+    if (pendingCustomerId) {
+      setFormData(prev => ({
+        ...prev,
+        customer_id: pendingCustomerId,
+        electricity_subscription_type: subscriptionType
+      }));
+      setPendingCustomerId(null);
+    }
+    setIsSubscriptionModalOpen(false);
   };
 
   // Open wizard for new quote
