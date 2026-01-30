@@ -534,16 +534,27 @@ class QuotePDFGenerator:
         diesel_price = company_settings.get('diesel_price_per_liter', 45.0) or 45.0
         diesel_per_kwh = company_settings.get('diesel_consumption_per_kwh', 0.35) or 0.35
         
-        # Get electricity rate (default to mesken/konut rate)
+        # Get electricity rate based on quote's subscription type or default to mesken
         electricity_rates = company_settings.get('electricity_rates', [])
         electricity_price = 3.0  # default
+        subscription_type = quote_data.get('electricity_subscription_type', 'mesken')
+        subscription_type_name = "Mesken"  # default
+        
         if electricity_rates:
-            # Try to find mesken rate first, then use first available
-            mesken_rate = next((r for r in electricity_rates if r.get('type_code') == 'mesken'), None)
-            if mesken_rate:
-                electricity_price = mesken_rate.get('price_per_kwh', 3.0)
-            elif electricity_rates:
-                electricity_price = electricity_rates[0].get('price_per_kwh', 3.0)
+            # Find the rate matching the quote's subscription type
+            selected_rate = next(
+                (r for r in electricity_rates if r.get('type_code') == subscription_type), 
+                None
+            )
+            if selected_rate:
+                electricity_price = selected_rate.get('price_per_kwh', 3.0)
+                subscription_type_name = selected_rate.get('type_name', 'Mesken')
+            else:
+                # Fallback to mesken rate
+                mesken_rate = next((r for r in electricity_rates if r.get('type_code') == 'mesken'), None)
+                if mesken_rate:
+                    electricity_price = mesken_rate.get('price_per_kwh', 3.0)
+                    subscription_type_name = mesken_rate.get('type_name', 'Mesken')
         
         # Financial calculations
         if is_off_grid:
@@ -556,11 +567,11 @@ class QuotePDFGenerator:
                 f"• Mazot fiyatı: {diesel_price:.2f} TL/L olarak hesaplanmıştır.</i>"
             )
         else:
-            # On-Grid / Hybrid: Calculate based on electricity price
+            # On-Grid / Hybrid: Calculate based on electricity price from subscription type
             yearly_savings = yearly_production * electricity_price
             savings_label = "Elektrik Faturası Tasarrufu"
             savings_note_text = (
-                f"<i>• Tasarruf hesaplamaları {electricity_price:.2f} TL/kWh elektrik tarifesine göre yapılmıştır.<br/>"
+                f"<i>• Tasarruf hesaplamaları <b>{subscription_type_name}</b> tarifesine göre ({electricity_price:.2f} TL/kWh) yapılmıştır.<br/>"
                 "• Elektrik fiyatlarındaki artışlar tasarruf miktarını olumlu etkileyecektir.</i>"
             )
         
