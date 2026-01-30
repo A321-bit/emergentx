@@ -2482,6 +2482,64 @@ async def update_exchange_rates(
         result["last_updated"] = result["last_updated"].isoformat() if isinstance(result["last_updated"], datetime) else result["last_updated"]
     return result
 
+# ==================== ENERGY PRICING SETTINGS ====================
+
+@api_router.get("/settings/epdk-subscription-types")
+async def get_epdk_subscription_types():
+    """Get EPDK electricity subscription types"""
+    return EPDK_SUBSCRIPTION_TYPES
+
+@api_router.get("/settings/energy-prices")
+async def get_energy_prices(current_user: dict = Depends(get_current_user)):
+    """Get energy pricing settings (electricity rates + diesel)"""
+    settings = await db.company_settings.find_one({"id": "company_settings"}, {"_id": 0})
+    
+    # Default values if not set
+    electricity_rates = []
+    if settings and settings.get("electricity_rates"):
+        electricity_rates = settings["electricity_rates"]
+    else:
+        # Initialize with EPDK defaults
+        electricity_rates = [
+            {"type_code": t["type_code"], "type_name": t["type_name"], "price_per_kwh": t["default_price"]}
+            for t in EPDK_SUBSCRIPTION_TYPES
+        ]
+    
+    diesel_price = settings.get("diesel_price_per_liter", 45.0) if settings else 45.0
+    diesel_consumption = settings.get("diesel_consumption_per_kwh", 0.35) if settings else 0.35
+    
+    return {
+        "electricity_rates": electricity_rates,
+        "diesel_price_per_liter": diesel_price,
+        "diesel_consumption_per_kwh": diesel_consumption
+    }
+
+@api_router.put("/settings/energy-prices")
+async def update_energy_prices(
+    data: dict,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Update energy pricing settings"""
+    update_data = {}
+    
+    if "electricity_rates" in data:
+        update_data["electricity_rates"] = data["electricity_rates"]
+    
+    if "diesel_price_per_liter" in data:
+        update_data["diesel_price_per_liter"] = float(data["diesel_price_per_liter"])
+    
+    if "diesel_consumption_per_kwh" in data:
+        update_data["diesel_consumption_per_kwh"] = float(data["diesel_consumption_per_kwh"])
+    
+    if update_data:
+        await db.company_settings.update_one(
+            {"id": "company_settings"},
+            {"$set": update_data},
+            upsert=True
+        )
+    
+    return await get_energy_prices(current_user)
+
 # ==================== DASHBOARD STATS ROUTES ====================
 
 @api_router.get("/stats/dashboard")
