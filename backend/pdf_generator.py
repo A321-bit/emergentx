@@ -724,10 +724,20 @@ class QuotePDFGenerator:
         ]))
         elements.append(env_table)
         
-        # Environmental info note
+        # Environmental info note (dynamic based on system type)
+        if is_off_grid:
+            env_note_text = (
+                "<i>• CO₂ tasarrufu jeneratör dizel yakıt emisyonlarına göre hesaplanmıştır (~2.7 kg CO₂/L).<br/>"
+                "• Bir ağaç yılda ortalama 22 kg CO₂ absorbe etmektedir.</i>"
+            )
+        else:
+            env_note_text = (
+                "<i>• CO₂ tasarrufu Türkiye şebeke emisyon faktörüne göre hesaplanmıştır.<br/>"
+                "• Bir ağaç yılda ortalama 22 kg CO₂ absorbe etmektedir.</i>"
+            )
+        
         env_note = Paragraph(
-            "<i>• CO₂ tasarrufu Türkiye şebeke emisyon faktörüne göre hesaplanmıştır.<br/>"
-            "• Bir ağaç yılda ortalama 22 kg CO₂ absorbe etmektedir.</i>",
+            env_note_text,
             ParagraphStyle('InfoNote', parent=self.styles['Notes'], fontSize=7, textColor=colors.HexColor('#64748b'), leading=10)
         )
         elements.append(Spacer(1, 5))
