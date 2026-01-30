@@ -429,6 +429,20 @@ class CompanySettings(BaseModel):
     bank_account_holder: Optional[str] = None
     bank_iban: Optional[str] = None
     bank_swift: Optional[str] = None
+    # Energy pricing settings (Enerji Fiyat Ayarları)
+    electricity_rates: Optional[List[dict]] = None  # [{type_code, type_name, price_per_kwh}]
+    diesel_price_per_liter: Optional[float] = 45.0  # Mazot fiyatı (TL/L)
+    diesel_consumption_per_kwh: Optional[float] = 0.35  # Jeneratör mazot tüketimi (L/kWh)
+
+# EPDK Electricity Subscription Types (Abonelik Türleri)
+EPDK_SUBSCRIPTION_TYPES = [
+    {"type_code": "mesken", "type_name": "Mesken (Konut)", "default_price": 3.00},
+    {"type_code": "ticarethane", "type_name": "Ticarethane", "default_price": 3.50},
+    {"type_code": "sanayi_tek", "type_name": "Sanayi (Tek Zamanlı)", "default_price": 2.80},
+    {"type_code": "sanayi_cok", "type_name": "Sanayi (Çok Zamanlı)", "default_price": 2.50},
+    {"type_code": "tarimsal_sulama", "type_name": "Tarımsal Sulama", "default_price": 1.50},
+    {"type_code": "aydinlatma", "type_name": "Genel Aydınlatma", "default_price": 3.20},
+]
 
 # Exchange Rate Settings (Kur Ayarları)
 class ExchangeRateSettings(BaseModel):
