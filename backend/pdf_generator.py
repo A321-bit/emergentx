@@ -401,6 +401,16 @@ class QuotePDFGenerator:
             elements.append(Paragraph("GARANTİ KOŞULLARI", self.styles['SectionTitle']))
             elements.append(Spacer(1, 5))
             elements.append(Paragraph(warranty_text, self.styles['Notes']))
+            elements.append(Spacer(1, 15))
+        
+        # Bank accounts
+        bank_accounts = company_settings.get('bank_accounts', [])
+        if bank_accounts and len(bank_accounts) > 0:
+            elements.append(Paragraph("BANKA HESAP BİLGİLERİ", self.styles['SectionTitle']))
+            elements.append(Spacer(1, 5))
+            
+            bank_table = self._create_bank_accounts_table(bank_accounts)
+            elements.append(bank_table)
         
         doc.build(elements)
         buffer.seek(0)
