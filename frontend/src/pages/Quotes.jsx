@@ -242,24 +242,38 @@ const Quotes = () => {
 
   const fetchData = async () => {
     try {
-      const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes] = await Promise.all([
+      const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes, categoriesRes] = await Promise.all([
         axios.get(`${API_URL}/api/quotes`),
         axios.get(`${API_URL}/api/customers`),
         axios.get(`${API_URL}/api/products`),
         axios.get(`${API_URL}/api/packages`).catch(() => ({ data: [] })),
-        axios.get(`${API_URL}/api/settings/exchange-rates`).catch(() => ({ data: { usd_to_try: 34.0 } }))
+        axios.get(`${API_URL}/api/settings/exchange-rates`).catch(() => ({ data: { usd_to_try: 34.0 } })),
+        axios.get(`${API_URL}/api/customer-categories`).catch(() => ({ data: [] }))
       ]);
       setQuotes(quotesRes.data);
       setCustomers(customersRes.data);
       setProducts(productsRes.data);
       setPackages(packagesRes.data);
       setExchangeRate(exchangeRes.data?.usd_to_try || 34.0);
+      setCustomerCategories(categoriesRes.data || []);
     } catch (error) {
       toast.error('Veriler yüklenemedi');
     } finally {
       setLoading(false);
     }
   };
+
+  // Filtered customers for wizard (by category and search)
+  const filteredCustomersForWizard = useMemo(() => {
+    return customers.filter(c => {
+      const matchCategory = wizardCategoryFilter === 'all' || c.customer_category_id === wizardCategoryFilter;
+      const matchSearch = !wizardCustomerSearch || 
+        c.name?.toLowerCase().includes(wizardCustomerSearch.toLowerCase()) ||
+        c.phone?.includes(wizardCustomerSearch) ||
+        c.city?.toLowerCase().includes(wizardCustomerSearch.toLowerCase());
+      return matchCategory && matchSearch && c.is_active;
+    });
+  }, [customers, wizardCategoryFilter, wizardCustomerSearch]);
 
   // Filtered quotes
   const filteredQuotes = useMemo(() => {
