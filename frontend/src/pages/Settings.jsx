@@ -300,6 +300,10 @@ const Settings = () => {
             <DollarSign className="h-4 w-4" />
             Kur Ayarları
           </TabsTrigger>
+          <TabsTrigger value="energy" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Enerji Fiyatları
+          </TabsTrigger>
         </TabsList>
 
         {/* Company Tab */}
