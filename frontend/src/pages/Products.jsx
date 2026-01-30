@@ -274,7 +274,9 @@ const Products = () => {
       profit_margin: product.profit_margin?.toString() || '',
       stock_quantity: product.stock_quantity?.toString() || '0',
       unit: product.unit || 'adet',
-      power_watt: product.power_watt?.toString() || ''
+      power_watt: product.power_watt?.toString() || '',
+      price_segment: product.price_segment || '',
+      matching_group: product.matching_group || ''
     });
     setIsModalOpen(true);
   };
