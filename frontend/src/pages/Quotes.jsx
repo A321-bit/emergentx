@@ -1399,7 +1399,11 @@ const Quotes = () => {
               Bu bilgi PDF teklifindeki tahmini tasarruf hesaplamalarında kullanılacaktır.
             </p>
             <div className="grid grid-cols-1 gap-2">
-              {epdkSubscriptionTypes.map((type) => (
+              {/* Ayarlardan kaydedilen fiyatları kullan, yoksa varsayılanları kullan */}
+              {(savedEnergyPrices.electricity_rates?.length > 0 
+                ? savedEnergyPrices.electricity_rates 
+                : epdkSubscriptionTypes
+              ).map((type) => (
                 <button
                   key={type.type_code}
                   type="button"
@@ -1415,19 +1419,19 @@ const Quotes = () => {
                 >
                   <div>
                     <p className="font-medium">{type.type_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Varsayılan: {type.default_price?.toFixed(2)} TL/kWh
-                    </p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-bold text-primary">
-                      {type.default_price?.toFixed(2)} ₺
+                      {(type.price_per_kwh ?? type.default_price)?.toFixed(2)} ₺
                     </span>
                     <p className="text-xs text-muted-foreground">/kWh</p>
                   </div>
                 </button>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-3 italic">
+              * Fiyatlar Ayarlar &gt; Enerji Fiyatları bölümünden güncellenebilir.
+            </p>
           </div>
           <DialogFooter>
             <Button 
