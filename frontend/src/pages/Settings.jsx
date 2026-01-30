@@ -111,6 +111,30 @@ const Settings = () => {
     }
   };
 
+  // Bank account management functions
+  const addBankAccount = () => {
+    setSettings(prev => ({
+      ...prev,
+      bank_accounts: [...(prev.bank_accounts || []), { ...emptyBankAccount }]
+    }));
+  };
+
+  const removeBankAccount = (index) => {
+    setSettings(prev => ({
+      ...prev,
+      bank_accounts: prev.bank_accounts.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateBankAccount = (index, field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      bank_accounts: prev.bank_accounts.map((account, i) => 
+        i === index ? { ...account, [field]: value } : account
+      )
+    }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
