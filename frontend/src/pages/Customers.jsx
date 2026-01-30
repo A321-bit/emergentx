@@ -277,12 +277,22 @@ const Customers = () => {
                   </TableCell>
                   <TableCell>{formatDate(customer.created_at)}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/quotes?customer=${customer.id}`)}
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        title="Teklif Oluştur"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(customer)}
                         data-testid={`edit-customer-${customer.id}`}
+                        title="Düzenle"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -292,6 +302,7 @@ const Customers = () => {
                         onClick={() => handleDelete(customer.id)}
                         className="text-destructive hover:text-destructive"
                         data-testid={`delete-customer-${customer.id}`}
+                        title="Sil"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
