@@ -921,7 +921,7 @@ const Quotes = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Müşteri * <span className="text-xs text-muted-foreground">({filteredCustomersForWizard.length} sonuç)</span></Label>
-                    <Select value={formData.customer_id} onValueChange={(v) => setFormData({...formData, customer_id: v})}>
+                    <Select value={formData.customer_id} onValueChange={handleCustomerSelect}>
                       <SelectTrigger>
                         <SelectValue placeholder="Müşteri seçin" />
                       </SelectTrigger>
@@ -939,6 +939,24 @@ const Quotes = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {/* Show selected subscription type if any */}
+                    {formData.electricity_subscription_type && (
+                      <div className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-md border border-yellow-200 dark:border-yellow-800">
+                        <span className="text-yellow-600">⚡</span>
+                        <span className="text-sm">
+                          Abonelik: <strong>{epdkSubscriptionTypes.find(t => t.type_code === formData.electricity_subscription_type)?.type_name || formData.electricity_subscription_type}</strong>
+                        </span>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="ml-auto h-6 px-2"
+                          onClick={() => setIsSubscriptionModalOpen(true)}
+                        >
+                          Değiştir
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Müşteri Durumu *</Label>
