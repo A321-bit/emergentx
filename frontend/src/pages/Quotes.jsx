@@ -222,6 +222,9 @@ const Quotes = () => {
   const [epdkSubscriptionTypes, setEpdkSubscriptionTypes] = useState([]);
   const [savedEnergyPrices, setSavedEnergyPrices] = useState({ electricity_rates: [] });  // Ayarlardan kaydedilen fiyatlar
   const [pendingCustomerId, setPendingCustomerId] = useState(null);
+  
+  // Off-Grid segment options modal
+  const [isSegmentOptionsModalOpen, setIsSegmentOptionsModalOpen] = useState(false);
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('quotes_manage');
   const isAdmin = user?.permissions?.includes('all');
