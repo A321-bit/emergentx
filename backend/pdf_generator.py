@@ -354,7 +354,17 @@ class QuotePDFGenerator:
         
         elements = []
         
-        # Header
+        # Category-based title at top center
+        category_name = quote_data.get('customer_category_name', '')
+        if category_name:
+            title_text = f"{category_name} Fiyat Teklifi"
+        else:
+            title_text = "Fiyat Teklifi"
+        
+        elements.append(Paragraph(f"<b>{title_text}</b>", self.styles['QuoteTitle']))
+        elements.append(Spacer(1, 15))
+        
+        # Header with company | divider | customer
         header_table = self._create_header(quote_data, company_settings)
         elements.append(header_table)
         elements.append(Spacer(1, 15))
@@ -362,20 +372,25 @@ class QuotePDFGenerator:
         # Quote info bar
         info_bar = self._create_info_bar(quote_data)
         elements.append(info_bar)
-        elements.append(Spacer(1, 15))
+        elements.append(Spacer(1, 10))
         
-        # Products table
-        elements.append(Paragraph("ÜRÜNLER", self.styles['SectionTitle']))
-        elements.append(Spacer(1, 5))
-        
+        # Products table (no "ÜRÜNLER" title)
         products_table = self._create_products_table(quote_data.get('items', []))
         elements.append(products_table)
-        elements.append(Spacer(1, 15))
         
-        # Totals
+        # Shipping/Installation row (if exists)
+        shipping = quote_data.get('shipping_cost', 0)
+        if shipping > 0:
+            elements.append(Spacer(1, 3))
+            shipping_table = self._create_shipping_row(shipping)
+            elements.append(shipping_table)
+        
+        elements.append(Spacer(1, 10))
+        
+        # Totals (smaller fonts, ₺ symbol)
         totals_table = self._create_totals_table(quote_data)
         elements.append(totals_table)
-        elements.append(Spacer(1, 20))
+        elements.append(Spacer(1, 15))
         
         # Quote terms (short notes)
         quote_terms = company_settings.get('quote_terms', '')
@@ -415,6 +430,26 @@ class QuotePDFGenerator:
         doc.build(elements)
         buffer.seek(0)
         return buffer
+    
+    def _create_shipping_row(self, shipping_cost: float):
+        """Create shipping/installation row below products table"""
+        data = [[
+            '',
+            '',
+            Paragraph("<b>Kurulum ve Nakliye Bedeli</b>", self.styles['TableCell']),
+            '',
+            Paragraph(f"<b>{format_currency(shipping_cost)}</b>", self.styles['TableCellRight']),
+        ]]
+        
+        table = Table(data, colWidths=[COL_MIKTAR, COL_BIRIM, COL_URUN, COL_BIRIM_FIYAT, COL_TOPLAM_FIYAT])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HEADER_BG),
+            ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('ALIGN', (-1, 0), (-1, 0), 'RIGHT'),
+        ]))
+        return table
     
     def _create_contract_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
         """Create contract terms page if contract_terms exists"""
