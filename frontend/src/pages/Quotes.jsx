@@ -998,6 +998,25 @@ const Quotes = () => {
                         </Button>
                       </div>
                     )}
+                    {/* Off-Grid segment options badge */}
+                    {formData.include_segment_options && (
+                      <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-950/30 rounded-md border border-orange-200 dark:border-orange-800">
+                        <span className="text-orange-600">📊</span>
+                        <span className="text-sm">
+                          <strong>3 Farklı Fiyat Seçeneği</strong> aktif
+                          <span className="text-muted-foreground ml-1">(Ekonomik / Standart / Premium)</span>
+                        </span>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="ml-auto h-6 px-2"
+                          onClick={() => setFormData({...formData, include_segment_options: false})}
+                        >
+                          Kapat
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Müşteri Durumu *</Label>
