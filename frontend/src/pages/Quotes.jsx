@@ -256,7 +256,8 @@ const Quotes = () => {
         axios.get(`${API_URL}/api/packages`).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/settings/exchange-rates`).catch(() => ({ data: { usd_to_try: 34.0 } })),
         axios.get(`${API_URL}/api/customer-categories`).catch(() => ({ data: [] })),
-        axios.get(`${API_URL}/api/settings/epdk-subscription-types`).catch(() => ({ data: [] }))
+        axios.get(`${API_URL}/api/settings/epdk-subscription-types`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/settings/energy-prices`).catch(() => ({ data: { electricity_rates: [] } }))
       ]);
       setQuotes(quotesRes.data);
       setCustomers(customersRes.data);
@@ -265,6 +266,7 @@ const Quotes = () => {
       setExchangeRate(exchangeRes.data?.usd_to_try || 34.0);
       setCustomerCategories(categoriesRes.data || []);
       setEpdkSubscriptionTypes(epdkRes.data || []);
+      setSavedEnergyPrices(energyPricesRes.data || { electricity_rates: [] });
     } catch (error) {
       toast.error('Veriler yüklenemedi');
     } finally {
