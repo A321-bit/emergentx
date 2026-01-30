@@ -1992,6 +1992,7 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         "customer_address": customer.get("address", ""),
         "customer_status": quote_data.customer_status,
         "electricity_subscription_type": quote_data.electricity_subscription_type,  # EPDK abonelik tipi
+        "include_segment_options": quote_data.include_segment_options,  # Off-Grid 3 segment seçeneği
         "items": items,
         "subtotal_usd": round(subtotal_usd, 2),
         "subtotal_tl": round(subtotal_tl, 2),
@@ -2196,6 +2197,7 @@ async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dic
         "customer_address": customer.get("address", ""),
         "customer_status": quote_data.customer_status,
         "electricity_subscription_type": quote_data.electricity_subscription_type,  # EPDK abonelik tipi
+        "include_segment_options": quote_data.include_segment_options,  # Off-Grid 3 segment seçeneği
         "items": items,
         "subtotal_usd": round(subtotal_usd, 2),
         "subtotal_tl": round(subtotal_tl, 2),
