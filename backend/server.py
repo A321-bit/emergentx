@@ -2212,6 +2212,14 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
         quote["customer_address"] = customer.get("address", "")
         quote["customer_city"] = customer.get("city", "")
         quote["customer_district"] = customer.get("district", "")
+        quote["customer_category_id"] = customer.get("customer_category_id", "")
+        quote["customer_category_name"] = customer.get("category_name", "")
+        
+        # If category_name not populated, fetch it
+        if not quote["customer_category_name"] and quote["customer_category_id"]:
+            category = await db.customer_categories.find_one({"id": quote["customer_category_id"]}, {"_id": 0})
+            if category:
+                quote["customer_category_name"] = category.get("name", "")
     
     # Get product datasheets for items
     items = quote.get("items", [])
