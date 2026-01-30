@@ -74,6 +74,7 @@ const WIZARD_STEPS = [
 
 const Quotes = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [quotes, setQuotes] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
