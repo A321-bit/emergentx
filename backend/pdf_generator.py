@@ -717,49 +717,49 @@ class QuotePDFGenerator:
         total = quote_data.get('total_tl', 0)
         vat_rate = quote_data.get('vat_rate', 20)
         
-        # Smaller style for totals
-        small_label = ParagraphStyle('SmallLabel', parent=self.styles['Notes'], fontSize=8, alignment=TA_RIGHT)
-        small_value = ParagraphStyle('SmallValue', parent=self.styles['Notes'], fontSize=8, fontName=FONT_BOLD, alignment=TA_RIGHT)
-        total_label = ParagraphStyle('TotalLabelBig', parent=self.styles['Notes'], fontSize=10, fontName=FONT_BOLD, alignment=TA_RIGHT)
-        total_value = ParagraphStyle('TotalValueBig', parent=self.styles['Notes'], fontSize=10, fontName=FONT_BOLD, textColor=PRIMARY_COLOR, alignment=TA_RIGHT)
-        
+        # Styles for totals - using simple text instead of Paragraph for no wrapping
         rows = []
         
         rows.append([
-            Paragraph("Ara Toplam:", small_label),
-            Paragraph(format_currency(subtotal), small_value)
+            "Ara Toplam:",
+            format_currency(subtotal)
         ])
         
         if discount > 0:
             discount_label = f"İndirim (%{int(discount_rate)}):" if discount_rate > 0 else "İndirim:"
             rows.append([
-                Paragraph(discount_label, small_label),
-                Paragraph(f"-{format_currency(discount)}", small_value)
+                discount_label,
+                f"-{format_currency(discount)}"
             ])
         
         rows.append([
-            Paragraph(f"KDV (%{int(vat_rate)}):", small_label),
-            Paragraph(format_currency(vat), small_value)
+            f"KDV (%{int(vat_rate)}):",
+            format_currency(vat)
         ])
         
         rows.append([
-            Paragraph("GENEL TOPLAM:", total_label),
-            Paragraph(format_currency(total), total_value)
+            "GENEL TOPLAM:",
+            format_currency(total)
         ])
         
-        # Wider columns to prevent text wrapping
-        inner_table = Table(rows, colWidths=[95, 110])
+        # Wide columns to prevent wrapping
+        inner_table = Table(rows, colWidths=[100, 120])
         inner_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('FONTNAME', (0, 0), (-1, -2), FONT_NORMAL),
+            ('FONTNAME', (0, -1), (-1, -1), FONT_BOLD),
+            ('FONTSIZE', (0, 0), (-1, -2), 8),
+            ('FONTSIZE', (0, -1), (-1, -1), 9),
+            ('TEXTCOLOR', (0, -1), (-1, -1), PRIMARY_COLOR),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
             ('LINEABOVE', (0, -1), (-1, -1), 1.5, PRIMARY_COLOR),
             ('TOPPADDING', (0, -1), (-1, -1), 6),
         ]))
         
         wrapper_data = [['', inner_table]]
-        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 220, 220])
+        wrapper = Table(wrapper_data, colWidths=[CONTENT_WIDTH - 240, 240])
         wrapper.setStyle(TableStyle([
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
