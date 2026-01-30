@@ -41,9 +41,16 @@ const Settings = () => {
     eur_to_try: 37.0,
     last_updated: null
   });
+  const [energyPrices, setEnergyPrices] = useState({
+    electricity_rates: [],
+    diesel_price_per_liter: 45.0,
+    diesel_consumption_per_kwh: 0.35
+  });
+  const [epdk_types, setEpdkTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingRates, setSavingRates] = useState(false);
+  const [savingEnergy, setSavingEnergy] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const logoInputRef = useRef(null);
@@ -54,6 +61,8 @@ const Settings = () => {
   useEffect(() => {
     fetchSettings();
     fetchExchangeRates();
+    fetchEnergyPrices();
+    fetchEpdkTypes();
   }, []);
 
   const fetchSettings = async () => {
