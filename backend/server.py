@@ -226,6 +226,8 @@ class ProductBase(BaseModel):
     stock_quantity: int = 0
     unit: str = "adet"
     power_watt: Optional[float] = None  # Güç değeri (W) - Panel, İnverter, Batarya için
+    price_segment: Optional[str] = None  # ekonomik, standart, premium
+    matching_group: Optional[str] = None  # Eşleştirme grubu ID (aynı güçteki ürünleri gruplar)
 
 class ProductCreate(ProductBase):
     pass
@@ -241,6 +243,15 @@ class ProductUpdate(BaseModel):
     stock_quantity: Optional[int] = None
     unit: Optional[str] = None
     power_watt: Optional[float] = None  # Güç değeri (W)
+    price_segment: Optional[str] = None  # ekonomik, standart, premium
+    matching_group: Optional[str] = None  # Eşleştirme grubu ID
+
+# Price segment options
+PRICE_SEGMENTS = [
+    {"value": "ekonomik", "label": "Ekonomik", "color": "green"},
+    {"value": "standart", "label": "Standart", "color": "yellow"},
+    {"value": "premium", "label": "Premium", "color": "blue"},
+]
 
 class Product(ProductBase):
     model_config = ConfigDict(extra="ignore")
