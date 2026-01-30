@@ -61,9 +61,9 @@ TEXT_COLOR = colors.HexColor('#1e293b')
 
 
 def format_currency(value, currency='TRY'):
-    """Format number as Turkish currency"""
+    """Format number as Turkish currency with ₺ symbol"""
     if currency == 'TRY':
-        return f"{value:,.2f} TL".replace(',', 'X').replace('.', ',').replace('X', '.')
+        return f"₺{value:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
     return f"${value:,.2f}"
 
 
@@ -72,24 +72,49 @@ def create_styles():
     styles = getSampleStyleSheet()
     
     styles.add(ParagraphStyle(
-        name='CompanyName',
+        name='QuoteTitle',
         fontSize=16,
         fontName=FONT_BOLD,
+        textColor=PRIMARY_COLOR,
+        alignment=TA_CENTER,
+        spaceAfter=10,
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='CompanyName',
+        fontSize=11,
+        fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
-        leading=20,
+        leading=14,
     ))
     
     styles.add(ParagraphStyle(
         name='CompanyInfo',
-        fontSize=9,
+        fontSize=8,
         fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
-        leading=12,
+        leading=11,
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='CustomerName',
+        fontSize=14,
+        fontName=FONT_BOLD,
+        textColor=TEXT_COLOR,
+        leading=18,
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='CustomerInfo',
+        fontSize=10,
+        fontName=FONT_NORMAL,
+        textColor=TEXT_COLOR,
+        leading=13,
     ))
     
     styles.add(ParagraphStyle(
         name='SectionTitle',
-        fontSize=12,
+        fontSize=11,
         fontName=FONT_BOLD,
         textColor=TEXT_COLOR,
         spaceBefore=10,
