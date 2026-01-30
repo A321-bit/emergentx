@@ -1502,6 +1502,64 @@ const Quotes = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Off-Grid Segment Options Modal */}
+      <Dialog open={isSegmentOptionsModalOpen} onOpenChange={(open) => {
+        if (!open && pendingCustomerId) {
+          setPendingCustomerId(null);
+        }
+        setIsSegmentOptionsModalOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-orange-500">📊</span>
+              Off-Grid Teklif Seçenekleri
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Off-Grid sistemlerde müşterinize farklı marka/fiyat seçenekleri sunmak ister misiniz?
+            </p>
+            
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => handleSegmentOptionsConfirm(true)}
+                className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition-all text-left"
+                data-testid="segment-option-yes"
+              >
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
+                  <span className="text-2xl">✓</span>
+                </div>
+                <div>
+                  <p className="font-semibold">Evet, 3 Farklı Seçenek Sun</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF'te Ekonomik, Standart ve Premium fiyat tabloları gösterilir
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSegmentOptionsConfirm(false)}
+                className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-border hover:border-primary/50 hover:bg-muted/50 transition-all text-left"
+                data-testid="segment-option-no"
+              >
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-2xl">✗</span>
+                </div>
+                <div>
+                  <p className="font-semibold">Hayır, Tek Fiyat Göster</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Sadece seçilen ürünlerle standart teklif oluşturulur
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
