@@ -209,7 +209,8 @@ const Quotes = () => {
     callback_date: '',
     callback_time: '',
     status: 'taslak',
-    electricity_subscription_type: ''  // EPDK abonelik tipi (On-Grid/Hibrit için)
+    electricity_subscription_type: '',  // EPDK abonelik tipi (On-Grid/Hibrit için)
+    include_segment_options: false  // Off-Grid için 3 farklı segment seçeneği
   });
   
   // Product selection
