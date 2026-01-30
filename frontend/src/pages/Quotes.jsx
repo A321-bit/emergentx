@@ -844,16 +844,51 @@ const Quotes = () => {
             {/* Step 1: Customer & Sales Info */}
             {wizardStep === 1 && (
               <div className="space-y-4">
+                {/* Customer Category Filter & Search */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-accent/50 rounded-lg">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Kategori Filtresi</Label>
+                    <Select value={wizardCategoryFilter} onValueChange={setWizardCategoryFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Tüm Kategoriler" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Kategoriler</SelectItem>
+                        {customerCategories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Müşteri Ara (isim, telefon, şehir)</Label>
+                    <Input
+                      placeholder="Ara..."
+                      value={wizardCustomerSearch}
+                      onChange={(e) => setWizardCustomerSearch(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Müşteri *</Label>
+                    <Label>Müşteri * <span className="text-xs text-muted-foreground">({filteredCustomersForWizard.length} sonuç)</span></Label>
                     <Select value={formData.customer_id} onValueChange={(v) => setFormData({...formData, customer_id: v})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Müşteri seçin" />
                       </SelectTrigger>
                       <SelectContent>
-                        {customers.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        {filteredCustomersForWizard.map(c => (
+                          <SelectItem key={c.id} value={c.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{c.name}</span>
+                              {c.category_name && (
+                                <span className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">{c.category_name}</span>
+                              )}
+                              {c.city && <span className="text-xs text-muted-foreground">• {c.city}</span>}
+                            </div>
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
