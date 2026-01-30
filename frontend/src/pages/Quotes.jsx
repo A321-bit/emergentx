@@ -391,6 +391,37 @@ const Quotes = () => {
     setFormData({ ...formData, items: updatedItems });
   };
 
+  // Drag and Drop Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle Drag End
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = formData.items.findIndex(item => item.product_id === active.id);
+    const newIndex = formData.items.findIndex(item => item.product_id === over.id);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newItems = arrayMove(formData.items, oldIndex, newIndex).map((item, idx) => ({
+        ...item,
+        sort_order: idx
+      }));
+      setFormData({ ...formData, items: newItems });
+      toast.success('Ürün sırası güncellendi');
+    }
+  };
+
   // Calculate totals
   const subtotalTL = formData.items.reduce((sum, item) => sum + (item.total_price_tl || 0), 0);
   const subtotalUSD = formData.items.reduce((sum, item) => sum + (item.total_price_usd || 0), 0);
