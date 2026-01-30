@@ -497,16 +497,19 @@ class QuotePDFGenerator:
         for item in items:
             power = item.get('power_watt', 0) or 0
             quantity = item.get('quantity', 1)
-            category = (item.get('category_name') or '').lower()
-            product_name = (item.get('product_name') or '').lower()
+            # Normalize Turkish characters for matching
+            category = (item.get('category_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
+            product_name = (item.get('product_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
             
-            # Determine category by name or category
-            if any(x in category or x in product_name for x in ['panel', 'güneş', 'solar', 'mono', 'poli']):
-                total_panel_watt += power * quantity
-            elif any(x in category or x in product_name for x in ['inverter', 'invertör', 'evirici']):
-                total_inverter_watt += power * quantity
-            elif any(x in category or x in product_name for x in ['batarya', 'akü', 'battery', 'depolama', 'lityum']):
+            # Check battery FIRST (before panel check, since battery names may contain "solar")
+            if any(x in category or x in product_name for x in ['batarya', 'akü', 'battery', 'depolama', 'lityum']):
                 total_battery_watt += power * quantity
+            # Check inverter (with Turkish character normalization)
+            elif any(x in category or x in product_name for x in ['inverter', 'invertor', 'evirici']):
+                total_inverter_watt += power * quantity
+            # Check panel last
+            elif any(x in category or x in product_name for x in ['panel', 'güneş', 'solar', 'mono', 'poli']):
+                total_panel_watt += power * quantity
         
         # If no power data, don't create page
         if total_panel_watt == 0 and total_inverter_watt == 0 and total_battery_watt == 0:
