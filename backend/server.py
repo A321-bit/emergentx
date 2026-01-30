@@ -4718,6 +4718,9 @@ async def init_default_data():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Mount static files with /api prefix for proper routing through Kubernetes ingress
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="api_uploads")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
