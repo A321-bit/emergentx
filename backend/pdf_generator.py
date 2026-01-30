@@ -407,23 +407,74 @@ class QuotePDFGenerator:
         elements.append(Paragraph(f"<b>{title_text}</b>", self.styles['QuoteTitle']))
         elements.append(Spacer(1, 8))
         
-        # Products table
-        products_table = self._create_products_table(quote_data.get('items', []))
-        elements.append(products_table)
+        # Check if Off-Grid with segment options
+        include_segment_options = quote_data.get('include_segment_options', False)
+        segment_items = quote_data.get('segment_items')
         
-        # Shipping/Installation row (if exists)
-        shipping = quote_data.get('shipping_cost', 0)
-        if shipping > 0:
-            elements.append(Spacer(1, 3))
-            shipping_table = self._create_shipping_row(shipping)
-            elements.append(shipping_table)
-        
-        elements.append(Spacer(1, 10))
-        
-        # Totals (smaller fonts, ₺ symbol)
-        totals_table = self._create_totals_table(quote_data)
-        elements.append(totals_table)
-        elements.append(Spacer(1, 15))
+        if include_segment_options and segment_items:
+            # Create 3 segment tables
+            segments = [
+                ('ekonomik', '🟢 EKONOMİK PAKET', colors.HexColor('#10b981')),
+                ('standart', '🟡 STANDART PAKET', colors.HexColor('#f59e0b')),
+                ('premium', '🔵 PREMİUM PAKET', colors.HexColor('#3b82f6'))
+            ]
+            
+            for segment_key, segment_title, segment_color in segments:
+                segment_data = segment_items.get(segment_key, {})
+                items = segment_data.get('items', [])
+                subtotal = segment_data.get('subtotal_tl', 0)
+                
+                if not items:
+                    continue
+                
+                # Segment title
+                elements.append(Paragraph(f"<b>{segment_title}</b>", ParagraphStyle(
+                    'SegmentTitle',
+                    parent=self.styles['QuoteTitle'],
+                    fontSize=11,
+                    textColor=segment_color,
+                    spaceAfter=5
+                )))
+                
+                # Products table for this segment
+                products_table = self._create_products_table(items)
+                elements.append(products_table)
+                
+                # Segment subtotal
+                segment_total_data = [[
+                    '', '', '',
+                    Paragraph("<b>Paket Toplamı:</b>", self.styles['TableCellRight']),
+                    Paragraph(f"<b>{format_currency(subtotal)}</b>", self.styles['TableCellRight'])
+                ]]
+                segment_total_table = Table(segment_total_data, colWidths=[COL_MIKTAR, COL_BIRIM, COL_URUN, COL_BIRIM_FIYAT, COL_TOPLAM_FIYAT])
+                segment_total_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), segment_color),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('BOX', (0, 0), (-1, -1), 1, segment_color),
+                    ('TOPPADDING', (0, 0), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                    ('ALIGN', (-2, 0), (-1, 0), 'RIGHT'),
+                ]))
+                elements.append(segment_total_table)
+                elements.append(Spacer(1, 15))
+        else:
+            # Standard single products table
+            products_table = self._create_products_table(quote_data.get('items', []))
+            elements.append(products_table)
+            
+            # Shipping/Installation row (if exists)
+            shipping = quote_data.get('shipping_cost', 0)
+            if shipping > 0:
+                elements.append(Spacer(1, 3))
+                shipping_table = self._create_shipping_row(shipping)
+                elements.append(shipping_table)
+            
+            elements.append(Spacer(1, 10))
+            
+            # Totals (smaller fonts, ₺ symbol)
+            totals_table = self._create_totals_table(quote_data)
+            elements.append(totals_table)
+            elements.append(Spacer(1, 15))
         
         # Quote terms (short notes)
         quote_terms = company_settings.get('quote_terms', '')
