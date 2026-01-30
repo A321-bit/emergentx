@@ -544,58 +544,64 @@ class QuotePDFGenerator:
         return buffer
     
     def _create_header(self, quote_data: dict, company_settings: dict):
-        """Create header with company and customer info (clean layout)"""
+        """Create header with company | vertical divider | customer"""
         
-        # Company info - clean formatted
+        # Company info (left side, smaller)
         company_name = company_settings.get('company_name', 'Solar Enerji')
         company_phone = company_settings.get('phone', '')
         company_email = company_settings.get('email', '')
         company_address = company_settings.get('address', '')
         
-        company_html = f"<b>{company_name}</b><br/>"
+        company_lines = [Paragraph(f"<b>{company_name}</b>", self.styles['CompanyName'])]
         if company_address:
-            company_html += f"<font size='8'>{company_address}</font><br/>"
+            company_lines.append(Paragraph(company_address, self.styles['CompanyInfo']))
         contact_parts = []
         if company_phone:
             contact_parts.append(f"Tel: {company_phone}")
         if company_email:
             contact_parts.append(company_email)
         if contact_parts:
-            company_html += f"<font size='8'>{' • '.join(contact_parts)}</font>"
+            company_lines.append(Paragraph(' • '.join(contact_parts), self.styles['CompanyInfo']))
         
-        company_content = [Paragraph(company_html, self.styles['CompanyInfo'])]
-        
-        # Customer info - with city, district and phone
+        # Customer info (right side, bigger and more prominent - NO "MÜŞTERİ" label)
         customer_name = quote_data.get('customer_name', '-')
         customer_phone = quote_data.get('customer_phone', '')
         customer_city = quote_data.get('customer_city', '')
         customer_district = quote_data.get('customer_district', '')
         
-        customer_html = f"<b>MÜŞTERİ</b><br/>"
-        customer_html += f"<b>{customer_name}</b><br/>"
+        customer_lines = [Paragraph(f"<b>{customer_name}</b>", self.styles['CustomerName'])]
         
-        # Location line (il/ilçe)
+        # Location (il/ilçe)
         location_parts = []
         if customer_district:
             location_parts.append(customer_district)
         if customer_city:
             location_parts.append(customer_city)
         if location_parts:
-            customer_html += f"<font size='8'>{' / '.join(location_parts)}</font><br/>"
+            customer_lines.append(Paragraph(' / '.join(location_parts), self.styles['CustomerInfo']))
         
         # Phone
         if customer_phone:
-            customer_html += f"<font size='8'>Tel: {customer_phone}</font>"
+            customer_lines.append(Paragraph(f"Tel: {customer_phone}", self.styles['CustomerInfo']))
         
-        customer_content = [Paragraph(customer_html, self.styles['CompanyInfo'])]
+        # Create 3-column layout: Company | Divider | Customer
+        # Divider is a thin column with vertical line
+        header_data = [[company_lines, '', customer_lines]]
         
-        header_data = [[company_content, customer_content]]
-        header_table = Table(header_data, colWidths=[CONTENT_WIDTH * 0.55, CONTENT_WIDTH * 0.45])
+        col_company = CONTENT_WIDTH * 0.45
+        col_divider = CONTENT_WIDTH * 0.04
+        col_customer = CONTENT_WIDTH * 0.51
+        
+        header_table = Table(header_data, colWidths=[col_company, col_divider, col_customer])
         header_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
             ('LEFTPADDING', (0, 0), (0, 0), 0),
-            ('RIGHTPADDING', (1, 0), (1, 0), 0),
+            ('RIGHTPADDING', (2, 0), (2, 0), 0),
+            # Vertical line in middle column
+            ('LINEAFTER', (0, 0), (0, 0), 1.5, PRIMARY_COLOR),
+            ('LEFTPADDING', (2, 0), (2, 0), 10),
         ]))
         
         return header_table
