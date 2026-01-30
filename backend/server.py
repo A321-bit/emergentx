@@ -1725,7 +1725,10 @@ async def delete_customer(customer_id: str, current_user: dict = Depends(require
         raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
     return {"message": "Müşteri silindi"}
 
-# ==================== QUOTE ROUTES ====================
+# ==================== QUOTE ROUTES (Gelişmiş Teklif Sistemi) ====================
+
+CUSTOMER_STATUS_OPTIONS = ["olumlu", "bilgi_amacli", "yuksek_potansiyel", "dusuk_potansiyel"]
+QUOTE_STATUS_OPTIONS = ["taslak", "gonderildi", "takipte", "satisa_dondu", "olumsuz", "iptal"]
 
 @api_router.post("/quotes", response_model=dict)
 async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(require_permission("quotes_manage"))):
@@ -1737,44 +1740,22 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
     exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
     usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
     
-    dealer_discount = 0
-    if current_user.get("dealer_id"):
-        dealer = await db.dealers.find_one({"id": current_user["dealer_id"]}, {"_id": 0})
-        if dealer and dealer.get("dealer_group_id"):
-            group = await db.dealer_groups.find_one({"id": dealer["dealer_group_id"]}, {"_id": 0})
-            if group:
-                dealer_discount = group.get("discount_rate", 0)
-    
     items = []
     subtotal_usd = 0
     subtotal_tl = 0
     
-    for item in quote_data.items:
+    for idx, item in enumerate(quote_data.items):
         product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
         if not product:
             raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
         
-        # Stock check
-        if product.get("stock_quantity", 0) < item["quantity"]:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Yetersiz stok: {product['name']} (Mevcut: {product.get('stock_quantity', 0)}, İstenen: {item['quantity']})"
-            )
-        
         product_currency = product.get("currency", "USD")
-        base_price = item.get("unit_price") or product["sale_price"]
-        
-        if dealer_discount > 0:
-            base_price = product["purchase_price"] * (1 + dealer_discount / 100)
+        base_price = item.get("unit_price") or item.get("unit_price_tl") or product.get("sale_price", 0)
         
         # Fiyatları USD ve TL olarak hesapla
         if product_currency == "USD":
             unit_price_usd = base_price
             unit_price_tl = base_price * usd_rate
-        elif product_currency == "EUR":
-            eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
-            unit_price_usd = base_price * (eur_rate / usd_rate)
-            unit_price_tl = base_price * eur_rate
         else:  # TRY
             unit_price_tl = base_price
             unit_price_usd = base_price / usd_rate
@@ -1790,16 +1771,23 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
             "unit_price_tl": round(unit_price_tl, 2),
             "total_price_usd": round(total_price_usd, 2),
             "total_price_tl": round(total_price_tl, 2),
-            "unit_price": round(unit_price_tl, 2),  # Legacy (TL)
-            "total_price": round(total_price_tl, 2),  # Legacy (TL)
+            "unit_price": round(unit_price_tl, 2),
+            "total_price": round(total_price_tl, 2),
             "unit": product.get("unit", "adet"),
             "datasheet_url": product.get("datasheet_url"),
-            "currency": product_currency
+            "currency": product_currency,
+            "description": item.get("description", ""),
+            "sort_order": item.get("sort_order", idx)
         })
         subtotal_usd += total_price_usd
         subtotal_tl += total_price_tl
     
-    # Calculate discount (TL bazlı indirim tutarı verilirse)
+    # Nakliye & Montaj (KDV dahil olarak girilir, KDV'siz tutarı hesapla)
+    shipping_cost = quote_data.shipping_cost or 0
+    shipping_cost_without_vat = shipping_cost / (1 + quote_data.vat_rate / 100) if quote_data.vat_rate > 0 else shipping_cost
+    shipping_vat = shipping_cost - shipping_cost_without_vat
+    
+    # İndirim hesapla
     if quote_data.discount_type == "percent":
         discount_amount_tl = subtotal_tl * (quote_data.discount_rate / 100)
         discount_amount_usd = subtotal_usd * (quote_data.discount_rate / 100)
@@ -1807,13 +1795,14 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         discount_amount_tl = quote_data.discount_amount
         discount_amount_usd = quote_data.discount_amount / usd_rate
     
-    # Calculate VAT
-    subtotal_after_discount_tl = subtotal_tl - discount_amount_tl
-    subtotal_after_discount_usd = subtotal_usd - discount_amount_usd
-    vat_amount_tl = subtotal_after_discount_tl * (quote_data.vat_rate / 100)
-    vat_amount_usd = subtotal_after_discount_usd * (quote_data.vat_rate / 100)
-    total_tl = subtotal_after_discount_tl + vat_amount_tl
-    total_usd = subtotal_after_discount_usd + vat_amount_usd
+    # KDV hesapla
+    subtotal_after_discount_tl = subtotal_tl - discount_amount_tl + shipping_cost_without_vat
+    subtotal_after_discount_usd = subtotal_usd - discount_amount_usd + (shipping_cost_without_vat / usd_rate)
+    vat_amount_tl = (subtotal_tl - discount_amount_tl) * (quote_data.vat_rate / 100) + shipping_vat
+    vat_amount_usd = vat_amount_tl / usd_rate
+    
+    total_tl = subtotal_tl - discount_amount_tl + vat_amount_tl + shipping_cost_without_vat
+    total_usd = total_tl / usd_rate
     
     quote_number = await generate_quote_number()
     
@@ -1822,33 +1811,34 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         "quote_number": quote_number,
         "customer_id": quote_data.customer_id,
         "customer_name": customer["name"],
+        "customer_phone": customer.get("phone", ""),
+        "customer_email": customer.get("email", ""),
+        "customer_address": customer.get("address", ""),
+        "customer_status": quote_data.customer_status,
         "items": items,
         "subtotal_usd": round(subtotal_usd, 2),
         "subtotal_tl": round(subtotal_tl, 2),
-        "subtotal": round(subtotal_tl, 2),  # Legacy
+        "shipping_cost": round(shipping_cost, 2),
+        "shipping_cost_without_vat": round(shipping_cost_without_vat, 2),
         "discount_type": quote_data.discount_type,
         "discount_rate": quote_data.discount_rate,
         "discount_amount_usd": round(discount_amount_usd, 2),
         "discount_amount_tl": round(discount_amount_tl, 2),
-        "discount_amount": round(discount_amount_tl, 2),  # Legacy
         "vat_rate": quote_data.vat_rate,
         "vat_amount_usd": round(vat_amount_usd, 2),
         "vat_amount_tl": round(vat_amount_tl, 2),
-        "vat_amount": round(vat_amount_tl, 2),  # Legacy
         "total_usd": round(total_usd, 2),
         "total_tl": round(total_tl, 2),
-        "total": round(total_tl, 2),  # Legacy
         "exchange_rate": usd_rate,
-        "currency": quote_data.currency,
         "validity_days": quote_data.validity_days,
-        "notes": quote_data.notes,
-        "delivery_time": quote_data.delivery_time,
-        "payment_terms": quote_data.payment_terms,
-        "warranty_info": quote_data.warranty_info,
+        "customer_notes": quote_data.customer_notes,
+        "internal_notes": quote_data.internal_notes,
+        "callback_required": quote_data.callback_required,
+        "callback_date": quote_data.callback_date,
+        "callback_time": quote_data.callback_time,
         "status": quote_data.status or "taslak",
         "created_by": current_user["id"],
-        "created_by_name": current_user["name"],
-        "dealer_id": current_user.get("dealer_id"),
+        "created_by_name": current_user.get("name", ""),
         "is_active": True,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "valid_until": (datetime.now(timezone.utc) + timedelta(days=quote_data.validity_days)).isoformat()
@@ -1860,18 +1850,76 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
     return quote_dict
 
 @api_router.get("/quotes", response_model=List[dict])
-async def get_quotes(status: Optional[str] = None, current_user: dict = Depends(require_permission("quotes_view"))):
+async def get_quotes(
+    status: Optional[str] = None,
+    customer_status: Optional[str] = None,
+    created_by: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    callback_upcoming: Optional[bool] = None,
+    current_user: dict = Depends(require_permission("quotes_view"))
+):
     query = {"is_active": True}
+    
+    # Personel sadece kendi tekliflerini görebilir (admin hariç)
+    user_perms = current_user.get("permissions", [])
+    if "all" not in user_perms and "quotes_view_all" not in user_perms:
+        query["created_by"] = current_user["id"]
     
     if status:
         query["status"] = status
+    if customer_status:
+        query["customer_status"] = customer_status
+    if created_by:
+        query["created_by"] = created_by
     
-    user_perms = current_user.get("permissions", [])
-    if "all" not in user_perms:
-        if current_user.get("dealer_id"):
-            query["dealer_id"] = current_user["dealer_id"]
+    # Tarih filtreleri
+    if date_from:
+        query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in query:
+            query["created_at"]["$lte"] = date_to
+        else:
+            query["created_at"] = {"$lte": date_to}
+    
+    # Yaklaşan arama zamanları
+    if callback_upcoming:
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        query["callback_required"] = True
+        query["callback_date"] = {"$lte": today}
+        query["status"] = {"$nin": ["satisa_dondu", "olumsuz", "iptal"]}
     
     quotes = await db.quotes.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return quotes
+
+@api_router.get("/quotes/my-followups", response_model=List[dict])
+async def get_my_followups(current_user: dict = Depends(require_permission("quotes_view"))):
+    """Personelin takipteki teklifleri"""
+    query = {
+        "is_active": True,
+        "created_by": current_user["id"],
+        "status": "takipte"
+    }
+    quotes = await db.quotes.find(query, {"_id": 0}).sort("callback_date", 1).to_list(1000)
+    return quotes
+
+@api_router.get("/quotes/upcoming-callbacks", response_model=List[dict])
+async def get_upcoming_callbacks(current_user: dict = Depends(require_permission("quotes_view"))):
+    """Aranması gereken teklifler"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    query = {
+        "is_active": True,
+        "callback_required": True,
+        "status": {"$nin": ["satisa_dondu", "olumsuz", "iptal"]}
+    }
+    
+    # Personel sadece kendi tekliflerini görebilir (admin hariç)
+    user_perms = current_user.get("permissions", [])
+    if "all" not in user_perms and "quotes_view_all" not in user_perms:
+        query["created_by"] = current_user["id"]
+    
+    quotes = await db.quotes.find(query, {"_id": 0}).sort("callback_date", 1).to_list(1000)
     return quotes
 
 @api_router.get("/quotes/{quote_id}", response_model=dict)
@@ -1887,17 +1935,242 @@ async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dic
     if not existing:
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     
-    # Check if quote can be edited (sadece satışa dönmüş teklifler düzenlenemez)
-    if existing.get("status") == "satisa_dondu":
-        raise HTTPException(status_code=400, detail="Satışa dönmüş teklifler düzenlenemez")
-    
-    # Döviz kurunu al
-    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
-    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    if existing.get("status") in ["satisa_dondu", "iptal"]:
+        raise HTTPException(status_code=400, detail="Bu teklif düzenlenemez")
     
     customer = await db.customers.find_one({"id": quote_data.customer_id}, {"_id": 0})
     if not customer:
         raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+    
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    
+    items = []
+    subtotal_usd = 0
+    subtotal_tl = 0
+    
+    for idx, item in enumerate(quote_data.items):
+        product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item['product_id']}")
+        
+        product_currency = product.get("currency", "USD")
+        base_price = item.get("unit_price_tl") or item.get("unit_price") or product.get("sale_price", 0)
+        
+        if product_currency == "USD":
+            unit_price_usd = base_price
+            unit_price_tl = base_price * usd_rate
+        else:
+            unit_price_tl = base_price
+            unit_price_usd = base_price / usd_rate
+        
+        total_price_usd = unit_price_usd * item["quantity"]
+        total_price_tl = unit_price_tl * item["quantity"]
+        
+        items.append({
+            "product_id": product["id"],
+            "product_name": product["name"],
+            "quantity": item["quantity"],
+            "unit_price_usd": round(unit_price_usd, 2),
+            "unit_price_tl": round(unit_price_tl, 2),
+            "total_price_usd": round(total_price_usd, 2),
+            "total_price_tl": round(total_price_tl, 2),
+            "unit_price": round(unit_price_tl, 2),
+            "total_price": round(total_price_tl, 2),
+            "unit": product.get("unit", "adet"),
+            "datasheet_url": product.get("datasheet_url"),
+            "currency": product_currency,
+            "description": item.get("description", ""),
+            "sort_order": item.get("sort_order", idx)
+        })
+        subtotal_usd += total_price_usd
+        subtotal_tl += total_price_tl
+    
+    shipping_cost = quote_data.shipping_cost or 0
+    shipping_cost_without_vat = shipping_cost / (1 + quote_data.vat_rate / 100) if quote_data.vat_rate > 0 else shipping_cost
+    shipping_vat = shipping_cost - shipping_cost_without_vat
+    
+    if quote_data.discount_type == "percent":
+        discount_amount_tl = subtotal_tl * (quote_data.discount_rate / 100)
+        discount_amount_usd = subtotal_usd * (quote_data.discount_rate / 100)
+    else:
+        discount_amount_tl = quote_data.discount_amount
+        discount_amount_usd = quote_data.discount_amount / usd_rate
+    
+    vat_amount_tl = (subtotal_tl - discount_amount_tl) * (quote_data.vat_rate / 100) + shipping_vat
+    vat_amount_usd = vat_amount_tl / usd_rate
+    
+    total_tl = subtotal_tl - discount_amount_tl + vat_amount_tl + shipping_cost_without_vat
+    total_usd = total_tl / usd_rate
+    
+    update_data = {
+        "customer_id": quote_data.customer_id,
+        "customer_name": customer["name"],
+        "customer_phone": customer.get("phone", ""),
+        "customer_email": customer.get("email", ""),
+        "customer_address": customer.get("address", ""),
+        "customer_status": quote_data.customer_status,
+        "items": items,
+        "subtotal_usd": round(subtotal_usd, 2),
+        "subtotal_tl": round(subtotal_tl, 2),
+        "shipping_cost": round(shipping_cost, 2),
+        "shipping_cost_without_vat": round(shipping_cost_without_vat, 2),
+        "discount_type": quote_data.discount_type,
+        "discount_rate": quote_data.discount_rate,
+        "discount_amount_usd": round(discount_amount_usd, 2),
+        "discount_amount_tl": round(discount_amount_tl, 2),
+        "vat_rate": quote_data.vat_rate,
+        "vat_amount_usd": round(vat_amount_usd, 2),
+        "vat_amount_tl": round(vat_amount_tl, 2),
+        "total_usd": round(total_usd, 2),
+        "total_tl": round(total_tl, 2),
+        "exchange_rate": usd_rate,
+        "validity_days": quote_data.validity_days,
+        "customer_notes": quote_data.customer_notes,
+        "internal_notes": quote_data.internal_notes,
+        "callback_required": quote_data.callback_required,
+        "callback_date": quote_data.callback_date,
+        "callback_time": quote_data.callback_time,
+        "status": quote_data.status,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "valid_until": (datetime.now(timezone.utc) + timedelta(days=quote_data.validity_days)).isoformat()
+    }
+    
+    await db.quotes.update_one({"id": quote_id}, {"$set": update_data})
+    updated = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    return updated
+
+@api_router.put("/quotes/{quote_id}/status")
+async def update_quote_status(quote_id: str, status_update: QuoteStatusUpdate, current_user: dict = Depends(require_permission("quotes_manage"))):
+    if status_update.status not in QUOTE_STATUS_OPTIONS:
+        raise HTTPException(status_code=400, detail="Geçersiz durum")
+    
+    update_data = {
+        "status": status_update.status,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    if status_update.notes:
+        update_data["status_notes"] = status_update.notes
+    
+    result = await db.quotes.update_one({"id": quote_id, "is_active": True}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    return quote
+
+@api_router.put("/quotes/{quote_id}/callback")
+async def update_quote_callback(quote_id: str, callback: QuoteCallbackUpdate, current_user: dict = Depends(require_permission("quotes_manage"))):
+    update_data = {
+        "callback_required": True,
+        "callback_date": callback.callback_date,
+        "callback_time": callback.callback_time,
+        "status": "takipte",
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    if callback.notes:
+        update_data["internal_notes"] = callback.notes
+    
+    result = await db.quotes.update_one({"id": quote_id, "is_active": True}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    return quote
+
+@api_router.put("/quotes/{quote_id}/discount")
+async def apply_extra_discount(quote_id: str, discount: QuoteDiscountUpdate, current_user: dict = Depends(require_permission("quotes_manage"))):
+    quote = await db.quotes.find_one({"id": quote_id, "is_active": True}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    subtotal_tl = quote.get("subtotal_tl", 0)
+    subtotal_usd = quote.get("subtotal_usd", 0)
+    usd_rate = quote.get("exchange_rate", 34.0)
+    vat_rate = quote.get("vat_rate", 20)
+    shipping_cost = quote.get("shipping_cost", 0)
+    shipping_cost_without_vat = quote.get("shipping_cost_without_vat", 0)
+    
+    if discount.discount_type == "percent":
+        discount_amount_tl = subtotal_tl * (discount.discount_rate / 100)
+        discount_amount_usd = subtotal_usd * (discount.discount_rate / 100)
+    else:
+        discount_amount_tl = discount.discount_amount
+        discount_amount_usd = discount.discount_amount / usd_rate
+    
+    shipping_vat = shipping_cost - shipping_cost_without_vat
+    vat_amount_tl = (subtotal_tl - discount_amount_tl) * (vat_rate / 100) + shipping_vat
+    vat_amount_usd = vat_amount_tl / usd_rate
+    
+    total_tl = subtotal_tl - discount_amount_tl + vat_amount_tl + shipping_cost_without_vat
+    total_usd = total_tl / usd_rate
+    
+    update_data = {
+        "discount_type": discount.discount_type,
+        "discount_rate": discount.discount_rate,
+        "discount_amount_tl": round(discount_amount_tl, 2),
+        "discount_amount_usd": round(discount_amount_usd, 2),
+        "vat_amount_tl": round(vat_amount_tl, 2),
+        "vat_amount_usd": round(vat_amount_usd, 2),
+        "total_tl": round(total_tl, 2),
+        "total_usd": round(total_usd, 2),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.quotes.update_one({"id": quote_id}, {"$set": update_data})
+    updated = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    return updated
+
+@api_router.post("/quotes/{quote_id}/convert-to-sale")
+async def convert_quote_to_sale(quote_id: str, current_user: dict = Depends(require_permission("quotes_manage"))):
+    quote = await db.quotes.find_one({"id": quote_id, "is_active": True}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    # Satış kaydı oluştur
+    sale_dict = {
+        "id": str(uuid.uuid4()),
+        "quote_id": quote_id,
+        "quote_number": quote.get("quote_number"),
+        "customer_id": quote.get("customer_id"),
+        "customer_name": quote.get("customer_name"),
+        "items": quote.get("items", []),
+        "subtotal_tl": quote.get("subtotal_tl", 0),
+        "subtotal_usd": quote.get("subtotal_usd", 0),
+        "discount_amount_tl": quote.get("discount_amount_tl", 0),
+        "vat_amount_tl": quote.get("vat_amount_tl", 0),
+        "shipping_cost": quote.get("shipping_cost", 0),
+        "total_tl": quote.get("total_tl", 0),
+        "total_usd": quote.get("total_usd", 0),
+        "exchange_rate": quote.get("exchange_rate", 34.0),
+        "sale_date": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user["id"],
+        "created_by_name": current_user.get("name", ""),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.sales.insert_one(sale_dict.copy())
+    
+    # Teklif durumunu güncelle
+    await db.quotes.update_one(
+        {"id": quote_id},
+        {"$set": {"status": "satisa_dondu", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if "_id" in sale_dict:
+        del sale_dict["_id"]
+    return {"message": "Teklif satışa dönüştürüldü", "sale": sale_dict}
+
+@api_router.delete("/quotes/{quote_id}")
+async def delete_quote(quote_id: str, current_user: dict = Depends(require_permission("quotes_manage"))):
+    result = await db.quotes.update_one(
+        {"id": quote_id},
+        {"$set": {"is_active": False, "status": "iptal", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    return {"message": "Teklif iptal edildi"}
     
     items = []
     subtotal_usd = 0
