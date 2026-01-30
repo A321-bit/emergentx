@@ -1221,6 +1221,137 @@ async def delete_dealer_group(group_id: str, current_user: dict = Depends(requir
 
 # ==================== PRODUCT ROUTES ====================
 
+@api_router.get("/products/price-segments")
+async def get_price_segments():
+    """Get available price segments for products"""
+    return PRICE_SEGMENTS
+
+@api_router.get("/products/matching-groups")
+async def get_matching_groups(current_user: dict = Depends(get_current_user)):
+    """Get all unique matching groups"""
+    pipeline = [
+        {"$match": {"is_active": True, "matching_group": {"$ne": None, "$ne": ""}}},
+        {"$group": {"_id": "$matching_group", "products": {"$push": {"id": "$id", "name": "$name", "price_segment": "$price_segment", "power_watt": "$power_watt", "category_name": "$category_name", "sale_price": "$sale_price"}}}},
+        {"$project": {"_id": 0, "matching_group": "$_id", "products": 1}}
+    ]
+    groups = await db.products.aggregate(pipeline).to_list(100)
+    return groups
+
+@api_router.get("/products/{product_id}/matched-products")
+async def get_matched_products(product_id: str, current_user: dict = Depends(get_current_user)):
+    """Get products in the same matching group as the given product"""
+    product = await db.products.find_one({"id": product_id, "is_active": True}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+    
+    matching_group = product.get("matching_group")
+    if not matching_group:
+        return {"product": product, "matched": []}
+    
+    # Find all products in the same matching group
+    matched = await db.products.find(
+        {"matching_group": matching_group, "is_active": True, "id": {"$ne": product_id}},
+        {"_id": 0}
+    ).to_list(10)
+    
+    return {"product": product, "matched": matched}
+
+@api_router.post("/quotes/calculate-segments")
+async def calculate_segment_prices(
+    data: dict,
+    current_user: dict = Depends(require_permission("quotes_view"))
+):
+    """Calculate prices for all segments based on selected products"""
+    items = data.get("items", [])
+    
+    # Get exchange rate
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    
+    # Categories that have segment variations (panel, inverter, battery)
+    segment_categories = ['panel', 'inverter', 'invertör', 'batarya', 'akü', 'battery']
+    
+    # Build result for each segment
+    segments_result = {
+        "ekonomik": {"items": [], "subtotal_tl": 0},
+        "standart": {"items": [], "subtotal_tl": 0},
+        "premium": {"items": [], "subtotal_tl": 0}
+    }
+    
+    for item in items:
+        product = await db.products.find_one({"id": item.get("product_id"), "is_active": True}, {"_id": 0})
+        if not product:
+            continue
+        
+        category_name = (product.get("category_name") or "").lower()
+        is_segment_product = any(cat in category_name for cat in segment_categories)
+        
+        quantity = item.get("quantity", 1)
+        
+        if is_segment_product and product.get("matching_group"):
+            # Find matched products for each segment
+            matching_group = product["matching_group"]
+            matched_products = await db.products.find(
+                {"matching_group": matching_group, "is_active": True},
+                {"_id": 0}
+            ).to_list(10)
+            
+            for segment in ["ekonomik", "standart", "premium"]:
+                # Find product for this segment
+                segment_product = next(
+                    (p for p in matched_products if p.get("price_segment") == segment),
+                    product  # fallback to original if no match
+                )
+                
+                # Calculate price
+                currency = segment_product.get("currency", "USD")
+                base_price = segment_product.get("sale_price", 0)
+                if currency == "USD":
+                    unit_price_tl = base_price * usd_rate
+                else:
+                    unit_price_tl = base_price
+                
+                total_price_tl = unit_price_tl * quantity
+                
+                segments_result[segment]["items"].append({
+                    "product_id": segment_product["id"],
+                    "product_name": segment_product["name"],
+                    "quantity": quantity,
+                    "unit_price_tl": round(unit_price_tl, 2),
+                    "total_price_tl": round(total_price_tl, 2),
+                    "power_watt": segment_product.get("power_watt"),
+                    "is_segment_product": True
+                })
+                segments_result[segment]["subtotal_tl"] += total_price_tl
+        else:
+            # Non-segment product - same for all segments
+            currency = product.get("currency", "USD")
+            base_price = product.get("sale_price", 0)
+            if currency == "USD":
+                unit_price_tl = base_price * usd_rate
+            else:
+                unit_price_tl = base_price
+            
+            total_price_tl = unit_price_tl * quantity
+            
+            for segment in ["ekonomik", "standart", "premium"]:
+                segments_result[segment]["items"].append({
+                    "product_id": product["id"],
+                    "product_name": product["name"],
+                    "quantity": quantity,
+                    "unit_price_tl": round(unit_price_tl, 2),
+                    "total_price_tl": round(total_price_tl, 2),
+                    "power_watt": product.get("power_watt"),
+                    "is_segment_product": False
+                })
+                segments_result[segment]["subtotal_tl"] += total_price_tl
+    
+    # Round subtotals
+    for segment in segments_result:
+        segments_result[segment]["subtotal_tl"] = round(segments_result[segment]["subtotal_tl"], 2)
+    
+    return segments_result
+
 async def calculate_product_prices(product_data: dict, category: dict = None):
     purchase_without_vat = product_data.get("purchase_price_without_vat", 0)
     vat_rate = product_data.get("vat_rate", 20)
