@@ -127,6 +127,23 @@ const Quotes = () => {
     fetchData();
   }, []);
 
+  // URL'den müşteri parametresini kontrol et ve otomatik wizard aç
+  useEffect(() => {
+    const customerId = searchParams.get('customer');
+    if (customerId && customers.length > 0 && !loading) {
+      const customer = customers.find(c => c.id === customerId);
+      if (customer) {
+        setFormData(prev => ({
+          ...prev,
+          customer_id: customerId
+        }));
+        setIsWizardOpen(true);
+        // URL'den parametreyi temizle
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, customers, loading]);
+
   const fetchData = async () => {
     try {
       const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes] = await Promise.all([
