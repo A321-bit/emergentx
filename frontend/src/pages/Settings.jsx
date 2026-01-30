@@ -862,6 +862,192 @@ MADDE 6 - GENEL HÜKÜMLER
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Energy Prices Tab */}
+        <TabsContent value="energy" className="space-y-6">
+          {/* Electricity Rates Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-700">
+                  ⚡
+                </span>
+                Elektrik Birim Fiyatları (EPDK)
+              </CardTitle>
+              <CardDescription>
+                Abonelik türüne göre elektrik birim fiyatlarını girin. Bu fiyatlar On-Grid sistem tasarruf hesaplamalarında kullanılır.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveEnergyPrices} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {energyPrices.electricity_rates.map((rate) => (
+                    <div key={rate.type_code} className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                      <Label className="font-medium text-sm">{rate.type_name}</Label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={rate.price_per_kwh}
+                          onChange={(e) => updateElectricityRate(rate.type_code, e.target.value)}
+                          className="pr-16"
+                          data-testid={`rate-${rate.type_code}`}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          TL/kWh
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 flex-shrink-0 text-lg">ℹ️</span>
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-800 dark:text-blue-200">EPDK Tarifeleri Hakkında</p>
+                      <p className="text-blue-700 dark:text-blue-300 mt-1">
+                        Elektrik birim fiyatları EPDK (Enerji Piyasası Düzenleme Kurumu) tarafından belirlenir. 
+                        Güncel fiyatları <a href="https://www.epdk.gov.tr" target="_blank" rel="noopener noreferrer" className="underline font-medium">epdk.gov.tr</a> adresinden kontrol edebilirsiniz.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Diesel/Generator Costs Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-700">
+                  ⛽
+                </span>
+                Jeneratör / Mazot Maliyetleri
+              </CardTitle>
+              <CardDescription>
+                Off-Grid sistemlerde jeneratör alternatifi ile karşılaştırma hesabı için mazot fiyatı ve tüketim değerlerini girin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveEnergyPrices} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Diesel Price */}
+                  <div className="space-y-3">
+                    <Label htmlFor="diesel_price" className="font-medium">
+                      Mazot Litre Fiyatı
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="diesel_price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={energyPrices.diesel_price_per_liter}
+                        onChange={(e) => setEnergyPrices({
+                          ...energyPrices, 
+                          diesel_price_per_liter: parseFloat(e.target.value) || 0
+                        })}
+                        className="text-lg font-semibold pr-12"
+                        data-testid="diesel-price-input"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">TL/L</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Güncel mazot (motorin) litre fiyatı</p>
+                  </div>
+
+                  {/* Diesel Consumption */}
+                  <div className="space-y-3">
+                    <Label htmlFor="diesel_consumption" className="font-medium">
+                      Jeneratör Tüketimi
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="diesel_consumption"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={energyPrices.diesel_consumption_per_kwh}
+                        onChange={(e) => setEnergyPrices({
+                          ...energyPrices, 
+                          diesel_consumption_per_kwh: parseFloat(e.target.value) || 0
+                        })}
+                        className="text-lg font-semibold pr-16"
+                        data-testid="diesel-consumption-input"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">L/kWh</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Ortalama jeneratör: 0.30 - 0.40 L/kWh</p>
+                  </div>
+                </div>
+
+                {/* Calculated Cost Display */}
+                <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <span className="text-orange-600 flex-shrink-0 text-lg">🔢</span>
+                    <div className="text-sm">
+                      <p className="font-medium text-orange-800 dark:text-orange-200">Hesaplanan Jeneratör Maliyeti</p>
+                      <p className="text-orange-700 dark:text-orange-300 mt-1">
+                        <span className="font-bold text-lg">
+                          {(energyPrices.diesel_price_per_liter * energyPrices.diesel_consumption_per_kwh).toFixed(2)} TL/kWh
+                        </span>
+                        <span className="ml-2">
+                          ({energyPrices.diesel_consumption_per_kwh} L × {energyPrices.diesel_price_per_liter} TL)
+                        </span>
+                      </p>
+                      <p className="text-orange-600 dark:text-orange-400 mt-2 text-xs">
+                        Bu değer Off-Grid sistem tekliflerindeki tasarruf hesaplamalarında kullanılır.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button type="submit" disabled={savingEnergy} data-testid="save-energy-btn">
+                  {savingEnergy ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Kaydediliyor...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Enerji Fiyatlarını Kaydet
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Quick Preview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">Örnek Tasarruf Karşılaştırması</CardTitle>
+              <CardDescription>10.000 kWh yıllık üretim için tahmini tasarruf</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground">On-Grid (Mesken Tarife)</p>
+                  <p className="text-2xl font-bold text-blue-600 mt-1">
+                    {((energyPrices.electricity_rates.find(r => r.type_code === 'mesken')?.price_per_kwh || 3) * 10000).toLocaleString('tr-TR')} TL/yıl
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Elektrik faturası tasarrufu</p>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground">Off-Grid (Jeneratör)</p>
+                  <p className="text-2xl font-bold text-orange-600 mt-1">
+                    {(energyPrices.diesel_price_per_liter * energyPrices.diesel_consumption_per_kwh * 10000).toLocaleString('tr-TR')} TL/yıl
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Mazot tasarrufu</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
