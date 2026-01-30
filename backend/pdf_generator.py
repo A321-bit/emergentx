@@ -379,7 +379,17 @@ class QuotePDFGenerator:
         
         elements = []
         
-        # Category-based title at top center
+        # Header with company | divider | customer
+        header_table = self._create_header(quote_data, company_settings)
+        elements.append(header_table)
+        elements.append(Spacer(1, 12))
+        
+        # Quote info bar (Teklif No, Tarih, Geçerlilik)
+        info_bar = self._create_info_bar(quote_data)
+        elements.append(info_bar)
+        elements.append(Spacer(1, 12))
+        
+        # Category-based title - between info bar and products table
         category_name = quote_data.get('customer_category_name', '')
         if category_name:
             title_text = f"{category_name} Fiyat Teklifi"
@@ -387,19 +397,9 @@ class QuotePDFGenerator:
             title_text = "Fiyat Teklifi"
         
         elements.append(Paragraph(f"<b>{title_text}</b>", self.styles['QuoteTitle']))
-        elements.append(Spacer(1, 15))
+        elements.append(Spacer(1, 8))
         
-        # Header with company | divider | customer
-        header_table = self._create_header(quote_data, company_settings)
-        elements.append(header_table)
-        elements.append(Spacer(1, 15))
-        
-        # Quote info bar
-        info_bar = self._create_info_bar(quote_data)
-        elements.append(info_bar)
-        elements.append(Spacer(1, 10))
-        
-        # Products table (no "ÜRÜNLER" title)
+        # Products table
         products_table = self._create_products_table(quote_data.get('items', []))
         elements.append(products_table)
         
