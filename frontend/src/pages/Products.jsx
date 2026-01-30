@@ -69,8 +69,13 @@ const Products = () => {
     profit_margin: '',
     stock_quantity: '0',
     unit: 'adet',
-    power_watt: ''
+    power_watt: '',
+    price_segment: '',
+    matching_group: ''
   });
+
+  const [priceSegments, setPriceSegments] = useState([]);
+  const [matchingGroups, setMatchingGroups] = useState([]);
 
   const [preview, setPreview] = useState({
     purchaseWithVat: 0,
