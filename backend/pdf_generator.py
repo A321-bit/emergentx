@@ -45,13 +45,13 @@ MARGIN_RIGHT = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT  # ~180mm
 CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-# Column widths for product table (5 columns as per example PDF)
-# Miktar | Birim | Ürün | Birim Fiyat | Toplam Fiyat
-COL_MIKTAR = 0.08 * CONTENT_WIDTH      # Miktar: 8%
+# Column widths for product table (5 columns)
+# Miktar | Birim | Ürün Açıklaması | Birim Fiyat | Toplam Fiyat
+COL_MIKTAR = 0.10 * CONTENT_WIDTH      # Miktar: 10% (artırıldı)
 COL_BIRIM = 0.10 * CONTENT_WIDTH       # Birim: 10%
-COL_URUN = 0.44 * CONTENT_WIDTH        # Ürün: 44%
-COL_BIRIM_FIYAT = 0.19 * CONTENT_WIDTH # Birim Fiyat: 19%
-COL_TOPLAM_FIYAT = 0.19 * CONTENT_WIDTH # Toplam Fiyat: 19%
+COL_URUN = 0.40 * CONTENT_WIDTH        # Ürün Açıklaması: 40%
+COL_BIRIM_FIYAT = 0.20 * CONTENT_WIDTH # Birim Fiyat: 20%
+COL_TOPLAM_FIYAT = 0.20 * CONTENT_WIDTH # Toplam Fiyat: 20%
 
 # Colors
 PRIMARY_COLOR = colors.HexColor('#f59e0b')  # Amber/Orange
