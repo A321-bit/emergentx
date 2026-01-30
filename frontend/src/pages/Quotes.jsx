@@ -552,6 +552,17 @@ const Quotes = () => {
                               <ShoppingCart className="h-4 w-4" />
                             </Button>
                           )}
+                          {canManage && !['satisa_dondu'].includes(quote.status) && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50" 
+                              onClick={() => handleDelete(quote.id)} 
+                              title="Sil"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
