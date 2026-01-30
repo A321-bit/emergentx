@@ -484,22 +484,11 @@ class QuotePDFGenerator:
         return buffer
     
     def _create_header(self, quote_data: dict, company_settings: dict):
-        """Create header with company and customer info"""
+        """Create header with company and customer info (no logo on detail pages)"""
         
         company_content = []
         
-        # Logo
-        logo_path = company_settings.get('logo')
-        if logo_path:
-            full_logo_path = self.upload_dir / logo_path.replace('/uploads/', '').replace('uploads/', '')
-            if full_logo_path.exists():
-                try:
-                    img = Image(str(full_logo_path), width=50, height=40)
-                    img.hAlign = 'LEFT'
-                    company_content.append(img)
-                except Exception as e:
-                    logger.warning(f"Could not load logo in header: {e}")
-        
+        # Company name and info only (no logo)
         company_name = company_settings.get('company_name', 'Solar Enerji')
         company_content.append(Paragraph(f"<b>{company_name}</b>", self.styles['CompanyName']))
         
