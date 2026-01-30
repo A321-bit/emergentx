@@ -261,7 +261,8 @@ const Products = () => {
       vat_rate: product.vat_rate?.toString() || '20',
       profit_margin: product.profit_margin?.toString() || '',
       stock_quantity: product.stock_quantity?.toString() || '0',
-      unit: product.unit || 'adet'
+      unit: product.unit || 'adet',
+      power_watt: product.power_watt?.toString() || ''
     });
     setIsModalOpen(true);
   };
