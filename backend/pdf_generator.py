@@ -220,7 +220,7 @@ class QuotePDFGenerator:
         self.styles = create_styles()
     
     def generate(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Generate complete PDF with cover, quote details, contract, and datasheets"""
+        """Generate complete PDF with cover, quote details, power calculation, contract, and datasheets"""
         pdf_parts = []
         
         # Part 1: Cover page
@@ -232,12 +232,20 @@ class QuotePDFGenerator:
         quote_pdf = self._create_quote_pages(quote_data, company_settings)
         pdf_parts.append(quote_pdf)
         
-        # Part 3: Contract terms page (if exists)
+        # Part 3: Power calculation page (only for Off Grid, On Grid, Sulama)
+        category_name = quote_data.get('customer_category_name', '').lower()
+        show_power_page = any(cat in category_name for cat in ['off', 'on', 'grid', 'sulama'])
+        if show_power_page:
+            power_pdf = self._create_power_calculation_page(quote_data, company_settings)
+            if power_pdf:
+                pdf_parts.append(power_pdf)
+        
+        # Part 4: Contract terms page (if exists)
         contract_pdf = self._create_contract_page(quote_data, company_settings)
         if contract_pdf:
             pdf_parts.append(contract_pdf)
         
-        # Part 4: Product datasheets
+        # Part 5: Product datasheets
         datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
         pdf_parts.extend(datasheet_pdfs)
         
