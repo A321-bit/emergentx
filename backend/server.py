@@ -2402,6 +2402,11 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
     
     quote["items"] = items
     
+    # Calculate segment items if include_segment_options is true
+    if quote.get("include_segment_options"):
+        segment_items = await calculate_segment_items(items, db)
+        quote["segment_items"] = segment_items
+    
     # Get company settings
     company_settings = await db.company_settings.find_one({"id": "company_settings"}, {"_id": 0})
     if not company_settings:
