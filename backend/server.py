@@ -2907,12 +2907,16 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
     if company_settings.get("logo_url"):
         company_settings["logo"] = company_settings["logo_url"]
     
+    # Get quote templates for category-based covers
+    quote_templates = await db.quote_templates.find({"is_active": True}, {"_id": 0}).to_list(10)
+    
     # Generate PDF
     try:
         pdf_buffer = generate_quote_pdf(
             quote_data=quote,
             company_settings=company_settings,
-            upload_dir=str(UPLOAD_DIR)
+            upload_dir=str(UPLOAD_DIR),
+            quote_templates=quote_templates
         )
         
         # Create filename
