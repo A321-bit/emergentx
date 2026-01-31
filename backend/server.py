@@ -4077,14 +4077,36 @@ async def get_expense_stats(current_user: dict = Depends(require_permission("fin
     }
 
 @api_router.get("/accounting/summary")
-async def get_accounting_summary(current_user: dict = Depends(require_permission("finance_view"))):
+async def get_accounting_summary(
+    month: Optional[int] = None, 
+    year: Optional[int] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    current_user: dict = Depends(require_permission("finance_view"))
+):
     now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    # Get sales
+    # Varsayılan: Bu ay
+    if not month:
+        month = now.month
+    if not year:
+        year = now.year
+    
+    # Tarih aralığı hesapla
+    if date_from and date_to:
+        start_date = datetime.fromisoformat(date_from).replace(tzinfo=timezone.utc)
+        end_date = datetime.fromisoformat(date_to).replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+    else:
+        start_date = datetime(year, month, 1, tzinfo=timezone.utc)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
+        else:
+            end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
+    
+    # Get sales (Satış Gelirleri)
     sales = await db.sales.find({"is_active": True}, {"_id": 0}).to_list(10000)
-    monthly_sales_tl = 0
-    monthly_profit_tl = 0
+    sales_income_tl = 0
+    sales_cost_tl = 0
     
     for sale in sales:
         try:
@@ -4097,15 +4119,39 @@ async def get_accounting_summary(current_user: dict = Depends(require_permission
                 continue
             if sale_date.tzinfo is None:
                 sale_date = sale_date.replace(tzinfo=timezone.utc)
-            if sale_date >= month_start:
-                monthly_sales_tl += sale.get("sale_amount_tl", 0)
-                monthly_profit_tl += sale.get("profit_tl", 0)
+            if start_date <= sale_date <= end_date:
+                sales_income_tl += sale.get("sale_amount_tl", 0)
+                sales_cost_tl += sale.get("purchase_amount_tl", 0)
+        except Exception:
+            continue
+    
+    # Get other incomes (Satış Dışı Gelirler)
+    other_incomes = await db.incomes.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    other_income_tl = 0
+    
+    for inc in other_incomes:
+        try:
+            inc_date_raw = inc.get("income_date")
+            if isinstance(inc_date_raw, str):
+                inc_date = datetime.fromisoformat(inc_date_raw.replace("Z", "+00:00"))
+            elif isinstance(inc_date_raw, datetime):
+                inc_date = inc_date_raw if inc_date_raw.tzinfo else inc_date_raw.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            if inc_date.tzinfo is None:
+                inc_date = inc_date.replace(tzinfo=timezone.utc)
+            if start_date <= inc_date <= end_date:
+                other_income_tl += inc.get("amount_tl", inc.get("amount", 0))
         except Exception:
             continue
     
     # Get expenses
     expenses = await db.expenses.find({"is_active": True}, {"_id": 0}).to_list(10000)
-    monthly_expenses_tl = 0
+    total_expenses_tl = 0
+    fixed_expenses_tl = 0
+    variable_expenses_tl = 0
+    expenses_by_category = {}
+    top_expenses = []
     
     for exp in expenses:
         try:
@@ -4118,21 +4164,420 @@ async def get_accounting_summary(current_user: dict = Depends(require_permission
                 continue
             if exp_date.tzinfo is None:
                 exp_date = exp_date.replace(tzinfo=timezone.utc)
-            if exp_date >= month_start:
-                monthly_expenses_tl += exp.get("amount_tl", exp.get("amount", 0))
+            if start_date <= exp_date <= end_date:
+                amount = exp.get("amount_tl", exp.get("amount", 0))
+                total_expenses_tl += amount
+                
+                # Sabit/Değişken ayrımı
+                exp_type = exp.get("expense_type", "variable")
+                if exp_type == "fixed":
+                    fixed_expenses_tl += amount
+                else:
+                    variable_expenses_tl += amount
+                
+                # Kategori bazlı toplam
+                cat_name = exp.get("category_name", "Diğer")
+                if cat_name not in expenses_by_category:
+                    expenses_by_category[cat_name] = 0
+                expenses_by_category[cat_name] += amount
+                
+                # Top expenses için
+                top_expenses.append({
+                    "category": cat_name,
+                    "amount": amount,
+                    "description": exp.get("description", ""),
+                    "date": exp_date.strftime("%d.%m.%Y")
+                })
         except Exception:
             continue
     
-    # Calculate net profit
-    net_profit = monthly_sales_tl - monthly_expenses_tl
+    # Sort and get top 3
+    top_expenses.sort(key=lambda x: x["amount"], reverse=True)
+    top_3_expenses = top_expenses[:3]
+    
+    # Calculate profits
+    total_income = sales_income_tl + other_income_tl
+    gross_profit = sales_income_tl - sales_cost_tl  # Brüt kar (satış - maliyet)
+    net_profit = gross_profit + other_income_tl - total_expenses_tl  # Net kar
+    
+    # Net kar marjı
+    profit_margin = (net_profit / total_income * 100) if total_income > 0 else 0
+    
+    # Budget check
+    budget = await db.budgets.find_one({
+        "year": year, 
+        "month": month, 
+        "is_active": True
+    }, {"_id": 0})
+    
+    budget_status = None
+    if budget:
+        budget_total = budget.get("total_budget", 0)
+        budget_exceeded = total_expenses_tl > budget_total
+        budget_percentage = (total_expenses_tl / budget_total * 100) if budget_total > 0 else 0
+        budget_status = {
+            "total_budget": budget_total,
+            "spent": total_expenses_tl,
+            "remaining": budget_total - total_expenses_tl,
+            "percentage": budget_percentage,
+            "exceeded": budget_exceeded,
+            "category_budgets": budget.get("category_budgets", {})
+        }
+    
+    # Ay adı (Türkçe)
+    month_names = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
+                   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
+    month_name = f"{month_names[month]} {year}"
     
     return {
-        "month": now.strftime("%B %Y"),
-        "total_income": monthly_sales_tl,
-        "total_expenses": monthly_expenses_tl,
-        "gross_profit": monthly_profit_tl,
-        "net_profit": net_profit
+        "month": month_name,
+        "month_num": month,
+        "year": year,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        # Gelirler
+        "sales_income": sales_income_tl,
+        "other_income": other_income_tl,
+        "total_income": total_income,
+        # Giderler
+        "total_expenses": total_expenses_tl,
+        "fixed_expenses": fixed_expenses_tl,
+        "variable_expenses": variable_expenses_tl,
+        "expenses_by_category": expenses_by_category,
+        "top_3_expenses": top_3_expenses,
+        # Kar/Zarar
+        "gross_profit": gross_profit,
+        "net_profit": net_profit,
+        "profit_margin": round(profit_margin, 2),
+        "is_loss": net_profit < 0,
+        # Bütçe
+        "budget_status": budget_status
     }
+
+@api_router.get("/accounting/trend")
+async def get_accounting_trend(months: int = 6, current_user: dict = Depends(require_permission("finance_view"))):
+    """Son X ay için trend verisi"""
+    now = datetime.now(timezone.utc)
+    trend_data = []
+    
+    month_names = ["", "Oca", "Şub", "Mar", "Nis", "May", "Haz", 
+                   "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
+    
+    for i in range(months - 1, -1, -1):
+        # Her ay için hesapla
+        target_date = now - timedelta(days=30 * i)
+        year = target_date.year
+        month = target_date.month
+        
+        start_date = datetime(year, month, 1, tzinfo=timezone.utc)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
+        else:
+            end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
+        
+        # Sales
+        sales = await db.sales.find({"is_active": True}, {"_id": 0}).to_list(10000)
+        sales_income = 0
+        sales_cost = 0
+        for sale in sales:
+            try:
+                sale_date_raw = sale.get("sale_date")
+                if isinstance(sale_date_raw, str):
+                    sale_date = datetime.fromisoformat(sale_date_raw.replace("Z", "+00:00"))
+                elif isinstance(sale_date_raw, datetime):
+                    sale_date = sale_date_raw.replace(tzinfo=timezone.utc) if sale_date_raw.tzinfo is None else sale_date_raw
+                else:
+                    continue
+                if start_date <= sale_date <= end_date:
+                    sales_income += sale.get("sale_amount_tl", 0)
+                    sales_cost += sale.get("purchase_amount_tl", 0)
+            except:
+                continue
+        
+        # Expenses
+        expenses = await db.expenses.find({"is_active": True}, {"_id": 0}).to_list(10000)
+        total_expenses = 0
+        for exp in expenses:
+            try:
+                exp_date_raw = exp.get("expense_date")
+                if isinstance(exp_date_raw, str):
+                    exp_date = datetime.fromisoformat(exp_date_raw.replace("Z", "+00:00"))
+                elif isinstance(exp_date_raw, datetime):
+                    exp_date = exp_date_raw.replace(tzinfo=timezone.utc) if exp_date_raw.tzinfo is None else exp_date_raw
+                else:
+                    continue
+                if start_date <= exp_date <= end_date:
+                    total_expenses += exp.get("amount_tl", exp.get("amount", 0))
+            except:
+                continue
+        
+        net_profit = (sales_income - sales_cost) - total_expenses
+        
+        trend_data.append({
+            "month": f"{month_names[month]}",
+            "month_year": f"{month_names[month]} {year}",
+            "year": year,
+            "month_num": month,
+            "income": sales_income,
+            "expenses": total_expenses,
+            "net_profit": net_profit,
+            "is_loss": net_profit < 0
+        })
+    
+    # Trend yorumu
+    if len(trend_data) >= 2:
+        last = trend_data[-1]
+        prev = trend_data[-2]
+        
+        expense_change = ((last["expenses"] - prev["expenses"]) / prev["expenses"] * 100) if prev["expenses"] > 0 else 0
+        profit_change = ((last["net_profit"] - prev["net_profit"]) / abs(prev["net_profit"]) * 100) if prev["net_profit"] != 0 else 0
+        
+        trend_comment = []
+        if expense_change > 10:
+            trend_comment.append(f"Giderler geçen aya göre %{abs(expense_change):.0f} arttı")
+        elif expense_change < -10:
+            trend_comment.append(f"Giderler geçen aya göre %{abs(expense_change):.0f} azaldı")
+        
+        if profit_change > 10:
+            trend_comment.append(f"Net kâr %{abs(profit_change):.0f} yükseldi")
+        elif profit_change < -10:
+            trend_comment.append(f"Net kâr %{abs(profit_change):.0f} düştü")
+    else:
+        expense_change = 0
+        profit_change = 0
+        trend_comment = []
+    
+    return {
+        "data": trend_data,
+        "expense_change_percent": round(expense_change, 1),
+        "profit_change_percent": round(profit_change, 1),
+        "trend_comments": trend_comment
+    }
+
+# ==================== INCOME (SATIŞ DIŞI GELİR) API ====================
+
+@api_router.get("/incomes")
+async def get_incomes(
+    month: Optional[int] = None, 
+    year: Optional[int] = None,
+    current_user: dict = Depends(require_permission("finance_view"))
+):
+    query = {"is_active": True}
+    incomes = await db.incomes.find(query, {"_id": 0}).sort("income_date", -1).to_list(1000)
+    
+    # Filter by month/year if provided
+    if month and year:
+        filtered = []
+        for inc in incomes:
+            try:
+                inc_date_raw = inc.get("income_date")
+                if isinstance(inc_date_raw, str):
+                    inc_date = datetime.fromisoformat(inc_date_raw.replace("Z", "+00:00"))
+                elif isinstance(inc_date_raw, datetime):
+                    inc_date = inc_date_raw
+                else:
+                    continue
+                if inc_date.month == month and inc_date.year == year:
+                    filtered.append(inc)
+            except:
+                continue
+        return filtered
+    return incomes
+
+@api_router.post("/incomes")
+async def create_income(income: IncomeCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    inc_dict = income.model_dump()
+    inc_dict["id"] = str(uuid.uuid4())
+    inc_dict["created_by"] = current_user["name"]
+    inc_dict["is_active"] = True
+    inc_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    inc_dict["income_date"] = inc_dict["income_date"].isoformat() if isinstance(inc_dict["income_date"], datetime) else inc_dict["income_date"]
+    
+    # TL hesapla
+    if inc_dict["currency"] == "USD":
+        inc_dict["amount_tl"] = inc_dict["amount"] * inc_dict["exchange_rate"]
+    else:
+        inc_dict["amount_tl"] = inc_dict["amount"]
+    
+    await db.incomes.insert_one(inc_dict.copy())
+    if "_id" in inc_dict:
+        del inc_dict["_id"]
+    return inc_dict
+
+@api_router.delete("/incomes/{income_id}")
+async def delete_income(income_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.incomes.update_one({"id": income_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Gelir bulunamadı")
+    return {"message": "Gelir silindi"}
+
+# ==================== BUDGET API ====================
+
+@api_router.get("/budgets")
+async def get_budgets(year: Optional[int] = None, current_user: dict = Depends(require_permission("finance_view"))):
+    query = {"is_active": True}
+    if year:
+        query["year"] = year
+    budgets = await db.budgets.find(query, {"_id": 0}).sort([("year", -1), ("month", -1)]).to_list(100)
+    return budgets
+
+@api_router.get("/budgets/{year}/{month}")
+async def get_budget(year: int, month: int, current_user: dict = Depends(require_permission("finance_view"))):
+    budget = await db.budgets.find_one({"year": year, "month": month, "is_active": True}, {"_id": 0})
+    return budget
+
+@api_router.post("/budgets")
+async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    existing = await db.budgets.find_one({"year": budget.year, "month": budget.month, "is_active": True})
+    
+    budget_dict = budget.model_dump()
+    budget_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    if existing:
+        await db.budgets.update_one(
+            {"year": budget.year, "month": budget.month, "is_active": True},
+            {"$set": budget_dict}
+        )
+        budget_dict["id"] = existing.get("id")
+    else:
+        budget_dict["id"] = str(uuid.uuid4())
+        budget_dict["is_active"] = True
+        budget_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+        await db.budgets.insert_one(budget_dict.copy())
+    
+    if "_id" in budget_dict:
+        del budget_dict["_id"]
+    return budget_dict
+
+@api_router.delete("/budgets/{year}/{month}")
+async def delete_budget(year: int, month: int, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.budgets.update_one(
+        {"year": year, "month": month, "is_active": True},
+        {"$set": {"is_active": False}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Bütçe bulunamadı")
+    return {"message": "Bütçe silindi"}
+
+# ==================== RECURRING EXPENSE API ====================
+
+@api_router.get("/recurring-expenses")
+async def get_recurring_expenses(current_user: dict = Depends(require_permission("finance_view"))):
+    expenses = await db.recurring_expenses.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return expenses
+
+@api_router.post("/recurring-expenses")
+async def create_recurring_expense(expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    exp_dict = expense.model_dump()
+    exp_dict["id"] = str(uuid.uuid4())
+    exp_dict["is_active"] = True
+    exp_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Kategori adını al
+    if expense.category_id:
+        cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
+        if cat:
+            exp_dict["category_name"] = cat.get("name")
+    
+    await db.recurring_expenses.insert_one(exp_dict.copy())
+    if "_id" in exp_dict:
+        del exp_dict["_id"]
+    return exp_dict
+
+@api_router.put("/recurring-expenses/{expense_id}")
+async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    exp_dict = expense.model_dump()
+    
+    # Kategori adını al
+    if expense.category_id:
+        cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
+        if cat:
+            exp_dict["category_name"] = cat.get("name")
+    
+    result = await db.recurring_expenses.update_one({"id": expense_id, "is_active": True}, {"$set": exp_dict})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Tekrarlayan gider bulunamadı")
+    
+    updated = await db.recurring_expenses.find_one({"id": expense_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/recurring-expenses/{expense_id}")
+async def delete_recurring_expense(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    result = await db.recurring_expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Tekrarlayan gider bulunamadı")
+    return {"message": "Tekrarlayan gider silindi"}
+
+@api_router.post("/recurring-expenses/generate")
+async def generate_recurring_expenses(
+    month: int,
+    year: int,
+    current_user: dict = Depends(require_permission("finance_manage"))
+):
+    """Belirli ay için tekrarlayan giderleri oluştur"""
+    month_key = f"{year}-{month:02d}"
+    
+    recurring = await db.recurring_expenses.find({
+        "is_active": True, 
+        "is_active_recurring": True
+    }, {"_id": 0}).to_list(100)
+    
+    generated = []
+    for rec in recurring:
+        # Bu ay için zaten oluşturulmuş mu kontrol et
+        existing = await db.expenses.find_one({
+            "recurring_expense_id": rec["id"],
+            "is_active": True
+        })
+        
+        if existing:
+            # Tarih kontrolü
+            try:
+                exp_date = datetime.fromisoformat(existing["expense_date"].replace("Z", "+00:00"))
+                if exp_date.month == month and exp_date.year == year:
+                    continue  # Zaten oluşturulmuş
+            except:
+                pass
+        
+        # Yeni gider oluştur
+        day = min(rec.get("day_of_month", 1), 28)  # Şubat için güvenli
+        expense_date = datetime(year, month, day, tzinfo=timezone.utc)
+        
+        # Kategori expense_type'ını al
+        cat = await db.expense_categories.find_one({"id": rec["category_id"]}, {"_id": 0})
+        expense_type = cat.get("expense_type", "fixed") if cat else "fixed"
+        
+        new_expense = {
+            "id": str(uuid.uuid4()),
+            "category_id": rec["category_id"],
+            "category_name": rec.get("category_name", ""),
+            "expense_type": expense_type,
+            "amount": rec["amount"],
+            "currency": rec.get("currency", "TRY"),
+            "exchange_rate": 1,
+            "amount_tl": rec["amount"],
+            "expense_date": expense_date.isoformat(),
+            "description": rec.get("description", f"Tekrarlayan: {rec.get('category_name', '')}"),
+            "is_recurring_generated": True,
+            "recurring_expense_id": rec["id"],
+            "created_by": current_user["name"],
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.expenses.insert_one(new_expense.copy())
+        
+        # Son oluşturma tarihini güncelle
+        await db.recurring_expenses.update_one(
+            {"id": rec["id"]},
+            {"$set": {"last_generated_month": month_key}}
+        )
+        
+        if "_id" in new_expense:
+            del new_expense["_id"]
+        generated.append(new_expense)
+    
+    return {"generated_count": len(generated), "expenses": generated}
 
 # ==================== PACKAGE CATEGORIES API ====================
 
