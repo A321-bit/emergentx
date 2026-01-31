@@ -394,6 +394,17 @@ class QuoteDiscountUpdate(BaseModel):
     discount_rate: float = 0
     discount_amount: float = 0
 
+# Quote Note Model (Teklif Notları)
+class QuoteNote(BaseModel):
+    id: str
+    text: str
+    created_by: str
+    created_by_name: str
+    created_at: str
+
+class QuoteNoteCreate(BaseModel):
+    text: str
+
 # Dealer Models
 class DealerBase(BaseModel):
     name: str
