@@ -704,6 +704,7 @@ class Personnel(PersonnelBase):
 class ExpenseBase(BaseModel):
     category_id: str
     category_name: Optional[str] = None
+    expense_type: str = "variable"  # "fixed" veya "variable" - kategoriden gelir
     amount: float
     currency: str = "TRY"
     exchange_rate: float = 1
@@ -711,6 +712,9 @@ class ExpenseBase(BaseModel):
     expense_date: datetime
     description: Optional[str] = None
     personnel_id: Optional[str] = None  # Personel gideri için
+    attachment_url: Optional[str] = None  # Fatura/fiş dosyası
+    is_recurring_generated: bool = False  # Tekrarlayan giderden mi oluşturuldu
+    recurring_expense_id: Optional[str] = None  # Hangi tekrarlayan giderden
 
 class ExpenseCreate(ExpenseBase):
     pass
