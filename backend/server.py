@@ -4012,6 +4012,10 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(re
     exp_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
     
+    # due_date'i de ISO string'e çevir
+    if exp_dict.get("due_date") and isinstance(exp_dict["due_date"], datetime):
+        exp_dict["due_date"] = exp_dict["due_date"].isoformat()
+    
     # Get category name and expense_type
     if expense.category_id:
         cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
