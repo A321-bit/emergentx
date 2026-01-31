@@ -1569,6 +1569,83 @@ const Quotes = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Notes Modal */}
+      <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-purple-600" />
+              Teklif Notları - {notesQuote?.quote_number}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-3 py-4 min-h-[200px] max-h-[400px]">
+            {loadingNotes ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full" />
+              </div>
+            ) : quoteNotes.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>Henüz not eklenmemiş</p>
+                <p className="text-sm">İlk notu ekleyerek başlayın</p>
+              </div>
+            ) : (
+              quoteNotes.map((note) => (
+                <div key={note.id} className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 relative group">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm whitespace-pre-wrap">{note.text}</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                        <User className="h-3 w-3" />
+                        <span>{note.created_by_name}</span>
+                        <span>•</span>
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDateTime(note.created_at)}</span>
+                      </div>
+                    </div>
+                    {canManage && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-red-500"
+                        onClick={() => handleDeleteNote(note.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {canManage && (
+            <div className="border-t pt-4">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Yeni not yazın... (Görüşme özeti, yapılacaklar, hatırlatmalar vb.)"
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  rows={2}
+                  className="flex-1 resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                      handleAddNote();
+                    }
+                  }}
+                />
+                <Button onClick={handleAddNote} className="bg-purple-600 hover:bg-purple-700">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Ekle
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Ctrl+Enter ile hızlı kaydet</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* EPDK Subscription Type Selection Modal */}
       <Dialog open={isSubscriptionModalOpen} onOpenChange={(open) => {
         if (!open && pendingCustomerId) {
