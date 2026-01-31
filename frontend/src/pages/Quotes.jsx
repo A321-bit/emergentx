@@ -694,15 +694,6 @@ const Quotes = () => {
   };
 
   // Call scheduling functions
-  const fetchUpcomingCalls = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/quotes/all-upcoming-calls`);
-      setUpcomingCalls(response.data || []);
-    } catch (error) {
-      console.error('Aranacaklar yüklenemedi');
-    }
-  };
-
   const openCallModal = async (quote) => {
     setCallQuote(quote);
     setCallDate(new Date().toISOString().split('T')[0]);
