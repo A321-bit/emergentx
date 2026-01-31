@@ -976,6 +976,19 @@ const Sales = () => {
                             Tahsilat
                           </Button>
                         )}
+                        {/* Tekliften oluşan satış için PDF İndir butonu */}
+                        {sale.quote_id && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDownloadQuotePdf(sale.quote_id, sale.quote_number)}
+                            title="Teklif PDF İndir"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            data-testid={`download-quote-pdf-${sale.id}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(sale)} title="Düzenle">
                           <Pencil className="h-4 w-4" />
                         </Button>
