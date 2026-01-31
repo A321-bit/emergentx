@@ -4038,6 +4038,38 @@ async def delete_expense(expense_id: str, current_user: dict = Depends(require_p
         raise HTTPException(status_code=404, detail="Gider bulunamadı")
     return {"message": "Gider silindi"}
 
+@api_router.put("/expenses/{expense_id}/pay")
+async def mark_expense_paid(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    """Gideri ödendi olarak işaretle"""
+    result = await db.expenses.update_one(
+        {"id": expense_id, "is_active": True},
+        {"$set": {
+            "is_paid": True,
+            "paid_date": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Gider bulunamadı")
+    
+    updated = await db.expenses.find_one({"id": expense_id}, {"_id": 0})
+    return updated
+
+@api_router.put("/expenses/{expense_id}/unpay")
+async def mark_expense_unpaid(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+    """Gideri ödenmedi olarak işaretle"""
+    result = await db.expenses.update_one(
+        {"id": expense_id, "is_active": True},
+        {"$set": {
+            "is_paid": False,
+            "paid_date": None
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Gider bulunamadı")
+    
+    updated = await db.expenses.find_one({"id": expense_id}, {"_id": 0})
+    return updated
+
 @api_router.get("/expenses/stats")
 async def get_expense_stats(current_user: dict = Depends(require_permission("finance_view"))):
     now = datetime.now(timezone.utc)
