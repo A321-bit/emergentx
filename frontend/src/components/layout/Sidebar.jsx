@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState(['users', 'packages', 'dealers', 'accounting']);
+  const [expandedMenus, setExpandedMenus] = useState(['users', 'packages', 'dealers', 'accounting', 'quotes']);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
