@@ -989,7 +989,8 @@ class PremiumQuotePDFGenerator:
         """Create a single product card - full width row with image left, text right"""
         
         product_name = item.get('product_name', '-')
-        description = item.get('description', '')
+        short_description = item.get('short_description', '')  # PDF için kısa açıklama
+        benefits = item.get('benefits', [])  # PDF için 3 fayda maddesi
         quantity = item.get('quantity', 1)
         unit = item.get('unit', 'Adet')
         image_url = item.get('image_url')  # First image
@@ -1000,22 +1001,28 @@ class PremiumQuotePDFGenerator:
         if len(product_name) > 70:
             product_name = product_name[:67] + "..."
         
-        # Truncate description (2 lines max)
-        if description and len(description) > 120:
-            description = description[:117] + "..."
+        # Truncate short description
+        if short_description and len(short_description) > 100:
+            short_description = short_description[:97] + "..."
         
         # Image settings - 120x100px as requested
         img_width = 42 * mm   # ~120px
         img_height = 35 * mm  # ~100px
         text_width = width - img_width - 20  # Remaining space for text
         
-        # Try to load image
+        # Try to load image with proper aspect ratio (NO OVERFLOW)
         product_image = None
         if image_url:
             img_path = self.upload_dir / image_url.replace('/uploads/', '').replace('uploads/', '')
             if img_path.exists():
                 try:
-                    product_image = Image(str(img_path), width=img_width, height=img_height)
+                    # Use preserveAspectRatio to prevent overflow
+                    product_image = Image(
+                        str(img_path), 
+                        width=img_width, 
+                        height=img_height,
+                        kind='proportional'  # Maintain aspect ratio, fit within bounds
+                    )
                     product_image.hAlign = 'CENTER'
                 except Exception as e:
                     logger.warning(f"Could not load product image: {e}")
@@ -1035,6 +1042,16 @@ class PremiumQuotePDFGenerator:
             ]))
             product_image = placeholder
         
+        # Wrap image in a fixed-size container to prevent overflow
+        img_container = [[product_image]]
+        img_table = Table(img_container, colWidths=[img_width], rowHeights=[img_height])
+        img_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+        ]))
+        
         # Build text content
         text_elements = []
         
@@ -1045,61 +1062,65 @@ class PremiumQuotePDFGenerator:
         )
         text_elements.append([Paragraph(f"<b>{product_name}</b>", name_style)])
         
-        # Row 2: Quantity badge + Category
+        # Row 2: Short description (from product card input)
+        if short_description:
+            desc_style = ParagraphStyle(
+                'CardShortDesc', parent=self.styles['CardDescription'],
+                fontSize=9, leading=12, textColor=TEXT_LIGHT, fontName=FONT_NORMAL
+            )
+            text_elements.append([Paragraph(short_description, desc_style)])
+        
+        # Row 3: Quantity + Category
         qty_cat_text = f"<b>Miktar:</b> {quantity} {unit}"
         if category_name:
-            qty_cat_text += f"  •  <b>Kategori:</b> {category_name}"
+            cat_short = category_name if len(category_name) <= 25 else category_name[:22] + "..."
+            qty_cat_text += f"  •  {cat_short}"
         qty_style = ParagraphStyle(
             'CardQtyFull', parent=self.styles['CardDescription'],
-            fontSize=9, textColor=TEXT_LIGHT
+            fontSize=8, textColor=TEXT_COLOR
         )
         text_elements.append([Paragraph(qty_cat_text, qty_style)])
         
-        # Row 3: Description (if exists, 2 lines max)
-        if description:
-            desc_style = ParagraphStyle(
-                'CardDescFull', parent=self.styles['CardDescription'],
-                fontSize=9, leading=12, textColor=TEXT_COLOR
-            )
-            text_elements.append([Paragraph(description, desc_style)])
+        # Row 4: 3 Benefit features with icons (from product card input or defaults)
+        feature_items = []
         
-        # Row 4: 3 Feature benefits with icons
-        features = []
+        # Use custom benefits if available, otherwise use defaults
+        if benefits and any(benefits):
+            for i, benefit in enumerate(benefits[:3]):
+                if benefit and benefit.strip():
+                    icon_colors = ['#f59e0b', '#10b981', '#3b82f6']
+                    icons = ['⚡', '✓', '🛡']
+                    feature_items.append(f"<font color='{icon_colors[i]}'>{icons[i]}</font> {benefit}")
+        else:
+            # Default features
+            if power_watt:
+                if power_watt >= 1000:
+                    power_display = f"{power_watt/1000:.1f} kW"
+                else:
+                    power_display = f"{power_watt:.0f}W"
+                feature_items.append(f"<font color='#f59e0b'>⚡</font> Güç: {power_display}")
+            feature_items.append(f"<font color='#10b981'>✓</font> A Sınıfı Ürün")
+            feature_items.append(f"<font color='#3b82f6'>🛡</font> Üretici Garantili")
         
-        # Feature 1: Power (if available)
-        if power_watt:
-            if power_watt >= 1000:
-                power_display = f"{power_watt/1000:.1f} kW"
-            else:
-                power_display = f"{power_watt:.0f}W"
-            features.append(f"<font color='#f59e0b'>⚡</font> <b>Güç:</b> {power_display}")
-        
-        # Feature 2: Quality assurance
-        features.append(f"<font color='#10b981'>✓</font> <b>Kalite:</b> A Sınıfı Ürün")
-        
-        # Feature 3: Warranty
-        features.append(f"<font color='#3b82f6'>🛡</font> <b>Garanti:</b> Üretici Garantili")
-        
-        # Only show first 3 features
-        if features:
+        if feature_items:
             feature_style = ParagraphStyle(
                 'CardFeatureFull', parent=self.styles['CardFeature'],
                 fontSize=8, leading=11, textColor=TEXT_COLOR
             )
-            feature_text = "    ".join(features[:3])
+            feature_text = "    ".join(feature_items[:3])
             text_elements.append([Paragraph(feature_text, feature_style)])
         
         # Create text column table
         text_table = Table(text_elements, colWidths=[text_width])
         text_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, 0), 0),  # No top padding for first row
-            ('TOPPADDING', (0, 1), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, 0), 0),
+            ('TOPPADDING', (0, 1), (-1, -1), 3),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
         ]))
         
         # Combine image and text horizontally
-        card_content = [[product_image, text_table]]
+        card_content = [[img_table, text_table]]
         inner_table = Table(card_content, colWidths=[img_width + 10, text_width])
         inner_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
