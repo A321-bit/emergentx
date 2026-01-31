@@ -710,6 +710,7 @@ class ExpenseBase(BaseModel):
     exchange_rate: float = 1
     amount_tl: float = 0
     expense_date: datetime
+    due_date: Optional[datetime] = None  # Vade tarihi (son ödeme tarihi)
     description: Optional[str] = None
     personnel_id: Optional[str] = None  # Personel gideri için
     attachment_url: Optional[str] = None  # Fatura/fiş dosyası
