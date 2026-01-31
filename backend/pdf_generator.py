@@ -923,7 +923,7 @@ class PremiumQuotePDFGenerator:
     
     # ==================== PAGE 4: PRODUCTS SHOWCASE ====================
     def _create_products_showcase_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create products showcase with 2-column card grid - NO PRICES"""
+        """Create products showcase with single column layout - NO PRICES"""
         
         items = quote_data.get('items', [])
         if not items:
@@ -945,38 +945,17 @@ class PremiumQuotePDFGenerator:
         elements.append(Paragraph("KULLANILAN ÜRÜNLER", self.styles['PageTitle']))
         elements.append(Spacer(1, 15))
         
-        # Create 2-column product cards
-        card_width = (CONTENT_WIDTH - 15) / 2
-        card_height = 120  # Fixed card height
+        # Single column product cards - full width
+        card_width = CONTENT_WIDTH
+        card_height = 95  # Fixed card height for single row
         
-        # Group items in pairs for 2-column layout
-        rows_data = []
-        for i in range(0, len(items), 2):
-            row = []
-            for j in range(2):
-                if i + j < len(items):
-                    item = items[i + j]
-                    card = self._create_product_card(item, card_width, card_height)
-                    row.append(card)
-                else:
-                    row.append('')  # Empty cell
-            rows_data.append(row)
-        
-        # Create table with cards
-        cards_table = Table(rows_data, colWidths=[card_width + 7, card_width + 7])
-        cards_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 0),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ]))
-        
-        elements.append(cards_table)
+        for item in items:
+            card = self._create_product_card(item, card_width, card_height)
+            elements.append(card)
+            elements.append(Spacer(1, 8))
         
         # Note at bottom
-        elements.append(Spacer(1, 20))
+        elements.append(Spacer(1, 15))
         note_text = "<i>* Ürün görselleri temsilidir. Detaylı teknik bilgiler için datasheet'leri inceleyiniz.</i>"
         elements.append(Paragraph(note_text, ParagraphStyle(
             'NoteStyle', parent=self.styles['BodyTextSmall'], 
