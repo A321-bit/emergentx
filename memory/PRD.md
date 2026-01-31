@@ -18,6 +18,15 @@
 - **Ödeme Takibi:** Giderlerde "Ödendi/Bekliyor" durumu, ödenmemiş giderler uyarı kartı
 - **Vade Tarihi Sistemi:** Her gidere son ödeme tarihi, yaklaşan/gecikmiş ödeme takibi
 
+#### Personel Giderleri Sistemi (YENİ):
+- **"Personel Giderleri" sekmesi** - Ayrı bir tab ile personel bazlı gider yönetimi
+- **Otomatik Maaş Aktarımı:** Personel listesindeki maaşları tek tıkla giderlere aktar
+- **Prim Entegrasyonu:** Bordro sistemindeki primler otomatik giderlere eklenir
+- **Personel Bazlı Özet:** Her personelin toplam maaş, prim ve gideri
+- **Detaylı Ödeme Listesi:** Maaş/Prim türü, açıklama, vade, ödeme durumu
+- **Vade Günü Seçimi:** Maaş ödeme günü ayarlanabilir (varsayılan: ayın 5'i)
+- **4 KPI Kartı:** Toplam Maaş, Toplam Prim, Toplam Personel Gideri, Personel Sayısı
+
 #### Yaklaşan Ödemeler Paneli:
 - **Gecikmiş:** Vade tarihi geçmiş ödenmemiş giderler (kırmızı vurgu)
 - **Bugün:** Bugün vadesi dolan giderler (turuncu vurgu)
@@ -51,6 +60,8 @@
 - `PUT /api/expenses/{id}/pay` - Gideri ödendi işaretle
 - `PUT /api/expenses/{id}/unpay` - Gideri ödenmedi işaretle
 - `GET /api/expenses/upcoming-payments` - Yaklaşan ödemeler listesi
+- `POST /api/personnel/generate-salary-expenses` - Maaşları giderlere aktar
+- `GET /api/personnel/salary-expenses` - Personel bazlı gider listesi
 - `GET /api/accounting/trend` - 6 aylık trend verisi
 - Güncellenmiş `GET /api/accounting/summary` - Kapsamlı özet (unpaid_expenses dahil)
 
