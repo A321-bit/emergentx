@@ -171,7 +171,7 @@ const Accounting = () => {
         ? { date_from: dateFrom, date_to: dateTo }
         : { month: selectedMonth, year: selectedYear };
       
-      const [summaryRes, trendRes, expensesRes, incomesRes, categoriesRes, personnelRes, recurringRes, upcomingRes] = await Promise.all([
+      const [summaryRes, trendRes, expensesRes, incomesRes, categoriesRes, personnelRes, recurringRes, upcomingRes, personnelExpRes] = await Promise.all([
         axios.get(`${API_URL}/api/accounting/summary`, { params }),
         axios.get(`${API_URL}/api/accounting/trend`),
         axios.get(`${API_URL}/api/expenses`, { params: { month: selectedMonth, year: selectedYear } }),
@@ -179,7 +179,8 @@ const Accounting = () => {
         axios.get(`${API_URL}/api/expense-categories`),
         axios.get(`${API_URL}/api/personnel`),
         axios.get(`${API_URL}/api/recurring-expenses`),
-        axios.get(`${API_URL}/api/expenses/upcoming-payments`)
+        axios.get(`${API_URL}/api/expenses/upcoming-payments`),
+        axios.get(`${API_URL}/api/personnel/salary-expenses`, { params: { month: selectedMonth, year: selectedYear } })
       ]);
       
       setSummary(summaryRes.data);
@@ -191,6 +192,7 @@ const Accounting = () => {
       setRecurringExpenses(recurringRes.data);
       setBudget(summaryRes.data?.budget_status);
       setUpcomingPayments(upcomingRes.data);
+      setPersonnelExpenses(personnelExpRes.data);
     } catch (error) {
       console.error('Veri yüklenemedi:', error);
       toast.error('Veriler yüklenemedi');
