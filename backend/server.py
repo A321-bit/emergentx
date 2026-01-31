@@ -2556,6 +2556,24 @@ async def add_call_log(
     
     return new_call
 
+@api_router.delete("/quotes/{quote_id}/call-logs/{call_id}")
+async def delete_call_log(
+    quote_id: str,
+    call_id: str,
+    current_user: dict = Depends(require_permission("quotes_manage"))
+):
+    """Delete a call log entry"""
+    result = await db.quotes.update_one(
+        {"id": quote_id},
+        {
+            "$pull": {"call_logs": {"id": call_id}},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    return {"message": "Arama randevusu silindi"}
+
 @api_router.put("/quotes/{quote_id}/call-logs/{call_id}/complete")
 async def complete_call_log(
     quote_id: str,
