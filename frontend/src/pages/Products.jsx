@@ -63,6 +63,8 @@ const Products = () => {
     name: '',
     category_id: '',
     description: '',
+    short_description: '',  // PDF için kısa açıklama
+    benefits: ['', '', ''],  // PDF için 3 fayda maddesi
     currency: 'USD',
     purchase_price_without_vat: '',
     vat_rate: '20',
