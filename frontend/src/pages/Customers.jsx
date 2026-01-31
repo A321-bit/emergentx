@@ -490,24 +490,80 @@ const Customers = () => {
               {/* Address Fields */}
               <div className="space-y-2">
                 <Label htmlFor="city">İl</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  placeholder="İstanbul"
-                  data-testid="customer-city-input"
-                />
+                {manualCityInput ? (
+                  <div className="flex gap-2">
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      placeholder="İl adı yazın"
+                      data-testid="customer-city-input"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setManualCityInput(false);
+                        setFormData(prev => ({ ...prev, city: '', district: '' }));
+                      }}
+                      title="Listeden seç"
+                    >
+                      <MapPin className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Select 
+                    value={formData.city || '__select__'} 
+                    onValueChange={handleCityChange}
+                  >
+                    <SelectTrigger data-testid="customer-city-select">
+                      <SelectValue placeholder="İl seçin" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="__select__">İl seçin</SelectItem>
+                      <SelectItem value="__manual__" className="text-blue-600 font-medium">
+                        ✏️ Manuel Giriş
+                      </SelectItem>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.plate} - {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="district">İlçe</Label>
-                <Input
-                  id="district"
-                  value={formData.district}
-                  onChange={(e) => setFormData({...formData, district: e.target.value})}
-                  placeholder="Kadıköy"
-                  data-testid="customer-district-input"
-                />
+                {manualCityInput ? (
+                  <Input
+                    id="district"
+                    value={formData.district}
+                    onChange={(e) => setFormData({...formData, district: e.target.value})}
+                    placeholder="İlçe adı yazın"
+                    data-testid="customer-district-input"
+                  />
+                ) : (
+                  <Select 
+                    value={formData.district || '__select__'} 
+                    onValueChange={(v) => setFormData({...formData, district: v === '__select__' ? '' : v})}
+                    disabled={!formData.city || districts.length === 0}
+                  >
+                    <SelectTrigger data-testid="customer-district-select">
+                      <SelectValue placeholder={formData.city ? "İlçe seçin" : "Önce il seçin"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="__select__">İlçe seçin</SelectItem>
+                      {districts.map((district, idx) => (
+                        <SelectItem key={idx} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="col-span-2 space-y-2">
