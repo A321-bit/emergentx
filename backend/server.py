@@ -441,6 +441,8 @@ class CompanySettings(BaseModel):
     contract_terms: Optional[str] = None  # Sözleşme metni (ayrı sayfa olarak PDF'e eklenir)
     # Multiple bank accounts support
     bank_accounts: Optional[List[dict]] = None  # Array of bank account objects
+    # Card providers (Kart Çekilen Sistemler)
+    card_providers: Optional[List[dict]] = None  # [{id, name, description}]
     # Legacy single bank fields (for backward compatibility)
     bank_name: Optional[str] = None
     bank_branch: Optional[str] = None
