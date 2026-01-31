@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="10" time="1.254" timestamp="2026-01-31T22:39:07.296343+00:00" hostname="agent-env-6bb32f05-e401-44db-8c9c-e1d56db93420"><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplates" name="test_get_quote_templates" time="0.129" /><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplates" name="test_get_single_quote_template" time="0.045" /><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplates" name="test_get_invalid_template" time="0.043" /><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplates" name="test_upload_cover_image" time="0.046" /><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplates" name="test_delete_cover_image" time="0.079" /><testcase classname="backend.tests.test_pdf_templates.TestPDFGeneration" name="test_generate_pdf_for_quote" time="0.504" /><testcase classname="backend.tests.test_pdf_templates.TestPDFGeneration" name="test_generate_pdf_invalid_quote" time="0.041" /><testcase classname="backend.tests.test_pdf_templates.TestPDFGeneration" name="test_pdf_without_auth" time="0.042"><failure message="AssertionError: Expected 401, got 403&#10;assert 403 == 401&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_pdf_templates.py:191: in test_pdf_without_auth
+    assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+E   AssertionError: Expected 401, got 403
+E   assert 403 == 401
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplateIntegration" name="test_on_grid_template_exists" time="0.077" /><testcase classname="backend.tests.test_pdf_templates.TestQuoteTemplateIntegration" name="test_all_template_categories" time="0.040"><failure message="AssertionError: Wrong name for on_grid&#10;assert 'On Grid Teklif' == 'On Grid Sistem Teklifi'&#10;  &#10;  - On Grid Sistem Teklifi&#10;  ?        -------       -&#10;  + On Grid Teklif">backend/tests/test_pdf_templates.py:233: in test_all_template_categories
+    assert template["category_name"] == expected[cat_id], f"Wrong name for {cat_id}"
+E   AssertionError: Wrong name for on_grid
+E   assert 'On Grid Teklif' == 'On Grid Sistem Teklifi'
+E     
+E     - On Grid Sistem Teklifi
+E     ?        -------       -
+E     + On Grid Teklif</failure></testcase></testsuite></testsuites>
