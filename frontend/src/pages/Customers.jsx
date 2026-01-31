@@ -180,6 +180,8 @@ const Customers = () => {
 
   const resetForm = () => {
     setEditingCustomer(null);
+    setManualCityInput(false);
+    setDistricts([]);
     setFormData({
       customer_type: 'bireysel',
       name: '',
@@ -196,6 +198,17 @@ const Customers = () => {
       customer_source_id: '',
       notes: ''
     });
+  };
+
+  const handleCityChange = (value) => {
+    if (value === '__manual__') {
+      setManualCityInput(true);
+      setFormData(prev => ({ ...prev, city: '', district: '' }));
+      setDistricts([]);
+    } else {
+      setManualCityInput(false);
+      setFormData(prev => ({ ...prev, city: value, district: '' }));
+    }
   };
 
   const filteredCustomers = customers.filter(customer => {
