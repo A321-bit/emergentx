@@ -41,11 +41,14 @@ const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [sources, setSources] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [districts, setDistricts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [manualCityInput, setManualCityInput] = useState(false);
   const [formData, setFormData] = useState({
     customer_type: 'bireysel',
     name: '',
@@ -62,6 +65,39 @@ const Customers = () => {
     customer_source_id: '',
     notes: ''
   });
+
+  // İlleri yükle
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/locations/cities`);
+        setCities(res.data);
+      } catch (error) {
+        console.error('İller yüklenemedi:', error);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  // İl seçildiğinde ilçeleri yükle
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (formData.city && !manualCityInput) {
+        const selectedCity = cities.find(c => c.name === formData.city);
+        if (selectedCity) {
+          try {
+            const res = await axios.get(`${API_URL}/api/locations/cities/${selectedCity.id}/districts`);
+            setDistricts(res.data);
+          } catch (error) {
+            setDistricts([]);
+          }
+        }
+      } else {
+        setDistricts([]);
+      }
+    };
+    fetchDistricts();
+  }, [formData.city, cities, manualCityInput]);
 
   useEffect(() => {
     fetchData();
