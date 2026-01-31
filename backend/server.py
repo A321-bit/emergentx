@@ -5287,6 +5287,215 @@ async def delete_bonus(bonus_id: str, current_user: dict = Depends(require_permi
         raise HTTPException(status_code=404, detail="Prim bulunamadı")
     return {"message": "Prim silindi"}
 
+# ==================== PERSONEL MAAŞ -> GİDER AKTARIMI ====================
+
+@api_router.post("/personnel/generate-salary-expenses")
+async def generate_salary_expenses(
+    month: int,
+    year: int,
+    salary_due_day: int = 5,  # Maaş ödeme günü (varsayılan 5)
+    current_user: dict = Depends(require_permission("finance_manage"))
+):
+    """Personel maaşlarını giderlere aktar"""
+    month_key = f"{year}-{month:02d}"
+    
+    # Personel Maaşları kategorisini bul veya oluştur
+    salary_category = await db.expense_categories.find_one({"name": "Personel Maaşları", "is_active": True}, {"_id": 0})
+    if not salary_category:
+        salary_category = {
+            "id": str(uuid.uuid4()),
+            "name": "Personel Maaşları",
+            "description": "Personel maaş ödemeleri",
+            "expense_type": "fixed",
+            "is_recurring": True,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.expense_categories.insert_one(salary_category.copy())
+    
+    # Prim kategorisini bul veya oluştur
+    bonus_category = await db.expense_categories.find_one({"name": "Personel Primleri", "is_active": True}, {"_id": 0})
+    if not bonus_category:
+        bonus_category = {
+            "id": str(uuid.uuid4()),
+            "name": "Personel Primleri",
+            "description": "Personel prim ödemeleri",
+            "expense_type": "variable",
+            "is_recurring": False,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.expense_categories.insert_one(bonus_category.copy())
+    
+    # Tüm aktif personeli al
+    personnel = await db.personnel.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    # Bu ay için primleri al
+    bonuses = await db.bonuses.find({"month": month_key, "is_active": True}, {"_id": 0}).to_list(1000)
+    
+    # Vade tarihi (ayın belirlenen günü)
+    due_day = min(salary_due_day, 28)  # Şubat için güvenli
+    due_date = datetime(year, month, due_day, tzinfo=timezone.utc)
+    expense_date = datetime(year, month, 1, tzinfo=timezone.utc)
+    
+    generated_salaries = []
+    generated_bonuses = []
+    
+    for person in personnel:
+        # Bu personel için bu ay zaten gider oluşturulmuş mu kontrol et
+        existing = await db.expenses.find_one({
+            "personnel_id": person["id"],
+            "category_name": "Personel Maaşları",
+            "is_active": True,
+            "expense_date": {"$regex": f"^{year}-{month:02d}"}
+        })
+        
+        if existing:
+            continue  # Zaten oluşturulmuş, atla
+        
+        # Maaş gideri oluştur
+        salary_expense = {
+            "id": str(uuid.uuid4()),
+            "category_id": salary_category["id"],
+            "category_name": "Personel Maaşları",
+            "expense_type": "fixed",
+            "amount": person["salary"],
+            "currency": person.get("currency", "TRY"),
+            "exchange_rate": 1,
+            "amount_tl": person["salary"],
+            "expense_date": expense_date.isoformat(),
+            "due_date": due_date.isoformat(),
+            "description": f"{person['name']} - {person.get('position', 'Personel')} - {month_key} Maaşı",
+            "personnel_id": person["id"],
+            "personnel_name": person["name"],
+            "is_recurring_generated": True,
+            "is_paid": False,
+            "paid_date": None,
+            "created_by": current_user["id"],
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.expenses.insert_one(salary_expense.copy())
+        if "_id" in salary_expense:
+            del salary_expense["_id"]
+        generated_salaries.append(salary_expense)
+    
+    # Primleri giderlere aktar
+    for bonus in bonuses:
+        # Bu prim için zaten gider oluşturulmuş mu kontrol et
+        existing_bonus = await db.expenses.find_one({
+            "bonus_id": bonus["id"],
+            "is_active": True
+        })
+        
+        if existing_bonus:
+            continue
+        
+        # Prim gideri oluştur
+        bonus_type_names = {
+            "sales": "Satış Primi",
+            "project": "Proje Primi",
+            "performance": "Performans Primi"
+        }
+        bonus_type_name = bonus_type_names.get(bonus.get("bonus_type", ""), "Prim")
+        
+        bonus_expense = {
+            "id": str(uuid.uuid4()),
+            "category_id": bonus_category["id"],
+            "category_name": "Personel Primleri",
+            "expense_type": "variable",
+            "amount": bonus["amount"],
+            "currency": "TRY",
+            "exchange_rate": 1,
+            "amount_tl": bonus["amount"],
+            "expense_date": expense_date.isoformat(),
+            "due_date": due_date.isoformat(),
+            "description": f"{bonus['employee_name']} - {bonus_type_name} - {bonus.get('description', '')}",
+            "personnel_id": bonus["employee_id"],
+            "personnel_name": bonus["employee_name"],
+            "bonus_id": bonus["id"],
+            "is_recurring_generated": False,
+            "is_paid": False,
+            "paid_date": None,
+            "created_by": current_user["id"],
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.expenses.insert_one(bonus_expense.copy())
+        if "_id" in bonus_expense:
+            del bonus_expense["_id"]
+        generated_bonuses.append(bonus_expense)
+    
+    return {
+        "message": f"{len(generated_salaries)} maaş ve {len(generated_bonuses)} prim gidere aktarıldı",
+        "salary_count": len(generated_salaries),
+        "bonus_count": len(generated_bonuses),
+        "salaries": generated_salaries,
+        "bonuses": generated_bonuses,
+        "total_salary_amount": sum(s["amount"] for s in generated_salaries),
+        "total_bonus_amount": sum(b["amount"] for b in generated_bonuses)
+    }
+
+@api_router.get("/personnel/salary-expenses")
+async def get_personnel_salary_expenses(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    current_user: dict = Depends(require_permission("finance_view"))
+):
+    """Personel bazlı maaş ve prim giderlerini getir"""
+    query = {
+        "is_active": True,
+        "$or": [
+            {"category_name": "Personel Maaşları"},
+            {"category_name": "Personel Primleri"}
+        ]
+    }
+    
+    if month and year:
+        month_prefix = f"{year}-{month:02d}"
+        query["expense_date"] = {"$regex": f"^{month_prefix}"}
+    
+    expenses = await db.expenses.find(query, {"_id": 0}).sort("expense_date", -1).to_list(1000)
+    
+    # Personel bazlı grupla
+    by_personnel = {}
+    for exp in expenses:
+        pid = exp.get("personnel_id", "unknown")
+        pname = exp.get("personnel_name", exp.get("description", "Bilinmiyor"))
+        
+        if pid not in by_personnel:
+            by_personnel[pid] = {
+                "personnel_id": pid,
+                "personnel_name": pname,
+                "salary": 0,
+                "bonus": 0,
+                "total": 0,
+                "items": []
+            }
+        
+        amount = exp.get("amount_tl", exp.get("amount", 0))
+        if exp.get("category_name") == "Personel Maaşları":
+            by_personnel[pid]["salary"] += amount
+        else:
+            by_personnel[pid]["bonus"] += amount
+        
+        by_personnel[pid]["total"] += amount
+        by_personnel[pid]["items"].append(exp)
+    
+    # Toplam hesapla
+    total_salary = sum(p["salary"] for p in by_personnel.values())
+    total_bonus = sum(p["bonus"] for p in by_personnel.values())
+    
+    return {
+        "by_personnel": list(by_personnel.values()),
+        "total_salary": total_salary,
+        "total_bonus": total_bonus,
+        "total": total_salary + total_bonus,
+        "personnel_count": len(by_personnel)
+    }
+
 # ==================== EMPLOYEE EXPENSES API ====================
 
 @api_router.get("/employee-expenses")
