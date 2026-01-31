@@ -947,12 +947,12 @@ class PremiumQuotePDFGenerator:
         
         # Single column product cards - full width
         card_width = CONTENT_WIDTH
-        card_height = 95  # Fixed card height for single row
+        card_height = 115  # Increased height to fit 100px image + padding
         
         for item in items:
             card = self._create_product_card(item, card_width, card_height)
             elements.append(card)
-            elements.append(Spacer(1, 8))
+            elements.append(Spacer(1, 10))
         
         # Note at bottom
         elements.append(Spacer(1, 15))
