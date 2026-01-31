@@ -606,9 +606,18 @@ const Quotes = () => {
   // Status change
   const handleStatusChange = async (quoteId, newStatus) => {
     try {
-      await axios.put(`${API_URL}/api/quotes/${quoteId}/status`, { status: newStatus });
+      const response = await axios.put(`${API_URL}/api/quotes/${quoteId}/status`, { status: newStatus });
       toast.success('Durum güncellendi');
-      fetchData();
+      
+      // Eğer "Satışa Döndü" ise ve satış oluşturulduysa, Satışlar sayfasına yönlendir
+      if (newStatus === 'satisa_dondu' && response.data.sale_id) {
+        toast.success('Satış kaydı otomatik oluşturuldu! Satışlar sayfasına yönlendiriliyorsunuz...');
+        setTimeout(() => {
+          navigate(`/sales?highlight=${response.data.sale_id}`);
+        }, 1000);
+      } else {
+        fetchData();
+      }
     } catch (error) {
       toast.error('Durum güncellenemedi');
     }
