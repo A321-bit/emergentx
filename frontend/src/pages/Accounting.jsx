@@ -100,6 +100,8 @@ const Accounting = () => {
   const [recurringExpenses, setRecurringExpenses] = useState([]);
   const [budget, setBudget] = useState(null);
   const [upcomingPayments, setUpcomingPayments] = useState(null);
+  const [personnelExpenses, setPersonnelExpenses] = useState(null);
+  const [salaryDueDay, setSalaryDueDay] = useState(5);
   const [loading, setLoading] = useState(true);
   
   // Modal states
