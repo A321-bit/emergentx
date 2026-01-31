@@ -1007,30 +1007,63 @@ class PremiumQuotePDFGenerator:
         canvas.restoreState()
     
     def _create_product_card(self, item: dict, width: float, height: float) -> Table:
-        """Create a single product card"""
+        """Create a single product card with image on left, text on right"""
         
         product_name = item.get('product_name', '-')
         description = item.get('description', '')
         quantity = item.get('quantity', 1)
         unit = item.get('unit', 'Adet')
+        image_url = item.get('image_url')  # First image
         
-        # Truncate long names
-        if len(product_name) > 45:
-            product_name = product_name[:42] + "..."
+        # Truncate long names (2 lines max)
+        if len(product_name) > 50:
+            product_name = product_name[:47] + "..."
         
-        # Truncate description
-        if description and len(description) > 60:
-            description = description[:57] + "..."
+        # Truncate description (1 line max)
+        if description and len(description) > 45:
+            description = description[:42] + "..."
         
-        # Build card content
-        card_elements = []
+        # Image settings - fixed size 80x80px (max 120x120 as per spec)
+        img_width = 34 * mm  # ~80px
+        img_height = 34 * mm  # ~80px
+        text_width = width - img_width - 15  # Remaining space for text
+        
+        # Try to load image
+        product_image = None
+        if image_url:
+            img_path = self.upload_dir / image_url.replace('/uploads/', '').replace('uploads/', '')
+            if img_path.exists():
+                try:
+                    product_image = Image(str(img_path), width=img_width, height=img_height)
+                    product_image.hAlign = 'CENTER'
+                except Exception as e:
+                    logger.warning(f"Could not load product image: {e}")
+        
+        # If no image, create placeholder
+        if not product_image:
+            # Create a placeholder table with icon
+            placeholder_data = [
+                [Paragraph("📦", ParagraphStyle('PlaceholderIcon', fontSize=24, alignment=TA_CENTER, textColor=TEXT_LIGHT))],
+                [Paragraph("Görsel Yok", ParagraphStyle('PlaceholderText', fontSize=7, alignment=TA_CENTER, textColor=TEXT_LIGHT))]
+            ]
+            placeholder = Table(placeholder_data, colWidths=[img_width], rowHeights=[img_height * 0.6, img_height * 0.4])
+            placeholder.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f1f5f9')),
+                ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ]))
+            product_image = placeholder
+        
+        # Build text content
+        text_elements = []
         
         # Product name (bold, max 2 lines)
         name_style = ParagraphStyle(
             'CardName', parent=self.styles['CardTitle'],
-            fontSize=10, leading=13, textColor=TEXT_COLOR
+            fontSize=9, leading=12, textColor=TEXT_COLOR
         )
-        card_elements.append([Paragraph(f"<b>{product_name}</b>", name_style)])
+        text_elements.append([Paragraph(f"<b>{product_name}</b>", name_style)])
         
         # Quantity badge
         qty_text = f"Miktar: {quantity} {unit}"
@@ -1038,50 +1071,63 @@ class PremiumQuotePDFGenerator:
             'CardQty', parent=self.styles['CardDescription'],
             fontSize=8, textColor=PRIMARY_DARK
         )
-        card_elements.append([Paragraph(qty_text, qty_style)])
+        text_elements.append([Paragraph(qty_text, qty_style)])
         
-        # Description (if exists)
+        # Description (if exists, 1 line max)
         if description:
             desc_style = ParagraphStyle(
                 'CardDesc', parent=self.styles['CardDescription'],
-                fontSize=8, leading=10, textColor=TEXT_LIGHT
+                fontSize=7, leading=9, textColor=TEXT_LIGHT
             )
-            card_elements.append([Paragraph(description, desc_style)])
+            text_elements.append([Paragraph(description, desc_style)])
         
-        # Technical features (max 3)
+        # Technical features (max 3, 1 line each)
         features = []
         if item.get('power_watt'):
-            features.append(f"✓ Güç: {item['power_watt']}W")
+            features.append(f"✓ {item['power_watt']}W")
         if item.get('category_name'):
-            features.append(f"✓ {item['category_name']}")
+            cat_name = item['category_name']
+            if len(cat_name) > 20:
+                cat_name = cat_name[:17] + "..."
+            features.append(f"✓ {cat_name}")
         
         if features:
-            feature_text = "  |  ".join(features[:3])
+            feature_text = "  ".join(features[:3])
             feat_style = ParagraphStyle(
                 'CardFeat', parent=self.styles['CardFeature'],
                 fontSize=7, textColor=ACCENT_COLOR
             )
-            card_elements.append([Paragraph(feature_text, feat_style)])
+            text_elements.append([Paragraph(feature_text, feat_style)])
         
-        # Create inner table for content
-        inner_table = Table(card_elements, colWidths=[width - 20])
-        inner_table.setStyle(TableStyle([
+        # Create text column table
+        text_table = Table(text_elements, colWidths=[text_width])
+        text_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
         ]))
         
-        # Wrap in card container
+        # Combine image and text horizontally
+        card_content = [[product_image, text_table]]
+        inner_table = Table(card_content, colWidths=[img_width + 5, text_width])
+        inner_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+            ('LEFTPADDING', (0, 0), (0, 0), 0),
+            ('RIGHTPADDING', (0, 0), (0, 0), 5),
+            ('LEFTPADDING', (1, 0), (1, 0), 5),
+        ]))
+        
+        # Wrap in card container with fixed height
         card_container = [[inner_table]]
         card = Table(card_container, colWidths=[width], rowHeights=[height])
         card.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), HEADER_BG),
             ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
-            ('ROUNDEDCORNERS', [8, 8, 8, 8]),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         
