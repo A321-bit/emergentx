@@ -749,7 +749,39 @@ const Quotes = () => {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-4">
+          </div>
+          {/* Tarih Filtreleme ve Checkboxlar */}
+          <div className="flex flex-col lg:flex-row gap-4 mt-4 pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Tarih:</span>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-36 h-9"
+                placeholder="Başlangıç"
+              />
+              <span className="text-muted-foreground">-</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-36 h-9"
+                placeholder="Bitiş"
+              />
+              {(dateFrom || dateTo) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => { setDateFrom(''); setDateTo(''); }}
+                  className="h-9 px-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-4 ml-auto">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <Checkbox checked={showOnlyMine} onCheckedChange={setShowOnlyMine} />
                 <span>Sadece Benim</span>
