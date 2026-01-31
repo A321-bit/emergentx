@@ -228,6 +228,13 @@ const Quotes = () => {
   
   // Off-Grid segment options modal
   const [isSegmentOptionsModalOpen, setIsSegmentOptionsModalOpen] = useState(false);
+  
+  // Notes panel
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const [notesQuote, setNotesQuote] = useState(null);
+  const [quoteNotes, setQuoteNotes] = useState([]);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [loadingNotes, setLoadingNotes] = useState(false);
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('quotes_manage');
   const isAdmin = user?.permissions?.includes('all');
