@@ -145,6 +145,15 @@ const Sidebar = ({ isOpen, onClose }) => {
   const hasAccountingAccess = accountingSubItems.length > 0;
   const isAccountingActive = ['/accounting', '/finance', '/employees', '/attendance', '/payroll'].includes(location.pathname);
 
+  // ===== TEKLİFLER ALT MENÜSÜ =====
+  const quotesSubItems = [];
+  if (hasPermission('quotes_view') || hasPermission('quotes_manage')) {
+    quotesSubItems.push({ path: '/quotes', icon: FileText, label: 'Tüm Teklifler' });
+    quotesSubItems.push({ path: '/quotes/callbacks', icon: Phone, label: 'Aranacaklar' });
+  }
+  const hasQuotesAccess = quotesSubItems.length > 0;
+  const isQuotesActive = ['/quotes', '/quotes/callbacks'].includes(location.pathname);
+
   // Render expandable menu helper
   const renderExpandableMenu = (menuId, icon, label, subItems, isActive) => {
     const Icon = icon;
