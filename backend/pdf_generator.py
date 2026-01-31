@@ -1048,8 +1048,6 @@ class PremiumQuotePDFGenerator:
         img_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('OVERFLOW', (0, 0), (-1, -1), 'HIDDEN'),  # Hide any overflow
-        ]))
             ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
             ('BACKGROUND', (0, 0), (-1, -1), colors.white),
         ]))
