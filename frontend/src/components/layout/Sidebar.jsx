@@ -32,7 +32,8 @@ import {
   ChevronDown,
   ChevronRight,
   Wallet,
-  Phone
+  Phone,
+  FileImage
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
