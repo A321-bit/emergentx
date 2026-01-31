@@ -4009,10 +4009,14 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(re
     exp_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
     
-    # Get category name
+    # Get category name and expense_type
     if expense.category_id:
         cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
-        exp_dict["category_name"] = cat["name"] if cat else "Bilinmiyor"
+        if cat:
+            exp_dict["category_name"] = cat.get("name", "Bilinmiyor")
+            exp_dict["expense_type"] = cat.get("expense_type", "variable")
+        else:
+            exp_dict["category_name"] = "Bilinmiyor"
     
     # Calculate TL amount
     if exp_dict["currency"] == "USD":
