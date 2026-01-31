@@ -222,6 +222,8 @@ class ProductBase(BaseModel):
     name: str
     category_id: str
     description: Optional[str] = None
+    short_description: Optional[str] = None  # PDF için kısa açıklama
+    benefits: Optional[List[str]] = None  # PDF için 3 fayda maddesi
     currency: str = "USD"
     purchase_price_without_vat: float
     vat_rate: float = 20
