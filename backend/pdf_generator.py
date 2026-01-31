@@ -140,7 +140,7 @@ def create_styles():
     ))
     
     styles.add(ParagraphStyle(
-        name='BodyText',
+        name='PremiumBodyText',
         fontSize=11,
         fontName=FONT_NORMAL,
         textColor=TEXT_COLOR,
