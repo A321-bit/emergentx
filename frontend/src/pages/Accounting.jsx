@@ -444,6 +444,28 @@ const Accounting = () => {
     }
   };
 
+  // Gideri ödendi olarak işaretle
+  const handleMarkPaid = async (id) => {
+    try {
+      await axios.put(`${API_URL}/api/expenses/${id}/pay`);
+      toast.success('Gider ödendi olarak işaretlendi');
+      fetchData();
+    } catch (error) {
+      toast.error('İşlem başarısız');
+    }
+  };
+
+  // Gideri ödenmedi olarak işaretle
+  const handleMarkUnpaid = async (id) => {
+    try {
+      await axios.put(`${API_URL}/api/expenses/${id}/unpay`);
+      toast.success('Gider ödenmedi olarak işaretlendi');
+      fetchData();
+    } catch (error) {
+      toast.error('İşlem başarısız');
+    }
+  };
+
   const handleGenerateRecurring = async () => {
     try {
       const res = await axios.post(`${API_URL}/api/recurring-expenses/generate`, null, {
