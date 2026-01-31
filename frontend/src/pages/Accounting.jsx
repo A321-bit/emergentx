@@ -99,6 +99,7 @@ const Accounting = () => {
   const [personnel, setPersonnel] = useState([]);
   const [recurringExpenses, setRecurringExpenses] = useState([]);
   const [budget, setBudget] = useState(null);
+  const [upcomingPayments, setUpcomingPayments] = useState(null);
   const [loading, setLoading] = useState(true);
   
   // Modal states
@@ -117,6 +118,7 @@ const Accounting = () => {
     currency: 'TRY',
     exchange_rate: '34.50',
     expense_date: new Date().toISOString().split('T')[0],
+    due_date: '',
     description: ''
   });
   
