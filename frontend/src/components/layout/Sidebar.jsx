@@ -76,6 +76,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (['/accounting', '/finance', '/employees', '/attendance', '/payroll'].includes(location.pathname)) {
       setExpandedMenus(prev => prev.includes('accounting') ? prev : [...prev, 'accounting']);
     }
+    if (['/quotes', '/quotes/callbacks'].includes(location.pathname)) {
+      setExpandedMenus(prev => prev.includes('quotes') ? prev : [...prev, 'quotes']);
+    }
   }, [location.pathname]);
 
   const toggleMenu = (menuId) => {
