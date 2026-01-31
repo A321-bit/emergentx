@@ -6,6 +6,36 @@
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
+### 31 Ocak 2026 - Kategori Bazlı PDF Teklif Şablonları 🆕
+**Her sistem türü için ayrı kapak görseli desteği**
+
+#### Ana Özellikler:
+- **Yeni Sayfa:** Ayarlar > Teklif Şablonları (`/settings/quote-templates`)
+- **4 Şablon Kategorisi:**
+  - On Grid Teklif - Şebekeye bağlı sistemler
+  - Off Grid Teklif - Şebekeden bağımsız sistemler
+  - Hibrit Sistem Teklifi - Şebeke + batarya destekli
+  - Solar Sulama Sistem Teklifi - Tarımsal sulama sistemleri
+- **Her Kategori İçin:**
+  - Ayrı kapak görseli yükleme alanı
+  - A4 boyut önerisi (2480x3508 px, 300 DPI)
+  - Görsel önizleme ve silme
+  - Drag & drop veya tıklayarak yükleme
+- **Sidebar Alt Menü:** Ayarlar artık genişletilebilir alt menü (Genel Ayarlar, Teklif Şablonları)
+- **Şablon Durumu Özeti:** Hangi kategorilerin hazır olduğunu gösteren özet kart
+
+#### Yeni Backend Endpoint'leri:
+- `GET /api/settings/quote-templates` - Tüm şablonları listele
+- `GET /api/settings/quote-templates/{category_id}` - Tek şablon detay
+- `POST /api/settings/quote-templates/{category_id}/upload-cover` - Kapak yükle
+- `DELETE /api/settings/quote-templates/{category_id}/cover` - Kapak sil
+- `PUT /api/settings/quote-templates/{category_id}` - Şablon ayarları güncelle
+
+#### Yeni Veritabanı Koleksiyonu:
+- `quote_templates` - Kategori bazlı şablon ayarları
+
+---
+
 ### 31 Ocak 2026 - Muhasebe Modülü Tam Yenileme 🎉
 **Kapsamlı Gelir/Gider Yönetimi ve Raporlama Sistemi**
 
