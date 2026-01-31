@@ -492,6 +492,23 @@ const Accounting = () => {
     }
   };
 
+  // Personel maaşlarını giderlere aktar
+  const handleGenerateSalaryExpenses = async () => {
+    try {
+      const res = await axios.post(`${API_URL}/api/personnel/generate-salary-expenses`, null, {
+        params: { month: selectedMonth, year: selectedYear, salary_due_day: salaryDueDay }
+      });
+      if (res.data.salary_count > 0 || res.data.bonus_count > 0) {
+        toast.success(`${res.data.salary_count} maaş, ${res.data.bonus_count} prim gidere aktarıldı`);
+        fetchData();
+      } else {
+        toast.info('Aktarılacak maaş veya prim bulunamadı');
+      }
+    } catch (error) {
+      toast.error('Maaşlar giderlere aktarılamadı');
+    }
+  };
+
   const openEditRecurring = (rec) => {
     setEditingRecurring(rec);
     setRecurringForm({
