@@ -176,7 +176,8 @@ const Accounting = () => {
         axios.get(`${API_URL}/api/incomes`, { params: { month: selectedMonth, year: selectedYear } }),
         axios.get(`${API_URL}/api/expense-categories`),
         axios.get(`${API_URL}/api/personnel`),
-        axios.get(`${API_URL}/api/recurring-expenses`)
+        axios.get(`${API_URL}/api/recurring-expenses`),
+        axios.get(`${API_URL}/api/expenses/upcoming-payments`)
       ]);
       
       setSummary(summaryRes.data);
@@ -187,6 +188,7 @@ const Accounting = () => {
       setPersonnel(personnelRes.data);
       setRecurringExpenses(recurringRes.data);
       setBudget(summaryRes.data?.budget_status);
+      setUpcomingPayments(upcomingRes.data);
     } catch (error) {
       console.error('Veri yüklenemedi:', error);
       toast.error('Veriler yüklenemedi');
