@@ -507,6 +507,15 @@ class PaymentDetail(BaseModel):
     havale_tl: float = 0  # Havale/EFT ile ödeme
     checks: Optional[List[CheckItem]] = None  # Çekler
 
+# Sale Item Model (Satış Kalemi - Ürün/Paket)
+class SaleItem(BaseModel):
+    item_type: str = "product"  # product veya package
+    item_id: str
+    item_name: str
+    quantity: int = 1
+    unit_price: float = 0
+    line_total: float = 0
+
 # Sales Model (Manuel Satış Girişi)
 class SaleBase(BaseModel):
     customer_id: Optional[str] = None
@@ -519,10 +528,23 @@ class SaleBase(BaseModel):
     currency: str = "TRY"  # Ana para birimi
     sale_date: datetime
     notes: Optional[str] = None
+    # Ürün/Paket bilgileri
+    items: Optional[List[SaleItem]] = None  # Satış kalemleri
+    calculated_total: float = 0  # Hesaplanan toplam (ürün/paket toplamı)
+    discount_percent: float = 0  # İskonto yüzdesi
+    discount_amount: float = 0  # İskonto tutarı (TL)
+    net_total: float = 0  # İskonto sonrası tutar
+    manual_override: bool = False  # Manuel tutar düzeltmesi yapıldı mı?
     # Çoklu ödeme alanları
     nakit_tl: float = 0  # Nakit ödeme
     kart_tl: float = 0  # Kart ile ödeme
+    kart_provider_id: Optional[str] = None  # Kart çekilen sistem/tedarikçi ID
+    kart_provider_name: Optional[str] = None  # Kart çekilen sistem/tedarikçi adı
     havale_tl: float = 0  # Havale/EFT ile ödeme
+    havale_bank_account_id: Optional[str] = None  # Havale alınan banka hesabı ID
+    havale_bank_name: Optional[str] = None  # Havale alınan banka adı
+    havale_currency: str = "TRY"  # Havale para birimi (TRY/USD)
+    havale_usd_amount: float = 0  # USD cinsinden havale tutarı
     checks: Optional[List[CheckItem]] = None  # Çekler
     due_date: Optional[datetime] = None  # Genel vade tarihi (vadeli satışlar için)
 
