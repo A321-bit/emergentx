@@ -92,6 +92,15 @@ def create_styles():
     """Create premium paragraph styles"""
     styles = getSampleStyleSheet()
     
+    # Override BodyText with our custom styling
+    if 'BodyText' in styles.byName:
+        styles['BodyText'].fontSize = 11
+        styles['BodyText'].fontName = FONT_NORMAL
+        styles['BodyText'].textColor = TEXT_COLOR
+        styles['BodyText'].leading = 16
+        styles['BodyText'].alignment = TA_JUSTIFY
+        styles['BodyText'].spaceAfter = 8
+    
     # Hero title for cover
     styles.add(ParagraphStyle(
         name='HeroTitle',
