@@ -15,6 +15,7 @@
 - **Sabit/Değişken Gider Ayrımı:** Kategorilere expense_type eklendi, otomatik sınıflandırma
 - **Gelir Türleri:** Satış Geliri (satışlardan otomatik) vs Satış Dışı Gelir (manuel)
 - **Net Kâr Hesaplama:** Brüt Kâr - Toplam Gider, Kâr Marjı %, Zarar durumunda kırmızı uyarı
+- **Ödeme Takibi:** Giderlerde "Ödendi/Bekliyor" durumu, ödenmemiş giderler uyarı kartı
 
 #### Görsel Raporlama:
 - **Gider Dağılımı:** Kategori bazlı pasta grafik
@@ -38,8 +39,10 @@
 - `GET/POST /api/budgets` - Bütçe yönetimi
 - `GET/POST/PUT/DELETE /api/recurring-expenses` - Tekrarlayan giderler
 - `POST /api/recurring-expenses/generate` - Otomatik gider oluşturma
+- `PUT /api/expenses/{id}/pay` - Gideri ödendi işaretle
+- `PUT /api/expenses/{id}/unpay` - Gideri ödenmedi işaretle
 - `GET /api/accounting/trend` - 6 aylık trend verisi
-- Güncellenmiş `GET /api/accounting/summary` - Kapsamlı özet
+- Güncellenmiş `GET /api/accounting/summary` - Kapsamlı özet (unpaid_expenses dahil)
 
 ### 31 Ocak 2026 - Satış Listesinde Teklif PDF İndirme
 - Tekliften oluşturulmuş satışlar için PDF indirme butonu eklendi
