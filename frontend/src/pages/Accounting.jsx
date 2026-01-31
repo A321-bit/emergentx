@@ -1074,6 +1074,7 @@ const Accounting = () => {
                     <TableHead>Tarih</TableHead>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Tür</TableHead>
+                    <TableHead>Vade</TableHead>
                     <TableHead>Açıklama</TableHead>
                     <TableHead className="text-right">Tutar</TableHead>
                     <TableHead className="text-center">Ödeme</TableHead>
@@ -1083,8 +1084,22 @@ const Accounting = () => {
                 <TableBody>
                   {expenses.map((exp) => {
                     const IconComponent = CATEGORY_ICONS[exp.category_name] || Package;
+                    // Vade durumu hesapla
+                    let dueStatus = null;
+                    if (exp.due_date && !exp.is_paid) {
+                      const dueDate = new Date(exp.due_date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      dueDate.setHours(0, 0, 0, 0);
+                      const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                      if (diffDays < 0) dueStatus = 'overdue';
+                      else if (diffDays === 0) dueStatus = 'today';
+                      else if (diffDays === 1) dueStatus = 'tomorrow';
+                      else if (diffDays <= 7) dueStatus = 'week';
+                    }
+                    
                     return (
-                      <TableRow key={exp.id} className={!exp.is_paid ? 'bg-red-50/50 dark:bg-red-900/10' : ''}>
+                      <TableRow key={exp.id} className={`${!exp.is_paid && dueStatus === 'overdue' ? 'bg-red-100/70 dark:bg-red-900/20' : !exp.is_paid ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''}`}>
                         <TableCell className="text-sm">{formatDate(exp.expense_date)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
