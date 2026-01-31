@@ -2800,6 +2800,121 @@ async def update_energy_prices(
     
     return await get_energy_prices(current_user)
 
+# ==================== CARD PROVIDERS (KART TEDARİKÇİLERİ) ====================
+
+@api_router.get("/settings/card-providers")
+async def get_card_providers(current_user: dict = Depends(get_current_user)):
+    """Get list of card payment providers"""
+    settings = await db.company_settings.find_one({"id": "company_settings"}, {"_id": 0})
+    providers = settings.get("card_providers", []) if settings else []
+    return providers
+
+@api_router.post("/settings/card-providers")
+async def add_card_provider(
+    data: dict,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Add a new card payment provider"""
+    provider = {
+        "id": str(uuid.uuid4()),
+        "name": data.get("name", ""),
+        "description": data.get("description", "")
+    }
+    
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$push": {"card_providers": provider}},
+        upsert=True
+    )
+    
+    return provider
+
+@api_router.delete("/settings/card-providers/{provider_id}")
+async def delete_card_provider(
+    provider_id: str,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Delete a card payment provider"""
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$pull": {"card_providers": {"id": provider_id}}}
+    )
+    return {"message": "Kart tedarikçisi silindi"}
+
+# ==================== SALE BANK ACCOUNTS (SATIŞ BANKA HESAPLARI) ====================
+
+@api_router.get("/settings/sale-bank-accounts")
+async def get_sale_bank_accounts(current_user: dict = Depends(get_current_user)):
+    """Get list of bank accounts for sales (havale)"""
+    settings = await db.company_settings.find_one({"id": "company_settings"}, {"_id": 0})
+    accounts = settings.get("bank_accounts", []) if settings else []
+    return accounts
+
+@api_router.post("/settings/sale-bank-accounts")
+async def add_sale_bank_account(
+    data: dict,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Add a new bank account for sales"""
+    account = {
+        "id": str(uuid.uuid4()),
+        "bank_name": data.get("bank_name", ""),
+        "bank_branch": data.get("bank_branch", ""),
+        "account_holder": data.get("account_holder", ""),
+        "iban": data.get("iban", ""),
+        "swift": data.get("swift", ""),
+        "currency": data.get("currency", "TRY")  # TRY veya USD
+    }
+    
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$push": {"bank_accounts": account}},
+        upsert=True
+    )
+    
+    return account
+
+@api_router.delete("/settings/sale-bank-accounts/{account_id}")
+async def delete_sale_bank_account(
+    account_id: str,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Delete a bank account"""
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$pull": {"bank_accounts": {"id": account_id}}}
+    )
+    return {"message": "Banka hesabı silindi"}
+
+# ==================== QUICK CUSTOMER CREATE ====================
+
+@api_router.post("/customers/quick-create")
+async def quick_create_customer(
+    data: dict,
+    current_user: dict = Depends(require_permission("customers_manage"))
+):
+    """Quick create a customer from sales modal"""
+    customer_dict = {
+        "id": str(uuid.uuid4()),
+        "name": data.get("name", ""),
+        "phone": data.get("phone", ""),
+        "city": data.get("city", ""),
+        "district": data.get("district", ""),
+        "notes": data.get("notes", ""),
+        "email": data.get("email", ""),
+        "address": data.get("address", ""),
+        "category_id": data.get("category_id"),
+        "source_id": data.get("source_id"),
+        "dealer_id": current_user.get("dealer_id"),
+        "created_by": current_user.get("user_id", ""),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.customers.insert_one(customer_dict.copy())
+    customer_dict.pop("_id", None)
+    return customer_dict
+
 # ==================== DASHBOARD STATS ROUTES ====================
 
 @api_router.get("/stats/dashboard")
