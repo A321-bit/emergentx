@@ -2334,6 +2334,79 @@ async def update_quote_status(quote_id: str, status_update: QuoteStatusUpdate, c
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     
     quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    
+    # Eğer "satisa_dondu" ise otomatik satış kaydı oluştur
+    sale_id = None
+    if status_update.status == "satisa_dondu":
+        # Daha önce bu teklife bağlı satış var mı kontrol et
+        existing_sale = await db.sales.find_one({"quote_id": quote_id, "is_active": True}, {"_id": 0})
+        
+        if not existing_sale:
+            # Teklifteki ürünleri satış kalemine dönüştür
+            sale_items = []
+            for item in quote.get("items", []):
+                sale_items.append({
+                    "item_type": "product",
+                    "item_id": item.get("product_id", ""),
+                    "item_name": item.get("product_name", ""),
+                    "quantity": item.get("quantity", 1),
+                    "unit_price": item.get("unit_price_tl", 0),
+                    "line_total": item.get("total_tl", 0)
+                })
+            
+            # Yeni satış kaydı oluştur
+            sale_dict = {
+                "id": str(uuid.uuid4()),
+                "quote_id": quote_id,
+                "quote_number": quote.get("quote_number", ""),
+                "customer_id": quote.get("customer_id"),
+                "customer_name": quote.get("customer_name", ""),
+                "sale_amount_usd": quote.get("total_usd", 0),
+                "sale_amount_tl": quote.get("total_tl", 0),
+                "purchase_amount_usd": 0,
+                "purchase_amount_tl": 0,
+                "exchange_rate": quote.get("exchange_rate", 34.0),
+                "currency": quote.get("currency", "TRY"),
+                "sale_date": datetime.now(timezone.utc).isoformat(),
+                "notes": f"Teklif No: {quote.get('quote_number', '')} - Otomatik oluşturuldu",
+                # Ürün bilgileri
+                "items": sale_items,
+                "calculated_total": quote.get("total_tl", 0),
+                "discount_percent": quote.get("discount_rate", 0),
+                "discount_amount": quote.get("discount_amount_tl", 0),
+                "net_total": quote.get("total_tl", 0),
+                "manual_override": False,
+                # Ödeme alanları (henüz ödeme yok)
+                "nakit_tl": 0,
+                "kart_tl": 0,
+                "kart_provider_id": None,
+                "kart_provider_name": None,
+                "havale_tl": 0,
+                "havale_bank_account_id": None,
+                "havale_bank_name": None,
+                "havale_currency": "TRY",
+                "havale_usd_amount": 0,
+                "checks": [],
+                "due_date": None,
+                # Meta bilgiler
+                "created_by": current_user.get("user_id", ""),
+                "created_by_name": current_user.get("name", ""),
+                "dealer_id": current_user.get("dealer_id"),
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "payment_status": "bekliyor"
+            }
+            
+            await db.sales.insert_one(sale_dict.copy())
+            sale_id = sale_dict["id"]
+            
+            # Quote'a sale_id referansı ekle
+            await db.quotes.update_one(
+                {"id": quote_id},
+                {"$set": {"sale_id": sale_id}}
+            )
+    
+    quote["sale_id"] = sale_id
     return quote
 
 @api_router.put("/quotes/{quote_id}/callback")
