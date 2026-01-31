@@ -986,26 +986,28 @@ class PremiumQuotePDFGenerator:
         canvas.restoreState()
     
     def _create_product_card(self, item: dict, width: float, height: float) -> Table:
-        """Create a single product card with image on left, text on right"""
+        """Create a single product card - full width row with image left, text right"""
         
         product_name = item.get('product_name', '-')
         description = item.get('description', '')
         quantity = item.get('quantity', 1)
         unit = item.get('unit', 'Adet')
         image_url = item.get('image_url')  # First image
+        power_watt = item.get('power_watt')
+        category_name = item.get('category_name', '')
         
         # Truncate long names (2 lines max)
-        if len(product_name) > 50:
-            product_name = product_name[:47] + "..."
+        if len(product_name) > 70:
+            product_name = product_name[:67] + "..."
         
-        # Truncate description (1 line max)
-        if description and len(description) > 45:
-            description = description[:42] + "..."
+        # Truncate description (2 lines max)
+        if description and len(description) > 120:
+            description = description[:117] + "..."
         
-        # Image settings - fixed size 80x80px (max 120x120 as per spec)
-        img_width = 34 * mm  # ~80px
-        img_height = 34 * mm  # ~80px
-        text_width = width - img_width - 15  # Remaining space for text
+        # Image settings - 120x100px as requested
+        img_width = 42 * mm   # ~120px
+        img_height = 35 * mm  # ~100px
+        text_width = width - img_width - 20  # Remaining space for text
         
         # Try to load image
         product_image = None
@@ -1020,12 +1022,11 @@ class PremiumQuotePDFGenerator:
         
         # If no image, create placeholder
         if not product_image:
-            # Create a placeholder table with icon
             placeholder_data = [
-                [Paragraph("📦", ParagraphStyle('PlaceholderIcon', fontSize=24, alignment=TA_CENTER, textColor=TEXT_LIGHT))],
-                [Paragraph("Görsel Yok", ParagraphStyle('PlaceholderText', fontSize=7, alignment=TA_CENTER, textColor=TEXT_LIGHT))]
+                [Paragraph("📦", ParagraphStyle('PlaceholderIcon', fontSize=28, alignment=TA_CENTER, textColor=TEXT_LIGHT))],
+                [Paragraph("Görsel Yok", ParagraphStyle('PlaceholderText', fontSize=8, alignment=TA_CENTER, textColor=TEXT_LIGHT))]
             ]
-            placeholder = Table(placeholder_data, colWidths=[img_width], rowHeights=[img_height * 0.6, img_height * 0.4])
+            placeholder = Table(placeholder_data, colWidths=[img_width], rowHeights=[img_height * 0.65, img_height * 0.35])
             placeholder.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f1f5f9')),
                 ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
@@ -1037,63 +1038,74 @@ class PremiumQuotePDFGenerator:
         # Build text content
         text_elements = []
         
-        # Product name (bold, max 2 lines)
+        # Row 1: Product name (bold, max 2 lines)
         name_style = ParagraphStyle(
-            'CardName', parent=self.styles['CardTitle'],
-            fontSize=9, leading=12, textColor=TEXT_COLOR
+            'CardNameFull', parent=self.styles['CardTitle'],
+            fontSize=11, leading=14, textColor=TEXT_COLOR
         )
         text_elements.append([Paragraph(f"<b>{product_name}</b>", name_style)])
         
-        # Quantity badge
-        qty_text = f"Miktar: {quantity} {unit}"
+        # Row 2: Quantity badge + Category
+        qty_cat_text = f"<b>Miktar:</b> {quantity} {unit}"
+        if category_name:
+            qty_cat_text += f"  •  <b>Kategori:</b> {category_name}"
         qty_style = ParagraphStyle(
-            'CardQty', parent=self.styles['CardDescription'],
-            fontSize=8, textColor=PRIMARY_DARK
+            'CardQtyFull', parent=self.styles['CardDescription'],
+            fontSize=9, textColor=TEXT_LIGHT
         )
-        text_elements.append([Paragraph(qty_text, qty_style)])
+        text_elements.append([Paragraph(qty_cat_text, qty_style)])
         
-        # Description (if exists, 1 line max)
+        # Row 3: Description (if exists, 2 lines max)
         if description:
             desc_style = ParagraphStyle(
-                'CardDesc', parent=self.styles['CardDescription'],
-                fontSize=7, leading=9, textColor=TEXT_LIGHT
+                'CardDescFull', parent=self.styles['CardDescription'],
+                fontSize=9, leading=12, textColor=TEXT_COLOR
             )
             text_elements.append([Paragraph(description, desc_style)])
         
-        # Technical features (max 3, 1 line each)
+        # Row 4: 3 Feature benefits with icons
         features = []
-        if item.get('power_watt'):
-            features.append(f"✓ {item['power_watt']}W")
-        if item.get('category_name'):
-            cat_name = item['category_name']
-            if len(cat_name) > 20:
-                cat_name = cat_name[:17] + "..."
-            features.append(f"✓ {cat_name}")
         
+        # Feature 1: Power (if available)
+        if power_watt:
+            if power_watt >= 1000:
+                power_display = f"{power_watt/1000:.1f} kW"
+            else:
+                power_display = f"{power_watt:.0f}W"
+            features.append(f"<font color='#f59e0b'>⚡</font> <b>Güç:</b> {power_display}")
+        
+        # Feature 2: Quality assurance
+        features.append(f"<font color='#10b981'>✓</font> <b>Kalite:</b> A Sınıfı Ürün")
+        
+        # Feature 3: Warranty
+        features.append(f"<font color='#3b82f6'>🛡</font> <b>Garanti:</b> Üretici Garantili")
+        
+        # Only show first 3 features
         if features:
-            feature_text = "  ".join(features[:3])
-            feat_style = ParagraphStyle(
-                'CardFeat', parent=self.styles['CardFeature'],
-                fontSize=7, textColor=ACCENT_COLOR
+            feature_style = ParagraphStyle(
+                'CardFeatureFull', parent=self.styles['CardFeature'],
+                fontSize=8, leading=11, textColor=TEXT_COLOR
             )
-            text_elements.append([Paragraph(feature_text, feat_style)])
+            feature_text = "    ".join(features[:3])
+            text_elements.append([Paragraph(feature_text, feature_style)])
         
         # Create text column table
         text_table = Table(text_elements, colWidths=[text_width])
         text_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, 0), 0),  # No top padding for first row
+            ('TOPPADDING', (0, 1), (-1, -1), 4),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
         ]))
         
         # Combine image and text horizontally
         card_content = [[product_image, text_table]]
-        inner_table = Table(card_content, colWidths=[img_width + 5, text_width])
+        inner_table = Table(card_content, colWidths=[img_width + 10, text_width])
         inner_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('ALIGN', (0, 0), (0, 0), 'CENTER'),
             ('LEFTPADDING', (0, 0), (0, 0), 0),
-            ('RIGHTPADDING', (0, 0), (0, 0), 5),
+            ('RIGHTPADDING', (0, 0), (0, 0), 10),
             ('LEFTPADDING', (1, 0), (1, 0), 5),
         ]))
         
@@ -1103,10 +1115,10 @@ class PremiumQuotePDFGenerator:
         card.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), HEADER_BG),
             ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         
