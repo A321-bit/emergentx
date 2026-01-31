@@ -2393,6 +2393,63 @@ async def delete_quote(quote_id: str, current_user: dict = Depends(require_permi
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     return {"message": "Teklif iptal edildi"}
 
+# ==================== QUOTE NOTES (TEKLİF NOTLARI) ====================
+
+@api_router.get("/quotes/{quote_id}/notes")
+async def get_quote_notes(quote_id: str, current_user: dict = Depends(require_permission("quotes_view"))):
+    """Get all notes for a quote"""
+    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0, "notes": 1})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    return quote.get("notes", [])
+
+@api_router.post("/quotes/{quote_id}/notes")
+async def add_quote_note(
+    quote_id: str, 
+    note_data: QuoteNoteCreate,
+    current_user: dict = Depends(require_permission("quotes_manage"))
+):
+    """Add a note to a quote"""
+    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    new_note = {
+        "id": str(uuid.uuid4()),
+        "text": note_data.text,
+        "created_by": current_user.get("user_id", ""),
+        "created_by_name": current_user.get("name", "Bilinmeyen"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.quotes.update_one(
+        {"id": quote_id},
+        {
+            "$push": {"notes": new_note},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    return new_note
+
+@api_router.delete("/quotes/{quote_id}/notes/{note_id}")
+async def delete_quote_note(
+    quote_id: str,
+    note_id: str,
+    current_user: dict = Depends(require_permission("quotes_manage"))
+):
+    """Delete a note from a quote"""
+    result = await db.quotes.update_one(
+        {"id": quote_id},
+        {
+            "$pull": {"notes": {"id": note_id}},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    return {"message": "Not silindi"}
+
 
 async def calculate_segment_items(items: list, db) -> dict:
     """Calculate items for each price segment (ekonomik, standart, premium)"""
