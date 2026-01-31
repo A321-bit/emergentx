@@ -840,8 +840,21 @@ const Sales = () => {
             </TableHeader>
             <TableBody>
               {filteredSales.map((sale) => (
-                <TableRow key={sale.id}>
-                  <TableCell className="text-sm">{formatDate(sale.sale_date)}</TableCell>
+                <TableRow 
+                  key={sale.id}
+                  className={cn(
+                    highlightedSaleId === sale.id && "bg-green-100 dark:bg-green-900/30 animate-pulse"
+                  )}
+                >
+                  <TableCell className="text-sm">
+                    {formatDate(sale.sale_date)}
+                    {sale.quote_number && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <FileText className="h-3 w-3 text-blue-500" />
+                        <span className="text-xs text-blue-600">{sale.quote_number}</span>
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{sale.customer_name}</TableCell>
                   <TableCell className="text-xs max-w-[150px]">
                     {sale.items && sale.items.length > 0 ? (
@@ -882,10 +895,22 @@ const Sales = () => {
                   {canManage && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(sale)}>
+                        {/* Tahsilat Ekle butonu - bekleyen ödemeler için */}
+                        {sale.payment_status !== 'odendi' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-green-600 border-green-300 hover:bg-green-50"
+                            onClick={() => handleEdit(sale)}
+                          >
+                            <Wallet className="h-3 w-3 mr-1" />
+                            Tahsilat
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(sale)} title="Düzenle">
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(sale.id)} className="text-destructive">
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(sale.id)} className="text-destructive" title="Sil">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
