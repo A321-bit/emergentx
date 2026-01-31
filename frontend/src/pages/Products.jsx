@@ -151,6 +151,8 @@ const Products = () => {
       name: formData.name,
       category_id: formData.category_id,
       description: formData.description || null,
+      short_description: formData.short_description || null,
+      benefits: formData.benefits?.filter(b => b.trim()) || [],  // Boş olmayanları filtrele
       currency: formData.currency,
       purchase_price_without_vat: parseFloat(formData.purchase_price_without_vat),
       vat_rate: parseFloat(formData.vat_rate) || 20,
