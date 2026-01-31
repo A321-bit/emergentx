@@ -618,11 +618,70 @@ class ExpenseCategoryBase(BaseModel):
     name: str
     description: Optional[str] = None
     is_recurring: bool = False  # Sabit gider mi?
+    expense_type: str = "variable"  # "fixed" (sabit) veya "variable" (değişken)
 
 class ExpenseCategory(ExpenseCategoryBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Income Model (Satış Dışı Gelirler)
+class IncomeBase(BaseModel):
+    source: str  # Gelir kaynağı
+    income_type: str = "other"  # "sale" (satış), "other" (satış dışı)
+    amount: float
+    currency: str = "TRY"
+    exchange_rate: float = 1
+    amount_tl: float = 0
+    income_date: datetime
+    description: Optional[str] = None
+
+class IncomeCreate(IncomeBase):
+    pass
+
+class Income(IncomeBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Budget Model (Bütçe)
+class BudgetBase(BaseModel):
+    year: int
+    month: int  # 1-12
+    total_budget: float = 0
+    category_budgets: Optional[dict] = None  # {"category_id": amount}
+    notes: Optional[str] = None
+
+class BudgetCreate(BudgetBase):
+    pass
+
+class Budget(BudgetBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Recurring Expense Model (Tekrarlayan Gider)
+class RecurringExpenseBase(BaseModel):
+    category_id: str
+    category_name: Optional[str] = None
+    amount: float
+    currency: str = "TRY"
+    description: Optional[str] = None
+    day_of_month: int = 1  # Her ayın kaçında
+    is_active_recurring: bool = True
+
+class RecurringExpenseCreate(RecurringExpenseBase):
+    pass
+
+class RecurringExpense(RecurringExpenseBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    last_generated_month: Optional[str] = None  # "2026-01" formatında
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Personnel Model (Personel)
