@@ -695,6 +695,85 @@ const Quotes = () => {
     });
   };
 
+  // Call scheduling functions
+  const fetchUpcomingCalls = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/quotes/all-upcoming-calls`);
+      setUpcomingCalls(response.data || []);
+    } catch (error) {
+      console.error('Aranacaklar yüklenemedi');
+    }
+  };
+
+  const openCallModal = async (quote) => {
+    setCallQuote(quote);
+    setCallDate(new Date().toISOString().split('T')[0]);
+    setCallTime('10:00');
+    setCallNotes('');
+    setIsCallModalOpen(true);
+    
+    // Load existing call logs
+    setLoadingCalls(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/quotes/${quote.id}/call-logs`);
+      setCallLogs(response.data || []);
+    } catch (error) {
+      setCallLogs([]);
+    } finally {
+      setLoadingCalls(false);
+    }
+  };
+
+  const handleScheduleCall = async () => {
+    if (!callDate || !callTime) {
+      toast.error('Tarih ve saat seçiniz');
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/quotes/${callQuote.id}/call-logs`, {
+        scheduled_date: callDate,
+        scheduled_time: callTime,
+        notes: callNotes
+      });
+      setCallLogs(prev => [...prev, response.data]);
+      setCallDate('');
+      setCallTime('');
+      setCallNotes('');
+      toast.success('Arama planlandı');
+      fetchUpcomingCalls();
+      fetchData();
+    } catch (error) {
+      toast.error('Arama planlanamadı');
+    }
+  };
+
+  const handleCompleteCall = async (quoteId, callId) => {
+    try {
+      await axios.put(`${API_URL}/api/quotes/${quoteId}/call-logs/${callId}/complete`, {
+        result_notes: completeCallResult
+      });
+      setCompleteCallId(null);
+      setCompleteCallResult('');
+      toast.success('Arama tamamlandı');
+      fetchUpcomingCalls();
+      
+      // Refresh call logs if modal is open
+      if (callQuote) {
+        const response = await axios.get(`${API_URL}/api/quotes/${callQuote.id}/call-logs`);
+        setCallLogs(response.data || []);
+      }
+    } catch (error) {
+      toast.error('İşlem başarısız');
+    }
+  };
+
+  const formatDateTR = (dateStr) => {
+    if (!dateStr) return '-';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}.${month}.${year}`;
+  };
+
   // Download PDF
   const handleDownloadPDF = async (quoteId, quoteNumber) => {
     try {
