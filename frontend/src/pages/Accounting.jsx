@@ -1046,6 +1046,7 @@ const Accounting = () => {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <TabsList>
             <TabsTrigger value="expenses">Giderler</TabsTrigger>
+            <TabsTrigger value="personnel-expenses">Personel Giderleri</TabsTrigger>
             <TabsTrigger value="incomes">Gelirler</TabsTrigger>
             <TabsTrigger value="recurring">Tekrarlayan</TabsTrigger>
             <TabsTrigger value="personnel">Personel</TabsTrigger>
