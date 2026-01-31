@@ -626,6 +626,62 @@ const Quotes = () => {
     }
   };
 
+  // Notes functions
+  const openNotesModal = async (quote) => {
+    setNotesQuote(quote);
+    setIsNotesModalOpen(true);
+    setLoadingNotes(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/quotes/${quote.id}/notes`);
+      setQuoteNotes(response.data || []);
+    } catch (error) {
+      toast.error('Notlar yüklenemedi');
+      setQuoteNotes([]);
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNoteText.trim()) {
+      toast.error('Not metni boş olamaz');
+      return;
+    }
+    try {
+      const response = await axios.post(`${API_URL}/api/quotes/${notesQuote.id}/notes`, {
+        text: newNoteText.trim()
+      });
+      setQuoteNotes(prev => [...prev, response.data]);
+      setNewNoteText('');
+      toast.success('Not eklendi');
+    } catch (error) {
+      toast.error('Not eklenemedi');
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    if (!window.confirm('Bu notu silmek istediğinize emin misiniz?')) return;
+    try {
+      await axios.delete(`${API_URL}/api/quotes/${notesQuote.id}/notes/${noteId}`);
+      setQuoteNotes(prev => prev.filter(n => n.id !== noteId));
+      toast.success('Not silindi');
+    } catch (error) {
+      toast.error('Not silinemedi');
+    }
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Download PDF
   const handleDownloadPDF = async (quoteId, quoteNumber) => {
     try {
