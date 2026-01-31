@@ -16,6 +16,15 @@
 - **Gelir Türleri:** Satış Geliri (satışlardan otomatik) vs Satış Dışı Gelir (manuel)
 - **Net Kâr Hesaplama:** Brüt Kâr - Toplam Gider, Kâr Marjı %, Zarar durumunda kırmızı uyarı
 - **Ödeme Takibi:** Giderlerde "Ödendi/Bekliyor" durumu, ödenmemiş giderler uyarı kartı
+- **Vade Tarihi Sistemi:** Her gidere son ödeme tarihi, yaklaşan/gecikmiş ödeme takibi
+
+#### Yaklaşan Ödemeler Paneli:
+- **Gecikmiş:** Vade tarihi geçmiş ödenmemiş giderler (kırmızı vurgu)
+- **Bugün:** Bugün vadesi dolan giderler (turuncu vurgu)
+- **Yarın:** Yarın vadesi dolacak giderler (sarı vurgu)
+- **Bu Hafta:** 2-7 gün içinde vadesi dolacak giderler
+- **Bu Ay:** 8-30 gün içinde vadesi dolacak giderler
+- **Acil Ödenecekler:** Gecikmiş ve bugün vadeli giderlerin detay listesi
 
 #### Görsel Raporlama:
 - **Gider Dağılımı:** Kategori bazlı pasta grafik
@@ -41,6 +50,7 @@
 - `POST /api/recurring-expenses/generate` - Otomatik gider oluşturma
 - `PUT /api/expenses/{id}/pay` - Gideri ödendi işaretle
 - `PUT /api/expenses/{id}/unpay` - Gideri ödenmedi işaretle
+- `GET /api/expenses/upcoming-payments` - Yaklaşan ödemeler listesi
 - `GET /api/accounting/trend` - 6 aylık trend verisi
 - Güncellenmiş `GET /api/accounting/summary` - Kapsamlı özet (unpaid_expenses dahil)
 
