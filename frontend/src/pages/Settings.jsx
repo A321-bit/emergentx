@@ -46,11 +46,14 @@ const Settings = () => {
     diesel_price_per_liter: 45.0,
     diesel_consumption_per_kwh: 0.35
   });
+  const [cardProviders, setCardProviders] = useState([]);
   const [epdk_types, setEpdkTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingRates, setSavingRates] = useState(false);
   const [savingEnergy, setSavingEnergy] = useState(false);
+  const [savingCardProvider, setSavingCardProvider] = useState(false);
+  const [newCardProviderName, setNewCardProviderName] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const logoInputRef = useRef(null);
