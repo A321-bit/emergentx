@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,7 @@ import {
 import { 
   Plus, Pencil, Trash2, TrendingUp, DollarSign, Calendar, Search, RefreshCw,
   CreditCard, Banknote, Building, FileCheck, Clock, AlertTriangle, CheckCircle2,
-  ChevronDown, ChevronUp, X
+  ChevronDown, ChevronUp, X, UserPlus, Package, ShoppingCart, Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -48,15 +49,43 @@ const Sales = () => {
   const { user } = useAuth();
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [packages, setPackages] = useState([]);
+  const [cardProviders, setCardProviders] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState([]);
   const [stats, setStats] = useState(null);
   const [upcomingChecks, setUpcomingChecks] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isCardProviderModalOpen, setIsCardProviderModalOpen] = useState(false);
+  const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statsPeriod, setStatsPeriod] = useState('monthly');
   const [systemExchangeRate, setSystemExchangeRate] = useState(34.0);
   const [showChecks, setShowChecks] = useState(true);
+  
+  // New customer form
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    phone: '',
+    city: '',
+    district: '',
+    notes: ''
+  });
+  
+  // New card provider form
+  const [newCardProvider, setNewCardProvider] = useState({ name: '', description: '' });
+  
+  // New bank account form
+  const [newBankAccount, setNewBankAccount] = useState({
+    bank_name: '',
+    bank_branch: '',
+    account_holder: '',
+    iban: '',
+    currency: 'TRY'
+  });
   
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -69,10 +98,24 @@ const Sales = () => {
     exchange_rate: '34.00',
     sale_date: new Date().toISOString().split('T')[0],
     notes: '',
+    // Items (ürün/paket)
+    items: [],
+    calculated_total: 0,
+    discount_type: 'percent', // percent veya amount
+    discount_percent: '',
+    discount_amount: '',
+    net_total: 0,
+    manual_override: false,
     // Çoklu ödeme
     nakit_tl: '',
     kart_tl: '',
+    kart_provider_id: '',
+    kart_provider_name: '',
     havale_tl: '',
+    havale_bank_account_id: '',
+    havale_bank_name: '',
+    havale_currency: 'TRY',
+    havale_usd_amount: '',
     checks: []
   });
 
@@ -89,6 +132,10 @@ const Sales = () => {
     fetchData();
     fetchExchangeRate();
     fetchUpcomingChecks();
+    fetchProducts();
+    fetchPackages();
+    fetchCardProviders();
+    fetchBankAccounts();
   }, []);
 
   const fetchData = async () => {
@@ -105,6 +152,42 @@ const Sales = () => {
       toast.error('Veriler yüklenemedi');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/products`);
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Ürünler yüklenemedi');
+    }
+  };
+
+  const fetchPackages = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/packages`);
+      setPackages(response.data);
+    } catch (error) {
+      console.error('Paketler yüklenemedi');
+    }
+  };
+
+  const fetchCardProviders = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/card-providers`);
+      setCardProviders(response.data || []);
+    } catch (error) {
+      console.error('Kart tedarikçileri yüklenemedi');
+    }
+  };
+
+  const fetchBankAccounts = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/sale-bank-accounts`);
+      setBankAccounts(response.data || []);
+    } catch (error) {
+      console.error('Banka hesapları yüklenemedi');
     }
   };
 
@@ -128,6 +211,151 @@ const Sales = () => {
     }
   };
 
+  // Quick customer create
+  const handleQuickCustomerCreate = async () => {
+    if (!newCustomer.name.trim()) {
+      toast.error('Müşteri adı zorunludur');
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/customers/quick-create`, newCustomer);
+      const createdCustomer = response.data;
+      
+      // Update customers list
+      setCustomers(prev => [...prev, createdCustomer]);
+      
+      // Select the new customer in form
+      setFormData(prev => ({
+        ...prev,
+        customer_id: createdCustomer.id,
+        customer_name: createdCustomer.name
+      }));
+      
+      setIsCustomerModalOpen(false);
+      setNewCustomer({ name: '', phone: '', city: '', district: '', notes: '' });
+      toast.success('Müşteri oluşturuldu ve seçildi');
+    } catch (error) {
+      toast.error('Müşteri oluşturulamadı');
+    }
+  };
+
+  // Add card provider
+  const handleAddCardProvider = async () => {
+    if (!newCardProvider.name.trim()) {
+      toast.error('Tedarikçi adı zorunludur');
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/settings/card-providers`, newCardProvider);
+      setCardProviders(prev => [...prev, response.data]);
+      setFormData(prev => ({
+        ...prev,
+        kart_provider_id: response.data.id,
+        kart_provider_name: response.data.name
+      }));
+      setIsCardProviderModalOpen(false);
+      setNewCardProvider({ name: '', description: '' });
+      toast.success('Kart tedarikçisi eklendi');
+    } catch (error) {
+      toast.error('Tedarikçi eklenemedi');
+    }
+  };
+
+  // Add bank account
+  const handleAddBankAccount = async () => {
+    if (!newBankAccount.bank_name.trim()) {
+      toast.error('Banka adı zorunludur');
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/settings/sale-bank-accounts`, newBankAccount);
+      setBankAccounts(prev => [...prev, response.data]);
+      setFormData(prev => ({
+        ...prev,
+        havale_bank_account_id: response.data.id,
+        havale_bank_name: response.data.bank_name
+      }));
+      setIsBankAccountModalOpen(false);
+      setNewBankAccount({ bank_name: '', bank_branch: '', account_holder: '', iban: '', currency: 'TRY' });
+      toast.success('Banka hesabı eklendi');
+    } catch (error) {
+      toast.error('Banka hesabı eklenemedi');
+    }
+  };
+
+  // Item management (ürün/paket)
+  const addItem = (type) => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { item_type: type, item_id: '', item_name: '', quantity: 1, unit_price: 0, line_total: 0 }]
+    }));
+  };
+
+  const removeItem = (index) => {
+    setFormData(prev => {
+      const newItems = prev.items.filter((_, i) => i !== index);
+      return { ...prev, items: newItems };
+    });
+  };
+
+  const updateItem = (index, field, value) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], [field]: value };
+      
+      // If selecting product/package, auto-fill price
+      if (field === 'item_id' && value) {
+        const item = newItems[index];
+        if (item.item_type === 'product') {
+          const product = products.find(p => p.id === value);
+          if (product) {
+            newItems[index].item_name = product.name;
+            newItems[index].unit_price = product.sale_price || 0;
+          }
+        } else if (item.item_type === 'package') {
+          const pkg = packages.find(p => p.id === value);
+          if (pkg) {
+            newItems[index].item_name = pkg.name;
+            newItems[index].unit_price = pkg.total_price || 0;
+          }
+        }
+      }
+      
+      // Recalculate line total
+      newItems[index].line_total = (parseFloat(newItems[index].quantity) || 0) * (parseFloat(newItems[index].unit_price) || 0);
+      
+      return { ...prev, items: newItems };
+    });
+  };
+
+  // Calculate totals when items change
+  useEffect(() => {
+    const calculated = formData.items.reduce((sum, item) => sum + (item.line_total || 0), 0);
+    let discount = 0;
+    
+    if (formData.discount_type === 'percent' && formData.discount_percent) {
+      discount = calculated * (parseFloat(formData.discount_percent) / 100);
+    } else if (formData.discount_type === 'amount' && formData.discount_amount) {
+      discount = parseFloat(formData.discount_amount) || 0;
+    }
+    
+    const net = calculated - discount;
+    
+    setFormData(prev => ({
+      ...prev,
+      calculated_total: calculated,
+      net_total: net,
+      // If not manual override, update sale amount
+      ...(!prev.manual_override && calculated > 0 ? {
+        sale_amount_tl: net.toFixed(2),
+        sale_amount_usd: prev.exchange_rate ? (net / parseFloat(prev.exchange_rate)).toFixed(2) : ''
+      } : {})
+    }));
+  }, [formData.items, formData.discount_percent, formData.discount_amount, formData.discount_type]);
+
   // Currency conversion handlers
   const handleUsdInput = (field, value) => {
     const numValue = parseFloat(value) || 0;
@@ -137,7 +365,8 @@ const Sales = () => {
       setFormData(prev => ({
         ...prev,
         sale_amount_usd: value,
-        sale_amount_tl: numValue > 0 ? (numValue * rate).toFixed(2) : ''
+        sale_amount_tl: numValue > 0 ? (numValue * rate).toFixed(2) : '',
+        manual_override: prev.items.length > 0
       }));
     } else if (field === 'purchase_amount_usd') {
       setFormData(prev => ({
@@ -156,7 +385,8 @@ const Sales = () => {
       setFormData(prev => ({
         ...prev,
         sale_amount_tl: value,
-        sale_amount_usd: numValue > 0 ? (numValue / rate).toFixed(2) : ''
+        sale_amount_usd: numValue > 0 ? (numValue / rate).toFixed(2) : '',
+        manual_override: prev.items.length > 0
       }));
     } else if (field === 'purchase_amount_tl') {
       setFormData(prev => ({
@@ -271,9 +501,23 @@ const Sales = () => {
       exchange_rate: parseFloat(formData.exchange_rate) || 1,
       sale_date: new Date(formData.sale_date).toISOString(),
       notes: formData.notes,
+      // Items
+      items: formData.items.filter(i => i.item_id),
+      calculated_total: formData.calculated_total,
+      discount_percent: parseFloat(formData.discount_percent) || 0,
+      discount_amount: parseFloat(formData.discount_amount) || 0,
+      net_total: formData.net_total,
+      manual_override: formData.manual_override,
+      // Payments
       nakit_tl: parseFloat(formData.nakit_tl) || 0,
       kart_tl: parseFloat(formData.kart_tl) || 0,
+      kart_provider_id: formData.kart_provider_id || null,
+      kart_provider_name: formData.kart_provider_name || null,
       havale_tl: parseFloat(formData.havale_tl) || 0,
+      havale_bank_account_id: formData.havale_bank_account_id || null,
+      havale_bank_name: formData.havale_bank_name || null,
+      havale_currency: formData.havale_currency,
+      havale_usd_amount: parseFloat(formData.havale_usd_amount) || 0,
       checks: validChecks.map(check => ({
         check_no: check.check_no,
         bank_name: check.bank_name,
@@ -313,9 +557,24 @@ const Sales = () => {
       exchange_rate: sale.exchange_rate?.toString() || systemExchangeRate.toString(),
       sale_date: sale.sale_date?.split('T')[0] || '',
       notes: sale.notes || '',
+      // Items
+      items: sale.items || [],
+      calculated_total: sale.calculated_total || 0,
+      discount_type: sale.discount_percent > 0 ? 'percent' : 'amount',
+      discount_percent: sale.discount_percent?.toString() || '',
+      discount_amount: sale.discount_amount?.toString() || '',
+      net_total: sale.net_total || 0,
+      manual_override: sale.manual_override || false,
+      // Payments
       nakit_tl: sale.nakit_tl?.toString() || '',
       kart_tl: sale.kart_tl?.toString() || '',
+      kart_provider_id: sale.kart_provider_id || '',
+      kart_provider_name: sale.kart_provider_name || '',
       havale_tl: sale.havale_tl?.toString() || '',
+      havale_bank_account_id: sale.havale_bank_account_id || '',
+      havale_bank_name: sale.havale_bank_name || '',
+      havale_currency: sale.havale_currency || 'TRY',
+      havale_usd_amount: sale.havale_usd_amount?.toString() || '',
       checks: (sale.checks || []).map(c => ({
         id: c.id,
         check_no: c.check_no || '',
@@ -354,9 +613,22 @@ const Sales = () => {
       exchange_rate: systemExchangeRate.toString(),
       sale_date: new Date().toISOString().split('T')[0],
       notes: '',
+      items: [],
+      calculated_total: 0,
+      discount_type: 'percent',
+      discount_percent: '',
+      discount_amount: '',
+      net_total: 0,
+      manual_override: false,
       nakit_tl: '',
       kart_tl: '',
+      kart_provider_id: '',
+      kart_provider_name: '',
       havale_tl: '',
+      havale_bank_account_id: '',
+      havale_bank_name: '',
+      havale_currency: 'TRY',
+      havale_usd_amount: '',
       checks: []
     });
   };
@@ -374,16 +646,6 @@ const Sales = () => {
   const getPaymentStatusBadge = (status) => {
     const statusInfo = PAYMENT_STATUS[status] || PAYMENT_STATUS.bekliyor;
     return <Badge className={`${statusInfo.color} text-xs`}>{statusInfo.label}</Badge>;
-  };
-
-  // Get payment summary for display
-  const getPaymentSummary = (sale) => {
-    const parts = [];
-    if (sale.nakit_tl > 0) parts.push(`Nakit: ${formatCurrency(sale.nakit_tl)}`);
-    if (sale.kart_tl > 0) parts.push(`Kart: ${formatCurrency(sale.kart_tl)}`);
-    if (sale.havale_tl > 0) parts.push(`Havale: ${formatCurrency(sale.havale_tl)}`);
-    if (sale.check_total_tl > 0) parts.push(`Çek: ${formatCurrency(sale.check_total_tl)}`);
-    return parts.length > 0 ? parts.join(', ') : '-';
   };
 
   const filteredSales = sales.filter(sale => 
@@ -550,6 +812,7 @@ const Sales = () => {
               <TableRow>
                 <TableHead>Tarih</TableHead>
                 <TableHead>Müşteri</TableHead>
+                <TableHead>Ürün/Paket</TableHead>
                 <TableHead className="text-right">Satış</TableHead>
                 <TableHead>Ödeme Detayı</TableHead>
                 <TableHead className="text-right">Tahsil</TableHead>
@@ -563,12 +826,34 @@ const Sales = () => {
                 <TableRow key={sale.id}>
                   <TableCell className="text-sm">{formatDate(sale.sale_date)}</TableCell>
                   <TableCell className="font-medium">{sale.customer_name}</TableCell>
+                  <TableCell className="text-xs max-w-[150px]">
+                    {sale.items && sale.items.length > 0 ? (
+                      <div className="space-y-0.5">
+                        {sale.items.slice(0, 2).map((item, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs mr-1">
+                            {item.item_type === 'package' ? '📦' : '🔧'} {item.item_name?.substring(0, 15)}...
+                          </Badge>
+                        ))}
+                        {sale.items.length > 2 && <span className="text-muted-foreground">+{sale.items.length - 2}</span>}
+                      </div>
+                    ) : '-'}
+                  </TableCell>
                   <TableCell className="text-right font-mono">{formatCurrency(sale.sale_amount_tl)}</TableCell>
                   <TableCell className="text-xs max-w-[200px]">
                     <div className="flex flex-wrap gap-1">
                       {sale.nakit_tl > 0 && <Badge variant="outline" className="text-green-600">💵 {formatCurrency(sale.nakit_tl)}</Badge>}
-                      {sale.kart_tl > 0 && <Badge variant="outline" className="text-blue-600">💳 {formatCurrency(sale.kart_tl)}</Badge>}
-                      {sale.havale_tl > 0 && <Badge variant="outline" className="text-purple-600">🏦 {formatCurrency(sale.havale_tl)}</Badge>}
+                      {sale.kart_tl > 0 && (
+                        <Badge variant="outline" className="text-blue-600">
+                          💳 {formatCurrency(sale.kart_tl)}
+                          {sale.kart_provider_name && <span className="ml-1 text-xs opacity-70">({sale.kart_provider_name})</span>}
+                        </Badge>
+                      )}
+                      {sale.havale_tl > 0 && (
+                        <Badge variant="outline" className="text-purple-600">
+                          🏦 {formatCurrency(sale.havale_tl)}
+                          {sale.havale_bank_name && <span className="ml-1 text-xs opacity-70">({sale.havale_bank_name})</span>}
+                        </Badge>
+                      )}
                       {sale.check_total_tl > 0 && <Badge variant="outline" className="text-orange-600">📄 {formatCurrency(sale.check_total_tl)}</Badge>}
                     </div>
                   </TableCell>
@@ -593,7 +878,7 @@ const Sales = () => {
               ))}
               {filteredSales.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Satış kaydı bulunamadı
                   </TableCell>
                 </TableRow>
@@ -605,44 +890,189 @@ const Sales = () => {
 
       {/* Add/Edit Sale Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingSale ? 'Satış Düzenle' : 'Yeni Satış Ekle'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Customer */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Müşteri Seç</Label>
-                <Select
-                  value={formData.customer_id}
-                  onValueChange={(val) => {
-                    const cust = customers.find(c => c.id === val);
-                    setFormData(prev => ({ ...prev, customer_id: val, customer_name: cust?.name || '' }));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Listeden seç" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Müşteri Adı *</Label>
-                <Input
-                  placeholder="veya elle yazın"
-                  value={formData.customer_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
-                />
+            {/* Customer Section */}
+            <div className="border rounded-lg p-4 bg-slate-50 dark:bg-slate-900">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <UserPlus className="h-4 w-4" /> Müşteri Bilgileri
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Müşteri Seç</Label>
+                  <Select
+                    value={formData.customer_id}
+                    onValueChange={(val) => {
+                      const cust = customers.find(c => c.id === val);
+                      setFormData(prev => ({ ...prev, customer_id: val, customer_name: cust?.name || '' }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Listeden seç" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Müşteri Adı *</Label>
+                  <Input
+                    placeholder="veya elle yazın"
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>&nbsp;</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      setNewCustomer({ ...newCustomer, name: formData.customer_name });
+                      setIsCustomerModalOpen(true);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    + Müşteri Ekle
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Currency & Exchange Rate */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Items Section (Ürün/Paket) */}
+            <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950/20">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" /> Ürün / Paket Seçimi
+                </h3>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => addItem('product')}>
+                    <Plus className="h-4 w-4 mr-1" /> Ürün
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => addItem('package')}>
+                    <Package className="h-4 w-4 mr-1" /> Paket
+                  </Button>
+                </div>
+              </div>
+
+              {formData.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Ürün veya paket eklemeden manuel tutar girebilirsiniz
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {formData.items.map((item, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-end bg-white dark:bg-slate-800 p-2 rounded">
+                      <div className="col-span-5">
+                        <Label className="text-xs">{item.item_type === 'package' ? 'Paket' : 'Ürün'}</Label>
+                        <Select
+                          value={item.item_id}
+                          onValueChange={(val) => updateItem(index, 'item_id', val)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Seçin" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {item.item_type === 'product' 
+                              ? products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
+                              : packages.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
+                            }
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs">Adet</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          className="h-9"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs">Birim Fiyat</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="h-9"
+                          value={item.unit_price}
+                          onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs">Toplam</Label>
+                        <Input
+                          type="text"
+                          className="h-9 bg-gray-100"
+                          value={formatCurrency(item.line_total)}
+                          readOnly
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Button type="button" size="icon" variant="ghost" className="h-9 text-red-500" onClick={() => removeItem(index)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Totals */}
+                  <div className="bg-white dark:bg-slate-800 p-3 rounded mt-2">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Ara Toplam</Label>
+                        <p className="font-bold">{formatCurrency(formData.calculated_total)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs flex items-center gap-1">
+                          <Percent className="h-3 w-3" /> İskonto
+                        </Label>
+                        <div className="flex gap-1">
+                          <Select
+                            value={formData.discount_type}
+                            onValueChange={(val) => setFormData(prev => ({ ...prev, discount_type: val, discount_percent: '', discount_amount: '' }))}
+                          >
+                            <SelectTrigger className="w-16 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percent">%</SelectItem>
+                              <SelectItem value="amount">₺</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0"
+                            className="h-8"
+                            value={formData.discount_type === 'percent' ? formData.discount_percent : formData.discount_amount}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              [formData.discount_type === 'percent' ? 'discount_percent' : 'discount_amount']: e.target.value
+                            }))}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Net Toplam</Label>
+                        <p className="font-bold text-green-600">{formatCurrency(formData.net_total)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Currency & Amount Section */}
+            <div className="grid grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Para Birimi</Label>
                 <div className="flex gap-1">
@@ -652,19 +1082,15 @@ const Sales = () => {
                     onClick={() => setFormData(prev => ({ ...prev, input_currency: 'USD' }))}>$ USD</Button>
                 </div>
               </div>
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-2">
                 <Label>Kur (1 USD = ? TL)</Label>
-                <div className="flex gap-2">
-                  <Input type="number" step="0.01" value={formData.exchange_rate} onChange={(e) => handleRateChange(e.target.value)} />
-                  <Button type="button" variant="outline" onClick={() => handleRateChange(systemExchangeRate.toString())}>
-                    <RefreshCw className="h-4 w-4 mr-1" />{systemExchangeRate}
+                <div className="flex gap-1">
+                  <Input type="number" step="0.01" className="h-9" value={formData.exchange_rate} onChange={(e) => handleRateChange(e.target.value)} />
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleRateChange(systemExchangeRate.toString())}>
+                    <RefreshCw className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
-            </div>
-
-            {/* Sale & Cost Amounts */}
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Satış Tutarı {formData.input_currency === 'TRY' ? '(TL)' : '(USD)'} *</Label>
                 <div className="relative">
@@ -674,7 +1100,7 @@ const Sales = () => {
                   <Input
                     type="number"
                     step="0.01"
-                    className="pl-7"
+                    className="pl-7 h-9"
                     value={formData.input_currency === 'TRY' ? formData.sale_amount_tl : formData.sale_amount_usd}
                     onChange={(e) => formData.input_currency === 'TRY' 
                       ? handleTlInput('sale_amount_tl', e.target.value)
@@ -682,11 +1108,8 @@ const Sales = () => {
                     }
                   />
                 </div>
-                {formData.sale_amount_tl && formData.input_currency === 'USD' && (
-                  <p className="text-xs text-muted-foreground">= ₺{formData.sale_amount_tl}</p>
-                )}
-                {formData.sale_amount_usd && formData.input_currency === 'TRY' && (
-                  <p className="text-xs text-muted-foreground">= ${formData.sale_amount_usd}</p>
+                {formData.manual_override && formData.items.length > 0 && (
+                  <p className="text-xs text-orange-600">Manuel düzeltme yapıldı</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -698,7 +1121,7 @@ const Sales = () => {
                   <Input
                     type="number"
                     step="0.01"
-                    className="pl-7"
+                    className="pl-7 h-9"
                     value={formData.input_currency === 'TRY' ? formData.purchase_amount_tl : formData.purchase_amount_usd}
                     onChange={(e) => formData.input_currency === 'TRY'
                       ? handleTlInput('purchase_amount_tl', e.target.value)
@@ -709,7 +1132,7 @@ const Sales = () => {
               </div>
             </div>
 
-            {/* Payment Section Header */}
+            {/* Payment Section */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">Ödeme Bilgileri</h3>
@@ -720,8 +1143,8 @@ const Sales = () => {
                 )}
               </div>
 
-              {/* Direct Payments (Nakit, Kart, Havale) */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* Nakit */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1 text-sm">
                     <Banknote className="h-4 w-4 text-green-600" /> Nakit
@@ -738,6 +1161,8 @@ const Sales = () => {
                     />
                   </div>
                 </div>
+
+                {/* Kart */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1 text-sm">
                     <CreditCard className="h-4 w-4 text-blue-600" /> Kart
@@ -754,6 +1179,42 @@ const Sales = () => {
                     />
                   </div>
                 </div>
+
+                {/* Kart Provider */}
+                {parseFloat(formData.kart_tl) > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm">Kart Çekilen Sistem</Label>
+                    <div className="flex gap-1">
+                      <Select
+                        value={formData.kart_provider_id}
+                        onValueChange={(val) => {
+                          const provider = cardProviders.find(p => p.id === val);
+                          setFormData(prev => ({
+                            ...prev,
+                            kart_provider_id: val,
+                            kart_provider_name: provider?.name || ''
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cardProviders.map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" size="icon" variant="outline" className="h-9" onClick={() => setIsCardProviderModalOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Havale */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1 text-sm">
                     <Building className="h-4 w-4 text-purple-600" /> Havale
@@ -770,6 +1231,74 @@ const Sales = () => {
                     />
                   </div>
                 </div>
+
+                {parseFloat(formData.havale_tl) > 0 && (
+                  <>
+                    {/* Bank Account */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Banka Hesabı</Label>
+                      <div className="flex gap-1">
+                        <Select
+                          value={formData.havale_bank_account_id}
+                          onValueChange={(val) => {
+                            const account = bankAccounts.find(a => a.id === val);
+                            setFormData(prev => ({
+                              ...prev,
+                              havale_bank_account_id: val,
+                              havale_bank_name: account?.bank_name || ''
+                            }));
+                          }}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Seçin" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {bankAccounts.map(a => (
+                              <SelectItem key={a.id} value={a.id}>{a.bank_name} {a.iban && `(${a.iban.slice(-4)})`}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button type="button" size="icon" variant="outline" className="h-9" onClick={() => setIsBankAccountModalOpen(true)}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Havale Currency */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Havale Cinsi</Label>
+                      <Select
+                        value={formData.havale_currency}
+                        onValueChange={(val) => setFormData(prev => ({ ...prev, havale_currency: val }))}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="TRY">₺ TL</SelectItem>
+                          <SelectItem value="USD">$ USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {formData.havale_currency === 'USD' && (
+                      <div className="space-y-2">
+                        <Label className="text-sm">USD Tutarı</Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0"
+                            className="pl-6 h-9"
+                            value={formData.havale_usd_amount}
+                            onChange={(e) => setFormData(prev => ({ ...prev, havale_usd_amount: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Checks Section */}
@@ -899,6 +1428,157 @@ const Sales = () => {
               <Button type="submit">{editingSale ? 'Güncelle' : 'Kaydet'}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Customer Create Modal */}
+      <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hızlı Müşteri Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Ad Soyad / Ünvan *</Label>
+              <Input
+                value={newCustomer.name}
+                onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Zorunlu"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefon</Label>
+              <Input
+                value={newCustomer.phone}
+                onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>İl</Label>
+                <Input
+                  value={newCustomer.city}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="Opsiyonel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>İlçe</Label>
+                <Input
+                  value={newCustomer.district}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, district: e.target.value }))}
+                  placeholder="Opsiyonel"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Not</Label>
+              <Textarea
+                value={newCustomer.notes}
+                onChange={(e) => setNewCustomer(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Opsiyonel"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsCustomerModalOpen(false)}>İptal</Button>
+            <Button onClick={handleQuickCustomerCreate}>Kaydet ve Seç</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card Provider Modal */}
+      <Dialog open={isCardProviderModalOpen} onOpenChange={setIsCardProviderModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Kart Tedarikçisi Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tedarikçi Adı *</Label>
+              <Input
+                value={newCardProvider.name}
+                onChange={(e) => setNewCardProvider(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Örn: PayTR, Endesan"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Açıklama</Label>
+              <Input
+                value={newCardProvider.description}
+                onChange={(e) => setNewCardProvider(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Opsiyonel"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsCardProviderModalOpen(false)}>İptal</Button>
+            <Button onClick={handleAddCardProvider}>Ekle</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bank Account Modal */}
+      <Dialog open={isBankAccountModalOpen} onOpenChange={setIsBankAccountModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Banka Hesabı Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Banka Adı *</Label>
+              <Input
+                value={newBankAccount.bank_name}
+                onChange={(e) => setNewBankAccount(prev => ({ ...prev, bank_name: e.target.value }))}
+                placeholder="Örn: Garanti, Ziraat"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Şube</Label>
+              <Input
+                value={newBankAccount.bank_branch}
+                onChange={(e) => setNewBankAccount(prev => ({ ...prev, bank_branch: e.target.value }))}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>IBAN</Label>
+              <Input
+                value={newBankAccount.iban}
+                onChange={(e) => setNewBankAccount(prev => ({ ...prev, iban: e.target.value }))}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Hesap Sahibi / Ünvan</Label>
+              <Input
+                value={newBankAccount.account_holder}
+                onChange={(e) => setNewBankAccount(prev => ({ ...prev, account_holder: e.target.value }))}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Para Birimi</Label>
+              <Select
+                value={newBankAccount.currency}
+                onValueChange={(val) => setNewBankAccount(prev => ({ ...prev, currency: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">₺ TL</SelectItem>
+                  <SelectItem value="USD">$ USD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsBankAccountModalOpen(false)}>İptal</Button>
+            <Button onClick={handleAddBankAccount}>Ekle</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
