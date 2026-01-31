@@ -2349,7 +2349,11 @@ async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dic
             "datasheet_url": product.get("datasheet_url"),
             "currency": product.get("currency", "USD"),
             "description": item.get("description", ""),
-            "sort_order": item.get("sort_order", idx)
+            "sort_order": item.get("sort_order", idx),
+            "images": product.get("images", []),  # Ürün görselleri PDF için
+            "image_url": product.get("images", [None])[0] if product.get("images") else None,  # İlk görsel
+            "power_watt": product.get("power_watt"),  # Güç bilgisi
+            "category_name": product.get("category_name", "")  # Kategori adı
         })
         subtotal_usd += total_price_usd
         subtotal_tl += total_price_tl
