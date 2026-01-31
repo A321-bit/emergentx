@@ -158,6 +158,15 @@ const Sidebar = ({ isOpen, onClose }) => {
   const hasQuotesAccess = quotesSubItems.length > 0;
   const isQuotesActive = ['/quotes', '/quotes/callbacks'].includes(location.pathname);
 
+  // ===== AYARLAR ALT MENÜSÜ =====
+  const settingsSubItems = [];
+  if (hasPermission('settings_manage')) {
+    settingsSubItems.push({ path: '/settings', icon: Settings, label: 'Genel Ayarlar' });
+    settingsSubItems.push({ path: '/settings/quote-templates', icon: FileImage, label: 'Teklif Şablonları' });
+  }
+  const hasSettingsAccess = settingsSubItems.length > 0;
+  const isSettingsActive = ['/settings', '/settings/quote-templates'].includes(location.pathname);
+
   // Render expandable menu helper
   const renderExpandableMenu = (menuId, icon, label, subItems, isActive) => {
     const Icon = icon;
