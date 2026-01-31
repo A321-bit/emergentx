@@ -1874,7 +1874,8 @@ async def get_customers(current_user: dict = Depends(require_permission("custome
         if current_user.get("dealer_id"):
             query["dealer_id"] = current_user["dealer_id"]
     
-    customers = await db.customers.find(query, {"_id": 0}).to_list(1000)
+    # Sort by created_at descending (newest first)
+    customers = await db.customers.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     
     # Add category and source names
     categories = {c["id"]: c["name"] for c in await db.customer_categories.find({"is_active": True}, {"_id": 0}).to_list(100)}
