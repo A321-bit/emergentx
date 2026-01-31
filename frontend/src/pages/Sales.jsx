@@ -619,6 +619,29 @@ const Sales = () => {
     }
   };
 
+  // Tekliften oluşan satış için PDF indirme
+  const handleDownloadQuotePdf = async (quoteId, quoteNumber) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/quotes/${quoteId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Teklif_${quoteNumber || quoteId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF indirildi');
+    } catch (error) {
+      toast.error('PDF indirilemedi');
+    }
+  };
+
   const resetForm = () => {
     setEditingSale(null);
     setFormData({
