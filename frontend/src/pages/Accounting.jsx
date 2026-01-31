@@ -1112,7 +1112,25 @@ const Accounting = () => {
                             {exp.expense_type === 'fixed' ? 'Sabit' : 'Değişken'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                        <TableCell>
+                          {exp.due_date ? (
+                            <div className={`text-xs ${
+                              exp.is_paid ? 'text-muted-foreground' :
+                              dueStatus === 'overdue' ? 'text-red-600 font-bold' :
+                              dueStatus === 'today' ? 'text-orange-600 font-bold' :
+                              dueStatus === 'tomorrow' ? 'text-yellow-600 font-medium' :
+                              'text-muted-foreground'
+                            }`}>
+                              {formatDate(exp.due_date)}
+                              {!exp.is_paid && dueStatus === 'overdue' && <span className="block text-[10px]">Gecikmiş!</span>}
+                              {!exp.is_paid && dueStatus === 'today' && <span className="block text-[10px]">Bugün!</span>}
+                              {!exp.is_paid && dueStatus === 'tomorrow' && <span className="block text-[10px]">Yarın</span>}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground max-w-[150px] truncate">
                           {exp.description || '-'}
                           {exp.is_recurring_generated && (
                             <Badge variant="outline" className="ml-2 text-xs">
