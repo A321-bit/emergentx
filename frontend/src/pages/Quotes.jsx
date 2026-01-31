@@ -927,6 +927,21 @@ const Quotes = () => {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
+                          {/* Notlar butonu */}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => openNotesModal(quote)} 
+                            title="Notlar"
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 relative"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            {quote.notes && quote.notes.length > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                {quote.notes.length}
+                              </span>
+                            )}
+                          </Button>
                           {/* Düzenleme butonu her zaman aktif */}
                           {canManage && (
                             <Button variant="ghost" size="icon" onClick={() => openEditQuote(quote)} title="Düzenle">
