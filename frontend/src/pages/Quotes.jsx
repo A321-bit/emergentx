@@ -1113,6 +1113,92 @@ const Quotes = () => {
         </CardContent>
       </Card>
 
+      {/* Aranacaklar Bölümü */}
+      {upcomingCalls.length > 0 && (
+        <Card className="border-green-200 bg-green-50/30 dark:bg-green-950/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Phone className="h-5 w-5 text-green-600" />
+              Aranacaklar ({upcomingCalls.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-24">Tarih</TableHead>
+                    <TableHead className="w-16">Saat</TableHead>
+                    <TableHead>Müşteri</TableHead>
+                    <TableHead>Teklif No</TableHead>
+                    <TableHead>Sorumlu</TableHead>
+                    <TableHead>Not</TableHead>
+                    <TableHead className="text-right w-32">İşlem</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {upcomingCalls.map((call) => {
+                    const isOverdue = new Date(`${call.scheduled_date}T${call.scheduled_time}`) < new Date();
+                    return (
+                      <TableRow key={call.call_id} className={isOverdue ? 'bg-red-50 dark:bg-red-950/20' : ''}>
+                        <TableCell className={cn("font-medium", isOverdue && "text-red-600")}>
+                          {formatDateTR(call.scheduled_date)}
+                          {isOverdue && <span className="text-xs ml-1">(Gecikmiş)</span>}
+                        </TableCell>
+                        <TableCell className={cn(isOverdue && "text-red-600")}>{call.scheduled_time}</TableCell>
+                        <TableCell className="font-medium">{call.customer_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono text-xs">{call.quote_number}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{call.responsible}</TableCell>
+                        <TableCell className="text-sm max-w-[200px] truncate">{call.notes || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          {completeCallId === call.call_id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                placeholder="Sonuç notu..."
+                                value={completeCallResult}
+                                onChange={(e) => setCompleteCallResult(e.target.value)}
+                                className="h-7 text-xs w-32"
+                              />
+                              <Button 
+                                size="sm" 
+                                className="h-7 bg-green-600" 
+                                onClick={() => handleCompleteCall(call.quote_id, call.call_id)}
+                              >
+                                ✓
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-7" 
+                                onClick={() => { setCompleteCallId(null); setCompleteCallResult(''); }}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-7 text-green-600 border-green-300"
+                              onClick={() => setCompleteCallId(call.call_id)}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Arandı
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Wizard Modal */}
       <Dialog open={isWizardOpen} onOpenChange={setIsWizardOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
