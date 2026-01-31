@@ -1762,6 +1762,165 @@ const Quotes = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Call Scheduling Modal */}
+      <Dialog open={isCallModalOpen} onOpenChange={setIsCallModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5 text-green-600" />
+              Arama Planla - {callQuote?.quote_number}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">{callQuote?.customer_name}</p>
+          </DialogHeader>
+          
+          {/* Yeni Arama Planla */}
+          <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 border border-green-200">
+            <h4 className="font-medium mb-3 flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Yeni Arama Planla
+            </h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Tarih *</Label>
+                <Input
+                  type="date"
+                  value={callDate}
+                  onChange={(e) => setCallDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Saat *</Label>
+                <Input
+                  type="time"
+                  value={callTime}
+                  onChange={(e) => setCallTime(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Not (Opsiyonel)</Label>
+                <Input
+                  placeholder="Arama notu..."
+                  value={callNotes}
+                  onChange={(e) => setCallNotes(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            <Button onClick={handleScheduleCall} className="mt-3 bg-green-600 hover:bg-green-700">
+              <Phone className="h-4 w-4 mr-2" />
+              Aramayı Planla
+            </Button>
+          </div>
+          
+          {/* Arama Geçmişi */}
+          <div className="flex-1 overflow-y-auto mt-4">
+            <h4 className="font-medium mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Arama Geçmişi ({callLogs.length})
+            </h4>
+            
+            {loadingCalls ? (
+              <div className="flex items-center justify-center h-24">
+                <div className="animate-spin h-6 w-6 border-4 border-green-500 border-t-transparent rounded-full" />
+              </div>
+            ) : callLogs.length === 0 ? (
+              <div className="text-center text-muted-foreground py-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                <Phone className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                <p>Henüz arama kaydı yok</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {callLogs.slice().reverse().map((log) => (
+                  <div 
+                    key={log.id} 
+                    className={cn(
+                      "p-3 rounded-lg border",
+                      log.status === 'tamamlandi' 
+                        ? "bg-green-50 dark:bg-green-950/20 border-green-200" 
+                        : "bg-amber-50 dark:bg-amber-950/20 border-amber-200"
+                    )}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={log.status === 'tamamlandi' ? 'default' : 'secondary'}
+                            className={log.status === 'tamamlandi' ? 'bg-green-600' : 'bg-amber-500'}
+                          >
+                            {log.status === 'tamamlandi' ? '✓ Arandı' : '⏳ Bekliyor'}
+                          </Badge>
+                          <span className="font-medium">
+                            {formatDateTR(log.scheduled_date)} - {log.scheduled_time}
+                          </span>
+                        </div>
+                        {log.notes && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            📝 Plan: {log.notes}
+                          </p>
+                        )}
+                        {log.result_notes && (
+                          <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                            ✓ Sonuç: {log.result_notes}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {log.created_by_name} tarafından planlandı • {formatDateTime(log.created_at)}
+                        </p>
+                        {log.completed_at && (
+                          <p className="text-xs text-green-600 mt-0.5">
+                            Tamamlandı: {formatDateTime(log.completed_at)}
+                          </p>
+                        )}
+                      </div>
+                      {log.status === 'bekliyor' && canManage && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="text-green-600 border-green-300 h-7"
+                          onClick={() => {
+                            setCompleteCallId(log.id);
+                            setCompleteCallResult('');
+                          }}
+                        >
+                          Arandı
+                        </Button>
+                      )}
+                    </div>
+                    {completeCallId === log.id && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <Input
+                          placeholder="Görüşme sonucu / not..."
+                          value={completeCallResult}
+                          onChange={(e) => setCompleteCallResult(e.target.value)}
+                          className="flex-1 h-8"
+                        />
+                        <Button 
+                          size="sm" 
+                          className="h-8 bg-green-600"
+                          onClick={() => handleCompleteCall(callQuote.id, log.id)}
+                        >
+                          Kaydet
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="h-8"
+                          onClick={() => setCompleteCallId(null)}
+                        >
+                          İptal
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Notes Modal */}
       <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>
         <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
