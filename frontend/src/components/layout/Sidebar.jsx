@@ -31,7 +31,8 @@ import {
   Banknote,
   ChevronDown,
   ChevronRight,
-  Wallet
+  Wallet,
+  Phone
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
