@@ -697,6 +697,128 @@ const Accounting = () => {
         </Card>
       </div>
 
+      {/* Yaklaşan Ödemeler Paneli */}
+      {(upcomingPayments?.total_count > 0 || upcomingPayments?.overdue?.count > 0) && (
+        <Card className="border-2 border-orange-200 dark:border-orange-800 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Clock className="h-5 w-5 text-orange-600" />
+                Yaklaşan Ödemeler
+                {upcomingPayments?.overdue?.count > 0 && (
+                  <Badge className="bg-red-500 text-white animate-pulse">
+                    {upcomingPayments.overdue.count} Gecikmiş!
+                  </Badge>
+                )}
+              </CardTitle>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Toplam Bekleyen</p>
+                <p className="text-xl font-bold text-orange-600">{formatCurrency(upcomingPayments?.total_pending)}</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {/* Gecikmiş */}
+              <div className={`p-3 rounded-lg ${upcomingPayments?.overdue?.count > 0 ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className={`h-4 w-4 ${upcomingPayments?.overdue?.count > 0 ? 'text-red-600' : 'text-gray-400'}`} />
+                  <span className="text-xs font-medium text-muted-foreground">GECİKMİŞ</span>
+                </div>
+                <p className={`text-lg font-bold ${upcomingPayments?.overdue?.count > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                  {formatCurrency(upcomingPayments?.overdue?.total || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">{upcomingPayments?.overdue?.count || 0} adet</p>
+              </div>
+
+              {/* Bugün */}
+              <div className={`p-3 rounded-lg ${upcomingPayments?.today?.count > 0 ? 'bg-orange-100 dark:bg-orange-900/30 border-2 border-orange-300' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Bell className={`h-4 w-4 ${upcomingPayments?.today?.count > 0 ? 'text-orange-600 animate-pulse' : 'text-gray-400'}`} />
+                  <span className="text-xs font-medium text-muted-foreground">BUGÜN</span>
+                </div>
+                <p className={`text-lg font-bold ${upcomingPayments?.today?.count > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+                  {formatCurrency(upcomingPayments?.today?.total || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">{upcomingPayments?.today?.count || 0} adet</p>
+              </div>
+
+              {/* Yarın */}
+              <div className={`p-3 rounded-lg ${upcomingPayments?.tomorrow?.count > 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className={`h-4 w-4 ${upcomingPayments?.tomorrow?.count > 0 ? 'text-yellow-600' : 'text-gray-400'}`} />
+                  <span className="text-xs font-medium text-muted-foreground">YARIN</span>
+                </div>
+                <p className={`text-lg font-bold ${upcomingPayments?.tomorrow?.count > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
+                  {formatCurrency(upcomingPayments?.tomorrow?.total || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">{upcomingPayments?.tomorrow?.count || 0} adet</p>
+              </div>
+
+              {/* Bu Hafta */}
+              <div className={`p-3 rounded-lg ${upcomingPayments?.this_week?.count > 0 ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-300' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className={`h-4 w-4 ${upcomingPayments?.this_week?.count > 0 ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <span className="text-xs font-medium text-muted-foreground">BU HAFTA</span>
+                </div>
+                <p className={`text-lg font-bold ${upcomingPayments?.this_week?.count > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                  {formatCurrency(upcomingPayments?.this_week?.total || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">{upcomingPayments?.this_week?.count || 0} adet</p>
+              </div>
+
+              {/* Bu Ay */}
+              <div className={`p-3 rounded-lg ${upcomingPayments?.this_month?.count > 0 ? 'bg-green-100 dark:bg-green-900/30 border border-green-300' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className={`h-4 w-4 ${upcomingPayments?.this_month?.count > 0 ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-xs font-medium text-muted-foreground">BU AY</span>
+                </div>
+                <p className={`text-lg font-bold ${upcomingPayments?.this_month?.count > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                  {formatCurrency(upcomingPayments?.this_month?.total || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">{upcomingPayments?.this_month?.count || 0} adet</p>
+              </div>
+            </div>
+
+            {/* Gecikmiş ve Bugün ödenecek detay listesi */}
+            {(upcomingPayments?.overdue?.count > 0 || upcomingPayments?.today?.count > 0) && (
+              <div className="mt-4 pt-4 border-t border-orange-200">
+                <p className="text-sm font-medium mb-2 text-orange-700">Acil Ödenecekler:</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {[...(upcomingPayments?.overdue?.items || []), ...(upcomingPayments?.today?.items || [])].slice(0, 5).map((exp, idx) => {
+                    const IconComponent = CATEGORY_ICONS[exp.category_name] || Package;
+                    const isOverdue = exp.days_remaining < 0;
+                    return (
+                      <div key={idx} className={`flex items-center justify-between p-2 rounded ${isOverdue ? 'bg-red-100 dark:bg-red-900/20' : 'bg-orange-100 dark:bg-orange-900/20'}`}>
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">{exp.category_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {isOverdue 
+                                ? <span className="text-red-600 font-medium">{Math.abs(exp.days_remaining)} gün gecikti!</span>
+                                : exp.days_remaining === 0 
+                                  ? <span className="text-orange-600 font-medium">Bugün son gün!</span>
+                                  : `${exp.days_remaining} gün kaldı`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-mono font-bold ${isOverdue ? 'text-red-600' : 'text-orange-600'}`}>
+                            {formatCurrency(exp.amount_tl || exp.amount)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{exp.due_date_formatted}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Expense Distribution Pie */}
