@@ -34,7 +34,7 @@ import {
   Plus, Search, FileText, Send, CheckCircle, XCircle, Clock, ShoppingCart,
   Eye, Pencil, Trash2, Download, Phone, Calendar, User, Package, Percent,
   DollarSign, Truck, ChevronRight, ChevronLeft, GripVertical, X, Filter,
-  AlertCircle, TrendingUp, TrendingDown, Bell
+  AlertCircle, TrendingUp, TrendingDown, Bell, MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
