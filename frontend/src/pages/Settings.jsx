@@ -66,7 +66,50 @@ const Settings = () => {
     fetchExchangeRates();
     fetchEnergyPrices();
     fetchEpdkTypes();
+    fetchCardProviders();
   }, []);
+
+  const fetchCardProviders = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/card-providers`);
+      setCardProviders(response.data || []);
+    } catch (error) {
+      console.error('Kart tedarikçileri yüklenemedi');
+    }
+  };
+
+  const handleAddCardProvider = async () => {
+    if (!newCardProviderName.trim()) {
+      toast.error('Tedarikçi adı zorunludur');
+      return;
+    }
+    
+    setSavingCardProvider(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/settings/card-providers`, {
+        name: newCardProviderName.trim()
+      });
+      setCardProviders(prev => [...prev, response.data]);
+      setNewCardProviderName('');
+      toast.success('Kart tedarikçisi eklendi');
+    } catch (error) {
+      toast.error('Tedarikçi eklenemedi');
+    } finally {
+      setSavingCardProvider(false);
+    }
+  };
+
+  const handleDeleteCardProvider = async (providerId) => {
+    if (!window.confirm('Bu tedarikçiyi silmek istediğinize emin misiniz?')) return;
+    
+    try {
+      await axios.delete(`${API_URL}/api/settings/card-providers/${providerId}`);
+      setCardProviders(prev => prev.filter(p => p.id !== providerId));
+      toast.success('Tedarikçi silindi');
+    } catch (error) {
+      toast.error('Tedarikçi silinemedi');
+    }
+  };
 
   const fetchSettings = async () => {
     try {
