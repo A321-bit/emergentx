@@ -745,13 +745,13 @@ const Quotes = () => {
       setCompleteCallId(null);
       setCompleteCallResult('');
       toast.success('Arama tamamlandı');
-      fetchUpcomingCalls();
       
       // Refresh call logs if modal is open
       if (callQuote) {
         const response = await axios.get(`${API_URL}/api/quotes/${callQuote.id}/call-logs`);
         setCallLogs(response.data || []);
       }
+      fetchData();
     } catch (error) {
       toast.error('İşlem başarısız');
     }
