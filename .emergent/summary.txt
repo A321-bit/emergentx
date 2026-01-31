@@ -1,62 +1,55 @@
 <analysis>**original_problem_statement:**
-The user wants to build a comprehensive Solar Energy Sales Management System. The initial goal was a feature-rich application for managing sales, packages, and quotes, with a focus on PDF proposals.
+The user wants to build a comprehensive Solar Energy Sales Management System.
 
-The latest user requests focus on enhancing the Sales and Quotes modules with advanced features:
-1.  **Yeni Satış Ekle (New Sale) Screen Overhaul:**
-    *   Add a + Müşteri Ekle button to quickly create a new customer from the sales screen via a modal.
-    *   Add product/package selection to a sale, with quantity, line totals, and a grand total.
-    *   Implement discount fields (% or TL) and allow the user to manually override the final net total.
-    *   For card payments, add a dropdown to select the payment provider (e.g., PayTR), managed from a new Kart Tedarikçileri section in Settings.
-    *   For wire transfers, add a dropdown to select the bank account the payment was received in, managed from the Banka Hesapları section in Settings.
-2.  **Quote Management Enhancements:**
-    *   Make the Edit button on quotes always active, regardless of the quote's status.
-    *   Add an Olumsuz (Negative) status card to the top summary and date range filtering to the quotes list.
-    *   Implement a quote-specific note-taking system where each note has a timestamp and user details.
-    *   Implement a comprehensive call scheduling and tracking system (Aranacaklar):
-        *   Create a new Aranacaklar page accessible from a new sub-menu under Teklifler.
-        *   Allow scheduling calls (date, time, note) for each quote.
-        *   The Aranacaklar page should list upcoming calls, categorized by Overdue, Today, Tomorrow, etc.
-        *   Allow marking calls as complete with a specific outcome (Görüşme Sağlandı, Ulaşılamadı, Meşgul).
-        *   Allow deleting scheduled calls.
-        *   The call scheduling modal should default to the current date and time.
-3.  **Automation & Workflow:**
-    *   When a quote's status is changed to Satışa Döndü (Converted to Sale), automatically create a new record in the Sales module, pre-filled with the quote's data (customer, products, total amount), and redirect the user to the sales page with the new record highlighted.
-    *   Add a Tahsilat (Add Payment) button on the sales list to quickly open the payment entry screen for that sale.
-    *   Add date range filtering to the Sales list.
-4.  **Latest Request:**
-    *   On the Sales page, for sales that were created from a quote, add a button to view and download the original quote's PDF.
+The most recent user requests were:
+1.  **Accounting Module Overhaul**: The user requested a complete rebuild of the Muhasebe (Accounting) page to transform it from a simple list into a powerful financial control panel. This included:
+    *   Monthly/period-based filtering.
+    *   KPI cards for income, expenses, profit, and budget.
+    *   Distinction between Fixed and Variable expenses.
+    *   Category-based expense distribution charts.
+    *   A system for recurring expenses.
+    *   Separation of Sales vs. Non-Sales income.
+    *   Accurate Net Profit calculation.
+    *   6-month trend analysis.
+    *   A feature to track the payment status of expenses (Ödendi/Ödenmedi).
+    *   A feature to add a due date (Vade Tarihi) to expenses and a dashboard to view upcoming/overdue payments.
+    *   A system to automatically transfer personnel salaries and bonuses from the personnel module into the expense records, with detailed per-employee tracking.
+2.  **City/District Selection**: The user wants to replace the free-text  and  fields in the customer creation form with dropdowns populated from a comprehensive list of all cities and districts in Turkey. The user should have the option to select from the list or enter the data manually.
+3.  **Data Persistence Clarification**: The user asked for confirmation that their data (customers, quotes, etc.) is safe and will not be deleted during application redeployments.
+4.  **Sidebar Menu Fix**: The user noticed that sub-menus in the sidebar were always open on page load and requested that they be collapsed by default.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A full-stack application (React/FastAPI/MongoDB). The backend is a single  file. The frontend is built with React and Shadcn UI. The system now has robust modules for Sales and Quotes.
+A full-stack application (React/FastAPI/MongoDB). The system features modules for Customers, Sales, Quotes, Callbacks (Aranacaklar), Personnel, and Settings.
 
-Recent major work includes:
--   A security fix for a hardcoded JWT secret.
--   A complete overhaul of the New Sale screen to include quick customer creation, detailed product/package line items, discounts, and specific payment provider/bank account tracking.
--   A new Kart Tedarikçileri (Card Providers) management tab in the Settings page.
--   A comprehensive call scheduling and tracking system (Aranacaklar) with its own dedicated page and UI.
--   An automation that converts a won quote into a sales record automatically.
--   Various UI/UX improvements like date filtering on Quotes and Sales pages, and making quote action buttons always active.
--   A new sub-menu navigation system in the sidebar.
+The most significant recent change is a complete, feature-rich overhaul of the **Accounting () module**. It now functions as a comprehensive financial dashboard with KPIs, charts, trend analysis, expense payment tracking, due date management, and automated personnel expense integration.
+
+The backend remains a single  file, which has grown significantly more complex. The frontend uses React with Shadcn UI components.
 
 **Last working item**:
--   **Last item agent was working**: The user requested to add a feature to the Sales list. For any sale that originated from a quote, there should be a button to view and download the original quote's PDF. The agent has acknowledged the request but has not yet started implementation.
--   **Status**: NOT STARTED
--   **Agent Testing Done**: N/A
--   **Which testing method agent to use?**: backend testing agent (to verify the PDF endpoint is correctly called) and screenshot tool (to verify the button is present and works).
--   **User Testing Done**: N/A
+-   **Last item agent was working**: Implementing the city and district selection feature for the customer creation form. The agent has created a data source (), added the necessary backend endpoints to serve city and district data, and updated the  frontend to replace the text inputs with combobox-style dropdowns.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: screenshot tool. The agent has verified that the İl (City) dropdown populates correctly with all 81 cities and that the manual entry option is present. The next step is to verify that selecting a city correctly populates the İlçe (District) dropdown and that the data saves correctly upon form submission.
+-   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** (P0) Implement PDF Download for Quote-Generated Sales
-    -   **Description**: On the  page, for each sale row that has an associated , a new button (e.g., an icon button) should be added. Clicking this button should trigger the download of the PDF for that specific quote by calling the  endpoint.
-    -   **Status**: NOT STARTED
+-   **Issue 1:** (P0) Finalize and Test City/District Selection Feature
+    -   **Description**: The city/district selection feature in the customer creation/edit modal is partially implemented. The final steps are to verify that the district dropdown populates dynamically based on the selected city and to test the full end-to-end flow of creating/updating a customer with the new dropdowns.
+    -   **Attempted fixes**: The agent successfully implemented the backend and the city dropdown UI.
+    -   **Next debug checklist**:
+        1.  In , confirm the  hook that fetches districts is correctly triggered when the  state changes.
+        2.  Use the screenshot tool to select a city (e.g., İstanbul) and verify the district dropdown is populated with the correct districts (Adalar, Bakırköy, etc.).
+        3.  Create a new customer using the dropdowns and verify the  and  fields are saved correctly in the database.
+    -   **Why fix this issue and what will be achieved with the fix?**: This will complete the user's request for standardized and user-friendly address entry, reducing data entry errors.
+    -   **Status**: IN PROGRESS
     -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: Both
+    -   **Should Test frontend/backend/both after fix?**: Frontend
 
 **In progress Task List**:
 -   **Task 1:** (P2) Off-Grid 3-Segment Pricing System.
-    -   **Where to resume**: The core logic in  and  is implemented. The UI in  is also partially complete.
+    -   **Where to resume**: Core logic in  and UI in  are partially complete.
     -   **What will be achieved with this?** This will allow generating a single PDF with three different price points (Economic, Standard, Premium) for Off-Grid systems.
     -   **Status**: BLOCKED (Paused by user).
     -   **Should Test frontend/backend/both after fix?** Both.
@@ -64,115 +57,103 @@ Recent major work includes:
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **P1: Personnel & Payroll Module (Phases 3-5):** Implement Advance (Avans), Bonus (Prim), and Employee expense management, followed by PDF payroll generation.
+-   **P1: Personnel & Payroll Module (Phases 3-5):** Implement Advance (Avans), Bonus (Prim), and Employee expense management, followed by PDF payroll generation. (Note: Bonus and salary expenses are now automated, but Avans and PDF generation are pending).
 -   **P2: XML B2B Integration:** Implement product import from a B2B XML feed.
 
-**Future Tasks:**
+**Future Tasks (from PRD & user suggestions):**
 -   **WhatsApp Quote Sending:** Integrate an API to send the generated PDF via WhatsApp.
 -   **PayTR Integration:** Add installment calculation and payment options.
--   **Accounting Module:** Fully build out the dedicated Muhasebe page.
+-   **Accounting Module PDF Report:** Add a button to download a comprehensive monthly financial report as a PDF.
+-   **Dashboard Widgets:** Add a Yaklaşan Ödemeler (Upcoming Payments) widget to the main dashboard.
 -   **Refactor :** Break down the monolithic file into routers and models.
--   **Refactor  & :** Extract the complex logic into smaller, dedicated components.
+-   **Refactor :** Decompose the massive , , and  pages into smaller, manageable components.
 
 **Completed work in this session**
--   **Deployment Readiness:** Fixed a critical security vulnerability by removing a hardcoded JWT secret fallback and moving the secret to the  file.
--   **Sales Module Overhaul:**
-    -   Implemented a completely new New Sale modal with multi-step-like functionality.
-    -   Added quick customer creation from the sales modal.
-    -   Added line-item product/package selection, with totals, discounts, and a manual override for the net amount.
-    -   Added tracking for card payment providers and bank accounts for wire transfers.
-    -   Created a Kart Tedarikçileri management tab in the Settings page.
-    -   Added date-range filtering to the Sales list page.
--   **Quote-to-Sale Automation:**
-    -   When a quote is marked Satışa Döndü, a sales record is now automatically created with all relevant data.
-    -   The user is redirected to the Sales page, and the newly created sale is highlighted for immediate attention.
-    -   Added a Tahsilat (Add Payment) button to the sales list for quick payment entry.
--   **Quote Management Enhancements:**
-    -   Made Edit and Status Change buttons on the quotes list always active, regardless of quote status.
-    -   Added an Olumsuz (Negative) status card and date-range filtering to the Quotes page.
-    -   Implemented a quote-specific note-taking feature with a dedicated modal to view/add/delete notes with timestamps.
--   **Call Scheduling System ():**
-    -   Created a new Aranacaklar page () to track all scheduled sales calls.
-    -   Added a sub-menu under Teklifler in the sidebar to navigate to Tüm Teklifler and Aranacaklar.
-    -   Implemented functionality to schedule calls for quotes with a date, time, and note.
-    -   The Aranacaklar page categorizes calls by status (Overdue, Today, Tomorrow, etc.).
-    -   Implemented functionality to mark calls as complete with outcomes (Görüşme Sağlandı, Ulaşılamadı, Meşgul) and add a completion note.
-    -   Added the ability to delete scheduled (but not yet completed) calls.
--   **General Fixes:**
-    -   Corrected the customer list sorting to show the most recently added customers first.
+-   **PDF Download for Quote-Generated Sales**: Added a download button to the Sales list to get the PDF of the original quote.
+-   **Sidebar Menu UI Fix**: Corrected the sidebar behavior so that sub-menus are collapsed by default.
+-   **Accounting Module Complete Overhaul**:
+    -   Implemented a new, modern UI for .
+    -   Added a dynamic date-picker for monthly filtering.
+    -   Created KPI cards for Total Income, Total Expense (split by Fixed/Variable), Gross Profit, and Net Profit (with Zarar warning).
+    -   Implemented an expense distribution pie chart and a Top 3 Expenses list.
+    -   Added a 6-month financial trend chart.
+    -   Added expense payment tracking: expenses can be marked as Paid, and unpaid expenses are highlighted.
+    -   Created an Unpaid Expenses summary card.
+    -   Added due date tracking for expenses, with an Upcoming Payments dashboard panel showing overdue, due today, tomorrow, etc.
+    -   Automated personnel expense creation: A new tab allows transferring all employee salaries and bonuses for the month into the expenses list with a single click, creating detailed, per-person expense records.
+-   **Data Persistence Explanation**: Provided a clear, formatted explanation to the user about how data is preserved during deployments.
+-   **City/District Selection (In Progress)**: Began implementation of dropdowns for city/district selection in the customer form.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Backend:** FastAPI, Pydantic
--   **Frontend:** React, Shadcn/UI, , , 
+-   **Frontend:** React, Shadcn/UI, Recharts (for graphs), 
 -   **Database:** MongoDB
 -   **Authentication:** JWT
 
 **key DB schema**
--   ****: Heavily modified. Now includes , , , , .
--   ****: Now includes  and .
--   ****: Now contains  and has an updated structure for .
+-   ****: Heavily modified. New fields added: , , ,  (fixed/variable), , .
+-   ****: Modified. New field added: .
+-   ****: The  and  fields are now intended to be used with the new dropdown system.
 
 **All files of reference**
--   : Heavily modified to add new Pydantic models (, , ), new CRUD endpoints for these models, and the automation logic for converting quotes to sales.
--   : Almost completely rewritten to support the new sales modal, product/payment details, date filtering, and the Tahsilat button.
--   : Heavily modified to integrate the notes and call scheduling modals, and to trigger the sales conversion automation. The Aranacaklar section was removed from this file.
--   : Modified to add the new Kart Tedarikçileri tab and its associated logic.
--   : Updated to support collapsible, nested menu items.
--   : New page created to display and manage all scheduled calls.
--   : Updated with the new route for the Callbacks page.
+-   : Heavily modified to add a large number of endpoints for the new accounting module and the city/district data.
+-   : Completely overwritten with a new implementation for the financial dashboard.
+-   : Modified to replace text inputs for city/district with  components.
+-   : Modified to add the PDF download icon and handler.
+-   : Modified to change the initial state of .
+-   : New file created to hold the city and district data.
+-   : Updated to reflect completed work and log new user-approved improvement ideas.
 
 **Areas that need refactoring**:
--   : Critically oversized. Urgently needs to be broken down into separate files for routers (), models (), and services.
--   : Extremely large. The logic for the main table, various modals (edit, view, notes, calls), and state management should be extracted into smaller, dedicated components.
--   : Now also extremely large and complex. The sales creation/editing modal is a prime candidate for extraction into its own component.
+-   : Now critically oversized (over 5000 lines). Breaking this into routers (), models (), and services is the highest priority refactoring task.
+-   : This new file is extremely large and complex (~1600 lines). The various sections (KPIs, charts, tabs, modals) must be extracted into their own components to be maintainable.
+-   : The customer modal logic is growing and could be extracted into a separate component.
 
 **key api endpoints**
--   **POST/GET/PUT/DELETE **: Manages Card Payment Providers.
--   **POST/GET **: Manages notes for a quote.
--   **DELETE **: Deletes a specific note.
--   **POST/GET **: Manages call logs for a quote.
--   **PUT **: Marks a call log as complete.
--   **DELETE **: Deletes a call log.
--   **GET **: Fetches all scheduled calls across all quotes.
--   **PUT **: Updated to return a  when status is satisa_dondu.
+-   **GET **: Returns a list of all cities in Turkey.
+-   **GET **: Returns districts for a given city.
+-   **GET **: The main endpoint for the accounting dashboard, returns all KPIs and chart data.
+-   **GET **: Returns data for the 6-month trend chart.
+-   **PUT **: Marks an expense as paid or unpaid.
+-   **GET **: Returns a summary of upcoming and overdue expenses.
+-   **POST **: Creates expense records for all active personnel salaries and bonuses.
 
 **Critical Info for New Agent**
--   The user is driving the development with very specific, multi-part feature requests. Read user requests carefully.
--   The immediate next task is to add a PDF download button to the Sales list for quote-generated sales.
--   The codebase is growing in complexity. The monolith  and the large React page components (, ) are significant technical debt. While refactoring is a Future Task, be mindful of this when adding new code and try not to increase the complexity further if possible.
--   The agent has established a good workflow: understand the request, update backend models, update backend endpoints, update the frontend UI, and then test. Follow this pattern.
+-   The user is highly engaged and provides detailed, multi-part feature requests. Expect to build comprehensive modules, not just small features.
+-   The immediate task is to finish and test the city/district selection feature on the  page.
+-   The new  page is the application's centerpiece but is also a significant piece of technical debt due to its size. Be cautious when making changes there.
+-   The agent has started a good practice of adding user-approved İyileştirme Önerileri (Improvement Suggestions) to the . Continue this.
+-   The user appreciates proactive suggestions and detailed implementations that consider edge cases they might not have thought of (e.g., the Upcoming Payments panel).
 
 **documents and test reports created in this job**
 -    (Updated)
--   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Add call cancellation (delete) functionality. Also, make the call scheduler modal default to the current date/time. (Completed)
-2.  **Agent**: Acknowledged and implemented both features.
-3.  **User**: When a quote is marked Satışa Döndü, automatically create a Sales record and redirect the user. Also, add a Tahsilat Ekle (Add Payment) button to the sales list. (Completed)
-4.  **Agent**: Acknowledged and implemented the automation and the new button.
-5.  **Agent**: Confirmed via testing that the automation works and the new sales record appears on the Sales page, highlighted, with the Tahsilat button.
-6.  **User**: OK, now add date range filtering to the sales screen. (Completed)
-7.  **Agent**: Acknowledged and implemented date filtering on the Sales page.
-8.  **Agent**: Confirmed via screenshot that the date filter UI is present and working.
-9.  **User**: For sales that came from a quote, add a button to view and download the quote's PDF. (Pending - This is the highest priority task)
-10. **Agent**: Acknowledged the request. (Session ended before implementation).
+1.  **User**: Add a due date to expenses and show me upcoming/overdue payments.
+2.  **Agent**: Implemented due dates and an upcoming payments panel.
+3.  **User**: Automate personnel expense creation. Pull salaries and bonuses from the personnel list and add them as expenses. Show per-person details.
+4.  **Agent**: Implemented the personnel expense automation system.
+5.  **User**: Will my data (customers, quotes, etc.) be deleted when I redeploy?
+6.  **Agent**: Responded with a detailed explanation confirming that data is safe and stored separately from the code.
+7.  **User**: Change the customer creation form to use dropdowns for Turkish cities and districts. It should support both selection and manual entry.
+8.  **Agent**: Acknowledged and started implementation.
+9.  **User**:  (continue)
+10. **Agent**: Continued with the implementation of the city/district feature.
 
 **Project Health Check:**
 -   **Broken:** None.
--   **Mocked:** The  page is still a placeholder.
--   **Awaiting User Verification:** The latest feature request (PDF download button on sales page) is not yet implemented.
+-   **Mocked:** Some of the newly created sub-menu items under Muhasebe in the sidebar (e.g., Puantaj, Bordro) likely point to placeholder pages or are not yet fully implemented.
 
 **3rd Party Integrations**
--   None added in this session.
+-   None added.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, for the Sales module overhaul ().
+-   **Testing agent used after significant changes:** NO. The accounting module was tested manually with extensive screenshots and  commands.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None, apart from the testing agent report.
+-   **Test files created:** None.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
@@ -180,4 +161,4 @@ Recent major work includes:
 -   **Password:** 
 
 **What agent forgot to execute**
--   The agent did not forget anything. All user requests in the session were addressed. The last request to add a PDF download button is the pending task for the next agent.</analysis>
+-   The agent did not forget anything but was in the middle of verifying the city/district feature when the session ended. The final step of testing the dynamic district dropdown and the save functionality is pending.</analysis>
