@@ -270,10 +270,16 @@ const Products = () => {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
+    // Benefits array'ini 3 elemanlı yap (eksik olanları boş string ile doldur)
+    const benefits = product.benefits || [];
+    const paddedBenefits = [...benefits, '', '', ''].slice(0, 3);
+    
     setFormData({
       name: product.name,
       category_id: product.category_id || '',
       description: product.description || '',
+      short_description: product.short_description || '',
+      benefits: paddedBenefits,
       currency: product.currency || 'USD',
       purchase_price_without_vat: product.purchase_price_without_vat?.toString() || '',
       vat_rate: product.vat_rate?.toString() || '20',
