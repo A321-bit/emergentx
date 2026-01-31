@@ -6,6 +6,16 @@
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
+### 31 Ocak 2026 - Yeni Satış Ekranı Geliştirmesi
+- **Hızlı Müşteri Ekleme:** "+ Müşteri Ekle" butonu ile satış ekranından direkt müşteri oluşturma
+- **Ürün/Paket Seçimi:** Satışa ürün veya paket ekleme, adet ve birim fiyat girişi
+- **İskonto Sistemi:** % veya TL bazlı iskonto, otomatik net toplam hesaplama
+- **Kart Tedarikçi Seçimi:** Kart ödemelerinde hangi sistemden çekildiği (PayTR, Endesan vb.)
+- **Ayarlar > Kart Tedarikçileri:** Yeni tab ile tedarikçi CRUD yönetimi
+- **Banka Hesabı Seçimi:** Havale ödemelerinde hangi bankaya geldiği
+- **Havale Para Birimi:** TL veya USD seçimi ve USD tutarı girişi
+- **Raporlama:** Tüm ödeme detayları (tedarikçi, banka, para birimi) kaydediliyor
+
 ### 31 Ocak 2026 - Güvenlik Düzeltmesi (Deployment Readiness)
 - JWT_SECRET hardcoded fallback değeri kaldırıldı
 - Güçlü rastgele JWT_SECRET oluşturuldu ve .env dosyasına eklendi
