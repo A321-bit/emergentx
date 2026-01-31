@@ -350,6 +350,10 @@ const Settings = () => {
             <Zap className="h-4 w-4" />
             Enerji Fiyatları
           </TabsTrigger>
+          <TabsTrigger value="cardproviders" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Kart Tedarikçileri
+          </TabsTrigger>
         </TabsList>
 
         {/* Company Tab */}
