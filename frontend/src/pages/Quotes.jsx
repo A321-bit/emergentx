@@ -1153,41 +1153,56 @@ const Quotes = () => {
                         <TableCell className="text-sm text-muted-foreground">{call.responsible}</TableCell>
                         <TableCell className="text-sm max-w-[200px] truncate">{call.notes || '-'}</TableCell>
                         <TableCell className="text-right">
-                          {completeCallId === call.call_id ? (
-                            <div className="flex items-center gap-1">
-                              <Input
-                                placeholder="Sonuç notu..."
-                                value={completeCallResult}
-                                onChange={(e) => setCompleteCallResult(e.target.value)}
-                                className="h-7 text-xs w-32"
-                              />
+                          {(() => {
+                            const callDateTime = new Date(`${call.scheduled_date}T${call.scheduled_time}:00`);
+                            const now = new Date();
+                            const isDue = callDateTime <= now;
+                            
+                            if (!isDue) {
+                              return (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Bekliyor
+                                </Badge>
+                              );
+                            }
+                            
+                            return completeCallId === call.call_id ? (
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  placeholder="Sonuç notu..."
+                                  value={completeCallResult}
+                                  onChange={(e) => setCompleteCallResult(e.target.value)}
+                                  className="h-7 text-xs w-32"
+                                />
+                                <Button 
+                                  size="sm" 
+                                  className="h-7 bg-green-600" 
+                                  onClick={() => handleCompleteCall(call.quote_id, call.call_id)}
+                                >
+                                  ✓
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-7" 
+                                  onClick={() => { setCompleteCallId(null); setCompleteCallResult(''); }}
+                                >
+                                  ✕
+                                </Button>
+                              </div>
+                            ) : (
                               <Button 
                                 size="sm" 
-                                className="h-7 bg-green-600" 
-                                onClick={() => handleCompleteCall(call.quote_id, call.call_id)}
+                                variant="outline" 
+                                className="h-7 text-green-600 border-green-300"
+                                onClick={() => setCompleteCallId(call.call_id)}
                               >
-                                ✓
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Arandı
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-7" 
-                                onClick={() => { setCompleteCallId(null); setCompleteCallResult(''); }}
-                              >
-                                ✕
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="h-7 text-green-600 border-green-300"
-                              onClick={() => setCompleteCallId(call.call_id)}
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Arandı
-                            </Button>
-                          )}
+                            );
+                          })()}
                         </TableCell>
                       </TableRow>
                     );
