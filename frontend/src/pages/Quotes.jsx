@@ -1792,17 +1792,28 @@ const Quotes = () => {
                         )}
                       </div>
                       {log.status === 'bekliyor' && canManage && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="text-green-600 border-green-300 h-7"
-                          onClick={() => {
-                            setCompleteCallId(log.id);
-                            setCompleteCallResult('');
-                          }}
-                        >
-                          Arandı
-                        </Button>
+                        <div className="flex flex-col gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="text-green-600 border-green-300 h-7"
+                            onClick={() => {
+                              setCompleteCallId(log.id);
+                              setCompleteCallResult('');
+                            }}
+                          >
+                            Arandı
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-700 h-7"
+                            onClick={() => handleDeleteCallLog(log.id)}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Sil
+                          </Button>
+                        </div>
                       )}
                     </div>
                     {completeCallId === log.id && (
