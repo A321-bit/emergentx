@@ -730,7 +730,6 @@ const Quotes = () => {
       setCallTime('');
       setCallNotes('');
       toast.success('Arama planlandı');
-      fetchUpcomingCalls();
       fetchData();
     } catch (error) {
       toast.error('Arama planlanamadı');
