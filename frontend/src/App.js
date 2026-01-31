@@ -18,6 +18,7 @@ import Stock from "./pages/Stock";
 import Customers from "./pages/Customers";
 import CustomerSettings from "./pages/CustomerSettings";
 import Quotes from "./pages/Quotes";
+import Callbacks from "./pages/Callbacks";
 import Dealers from "./pages/Dealers";
 import DealerGroups from "./pages/DealerGroups";
 import Sales from "./pages/Sales";
