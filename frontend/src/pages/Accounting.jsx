@@ -1501,6 +1501,16 @@ const Accounting = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>Vade Tarihi (Son Ödeme)</Label>
+              <Input
+                type="date"
+                value={expenseForm.due_date}
+                onChange={(e) => setExpenseForm(prev => ({ ...prev, due_date: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">Bu tarihe kadar ödenmesi gereken son gün</p>
+            </div>
+
+            <div className="space-y-2">
               <Label>Açıklama</Label>
               <Input
                 value={expenseForm.description}
