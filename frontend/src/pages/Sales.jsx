@@ -132,6 +132,19 @@ const Sales = () => {
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('finance_manage');
 
+  // URL'den highlight parametresini kontrol et
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    if (highlightId) {
+      setHighlightedSaleId(highlightId);
+      // 5 saniye sonra highlight'ı kaldır
+      setTimeout(() => {
+        setHighlightedSaleId(null);
+        setSearchParams({});
+      }, 5000);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     fetchData();
     fetchExchangeRate();
