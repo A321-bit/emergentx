@@ -1214,6 +1214,260 @@ const Accounting = () => {
           </Card>
         </TabsContent>
 
+        {/* Personnel Expenses Tab */}
+        <TabsContent value="personnel-expenses" className="space-y-4">
+          {/* Özet Kartları */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Users className="h-8 w-8 text-blue-600" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Toplam Maaş</p>
+                    <p className="text-xl font-bold text-blue-600">{formatCurrency(personnelExpenses?.total_salary || 0)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Toplam Prim</p>
+                    <p className="text-xl font-bold text-purple-600">{formatCurrency(personnelExpenses?.total_bonus || 0)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Wallet className="h-8 w-8 text-orange-600" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Toplam Personel Gideri</p>
+                    <p className="text-xl font-bold text-orange-600">{formatCurrency(personnelExpenses?.total || 0)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Users className="h-8 w-8 text-gray-600" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Personel Sayısı</p>
+                    <p className="text-xl font-bold text-gray-600">{personnelExpenses?.personnel_count || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Maaş Aktarım Butonu */}
+          {canManage && (
+            <Card className="border-dashed border-2 border-blue-300 bg-blue-50/50 dark:bg-blue-900/10">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h4 className="font-medium text-blue-700">Personel Maaşlarını Giderlere Aktar</h4>
+                    <p className="text-sm text-muted-foreground">Personel listesindeki maaşları ve primleri bu aya gider olarak ekle</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm whitespace-nowrap">Vade Günü:</Label>
+                      <Select value={salaryDueDay.toString()} onValueChange={(v) => setSalaryDueDay(parseInt(v))}>
+                        <SelectTrigger className="w-20 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+                            <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={handleGenerateSalaryExpenses} className="bg-blue-600 hover:bg-blue-700">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Maaşları Aktar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Personel Bazlı Gider Listesi */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Personel Bazlı Giderler</CardTitle>
+              <CardDescription>Her personelin maaş ve prim giderleri</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Personel</TableHead>
+                    <TableHead className="text-right">Maaş</TableHead>
+                    <TableHead className="text-right">Prim</TableHead>
+                    <TableHead className="text-right">Toplam</TableHead>
+                    <TableHead className="text-center">Durum</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {personnelExpenses?.by_personnel?.map((person) => {
+                    const unpaidItems = person.items?.filter(i => !i.is_paid) || [];
+                    const allPaid = unpaidItems.length === 0 && person.items?.length > 0;
+                    
+                    return (
+                      <TableRow key={person.personnel_id} className={!allPaid && person.items?.length > 0 ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Users className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-medium">{person.personnel_name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-blue-600">
+                          {formatCurrency(person.salary)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-purple-600">
+                          {formatCurrency(person.bonus)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono font-bold">
+                          {formatCurrency(person.total)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {person.items?.length > 0 ? (
+                            allPaid ? (
+                              <Badge className="bg-green-500 text-white">
+                                <Check className="h-3 w-3 mr-1" /> Ödendi
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-orange-400 text-orange-600">
+                                <Clock className="h-3 w-3 mr-1" /> {unpaidItems.length} Bekliyor
+                              </Badge>
+                            )
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {(!personnelExpenses?.by_personnel || personnelExpenses.by_personnel.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        Bu dönemde personel gideri bulunamadı. Maaşları aktarmak için yukarıdaki butonu kullanın.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Detaylı Gider Listesi */}
+          {personnelExpenses?.by_personnel?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Detaylı Ödeme Listesi</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Personel</TableHead>
+                      <TableHead>Tür</TableHead>
+                      <TableHead>Açıklama</TableHead>
+                      <TableHead>Vade</TableHead>
+                      <TableHead className="text-right">Tutar</TableHead>
+                      <TableHead className="text-center">Ödeme</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {personnelExpenses?.by_personnel?.flatMap(person => 
+                      person.items?.map(item => {
+                        const dueDate = item.due_date ? new Date(item.due_date) : null;
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        let dueStatus = null;
+                        if (dueDate && !item.is_paid) {
+                          dueDate.setHours(0, 0, 0, 0);
+                          const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                          if (diffDays < 0) dueStatus = 'overdue';
+                          else if (diffDays === 0) dueStatus = 'today';
+                          else if (diffDays === 1) dueStatus = 'tomorrow';
+                        }
+                        
+                        return (
+                          <TableRow key={item.id} className={dueStatus === 'overdue' ? 'bg-red-50 dark:bg-red-900/10' : ''}>
+                            <TableCell className="font-medium">{item.personnel_name}</TableCell>
+                            <TableCell>
+                              <Badge variant={item.category_name === 'Personel Maaşları' ? 'default' : 'secondary'}>
+                                {item.category_name === 'Personel Maaşları' ? 'Maaş' : 'Prim'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                              {item.description}
+                            </TableCell>
+                            <TableCell>
+                              {item.due_date ? (
+                                <div className={`text-xs ${
+                                  item.is_paid ? 'text-muted-foreground' :
+                                  dueStatus === 'overdue' ? 'text-red-600 font-bold' :
+                                  dueStatus === 'today' ? 'text-orange-600 font-bold' :
+                                  'text-muted-foreground'
+                                }`}>
+                                  {formatDate(item.due_date)}
+                                  {!item.is_paid && dueStatus === 'overdue' && <span className="block text-[10px]">Gecikmiş!</span>}
+                                  {!item.is_paid && dueStatus === 'today' && <span className="block text-[10px]">Bugün!</span>}
+                                </div>
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-mono font-medium">
+                              {formatCurrency(item.amount_tl || item.amount)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {canManage ? (
+                                <Button
+                                  variant={item.is_paid ? "default" : "outline"}
+                                  size="sm"
+                                  className={`h-7 px-2 ${item.is_paid 
+                                    ? 'bg-green-500 hover:bg-green-600 text-white' 
+                                    : 'border-orange-300 text-orange-600 hover:bg-orange-50'}`}
+                                  onClick={() => item.is_paid ? handleMarkUnpaid(item.id) : handleMarkPaid(item.id)}
+                                >
+                                  {item.is_paid ? (
+                                    <>
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Ödendi
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Bekliyor
+                                    </>
+                                  )}
+                                </Button>
+                              ) : (
+                                <Badge variant={item.is_paid ? 'default' : 'destructive'}>
+                                  {item.is_paid ? 'Ödendi' : 'Bekliyor'}
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }) || []
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* Incomes Tab */}
         <TabsContent value="incomes" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
