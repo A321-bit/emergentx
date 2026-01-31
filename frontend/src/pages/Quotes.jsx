@@ -166,6 +166,7 @@ const SortableItem = ({ item, index, formatTRY, onQuantityUpdate, onRemove }) =>
 const Quotes = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [quotes, setQuotes] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [customerCategories, setCustomerCategories] = useState([]);
