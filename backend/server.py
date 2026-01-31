@@ -715,6 +715,8 @@ class ExpenseBase(BaseModel):
     attachment_url: Optional[str] = None  # Fatura/fiş dosyası
     is_recurring_generated: bool = False  # Tekrarlayan giderden mi oluşturuldu
     recurring_expense_id: Optional[str] = None  # Hangi tekrarlayan giderden
+    is_paid: bool = False  # Ödendi mi?
+    paid_date: Optional[datetime] = None  # Ödeme tarihi
 
 class ExpenseCreate(ExpenseBase):
     pass
