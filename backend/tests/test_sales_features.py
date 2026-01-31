@@ -123,7 +123,7 @@ class TestBankAccounts:
         # Verify persistence
         get_response = requests.get(f"{BASE_URL}/api/settings/sale-bank-accounts", headers=headers)
         accounts = get_response.json()
-        found = any(a["id"] == data["id"] for a in accounts)
+        found = any(a.get("id") == data["id"] for a in accounts)
         assert found, "Created account not found in list"
         print(f"✓ Bank account persisted and verified")
         
@@ -169,7 +169,7 @@ class TestBankAccounts:
         # Verify deletion
         get_response = requests.get(f"{BASE_URL}/api/settings/sale-bank-accounts", headers=headers)
         accounts = get_response.json()
-        found = any(a["id"] == account_id for a in accounts)
+        found = any(a.get("id") == account_id for a in accounts)
         assert not found, "Deleted account should not be in list"
         print(f"✓ Bank account deleted and verified")
 
