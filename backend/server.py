@@ -2468,6 +2468,119 @@ async def delete_quote_note(
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     return {"message": "Not silindi"}
 
+# ==================== CALL LOGS (ARAMA TAKİP) ====================
+
+@api_router.get("/quotes/{quote_id}/call-logs")
+async def get_quote_call_logs(quote_id: str, current_user: dict = Depends(require_permission("quotes_view"))):
+    """Get all call logs for a quote"""
+    quote = await db.quotes.find_one({"id": quote_id, "is_active": True}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    return quote.get("call_logs", [])
+
+@api_router.post("/quotes/{quote_id}/call-logs")
+async def add_call_log(
+    quote_id: str, 
+    call_data: CallLogCreate,
+    current_user: dict = Depends(require_permission("quotes_manage"))
+):
+    """Add a new call log entry to a quote"""
+    quote = await db.quotes.find_one({"id": quote_id, "is_active": True}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Teklif bulunamadı")
+    
+    new_call = {
+        "id": str(uuid.uuid4()),
+        "scheduled_date": call_data.scheduled_date,
+        "scheduled_time": call_data.scheduled_time,
+        "notes": call_data.notes,
+        "status": "bekliyor",
+        "result_notes": None,
+        "completed_at": None,
+        "created_by": current_user.get("user_id", ""),
+        "created_by_name": current_user.get("name", "Bilinmeyen"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Update quote with new call log and set callback fields
+    await db.quotes.update_one(
+        {"id": quote_id},
+        {
+            "$push": {"call_logs": new_call},
+            "$set": {
+                "callback_required": True,
+                "callback_date": call_data.scheduled_date,
+                "callback_time": call_data.scheduled_time,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return new_call
+
+@api_router.put("/quotes/{quote_id}/call-logs/{call_id}/complete")
+async def complete_call_log(
+    quote_id: str,
+    call_id: str,
+    data: dict,
+    current_user: dict = Depends(require_permission("quotes_manage"))
+):
+    """Mark a call as completed with result notes"""
+    result_notes = data.get("result_notes", "")
+    
+    # Update the specific call log
+    await db.quotes.update_one(
+        {"id": quote_id, "call_logs.id": call_id},
+        {
+            "$set": {
+                "call_logs.$.status": "tamamlandi",
+                "call_logs.$.result_notes": result_notes,
+                "call_logs.$.completed_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"message": "Arama tamamlandı olarak işaretlendi"}
+
+@api_router.get("/quotes/all-upcoming-calls")
+async def get_all_upcoming_calls(current_user: dict = Depends(require_permission("quotes_view"))):
+    """Get all upcoming calls from all quotes, sorted by date/time"""
+    quotes = await db.quotes.find(
+        {"is_active": True, "call_logs": {"$exists": True, "$ne": []}},
+        {"_id": 0, "id": 1, "quote_number": 1, "customer_name": 1, "call_logs": 1, "created_by_name": 1}
+    ).to_list(10000)
+    
+    upcoming_calls = []
+    now = datetime.now(timezone.utc)
+    
+    for quote in quotes:
+        for call in quote.get("call_logs", []):
+            if call.get("status") == "bekliyor":
+                try:
+                    scheduled_datetime = datetime.fromisoformat(f"{call['scheduled_date']}T{call['scheduled_time']}:00")
+                    scheduled_datetime = scheduled_datetime.replace(tzinfo=timezone.utc)
+                except:
+                    scheduled_datetime = now
+                
+                upcoming_calls.append({
+                    "quote_id": quote["id"],
+                    "quote_number": quote.get("quote_number", ""),
+                    "customer_name": quote.get("customer_name", ""),
+                    "responsible": quote.get("created_by_name", ""),
+                    "call_id": call["id"],
+                    "scheduled_date": call["scheduled_date"],
+                    "scheduled_time": call["scheduled_time"],
+                    "notes": call.get("notes", ""),
+                    "created_by_name": call.get("created_by_name", ""),
+                    "sort_datetime": scheduled_datetime.isoformat()
+                })
+    
+    # Sort by scheduled datetime (nearest first)
+    upcoming_calls.sort(key=lambda x: x["sort_datetime"])
+    
+    return upcoming_calls
+
 
 async def calculate_segment_items(items: list, db) -> dict:
     """Calculate items for each price segment (ekonomik, standart, premium)"""
