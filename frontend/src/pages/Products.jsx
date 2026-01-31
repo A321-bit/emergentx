@@ -370,6 +370,8 @@ const Products = () => {
       name: '',
       category_id: '',
       description: '',
+      short_description: '',
+      benefits: ['', '', ''],
       currency: 'USD',
       purchase_price_without_vat: '',
       vat_rate: '20',
