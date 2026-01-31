@@ -180,6 +180,8 @@ const Quotes = () => {
   const [customerStatusFilter, setCustomerStatusFilter] = useState('all');
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showUpcomingCallbacks, setShowUpcomingCallbacks] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   
   // Wizard customer filter
   const [wizardCategoryFilter, setWizardCategoryFilter] = useState('all');
