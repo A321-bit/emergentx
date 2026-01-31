@@ -6,11 +6,49 @@
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
+### 31 Ocak 2026 - Muhasebe Modülü Tam Yenileme 🎉
+**Kapsamlı Gelir/Gider Yönetimi ve Raporlama Sistemi**
+
+#### Ana Özellikler:
+- **Dönem Bazlı Filtreleme:** Ay/Yıl seçici, tarih aralığı desteği, "Bugün" butonu
+- **5 KPI Kartı:** Toplam Gelir, Toplam Gider (Sabit/Değişken ayrımı), Brüt Kâr, Net Kâr (Zarar uyarısı), Bütçe Durumu
+- **Sabit/Değişken Gider Ayrımı:** Kategorilere expense_type eklendi, otomatik sınıflandırma
+- **Gelir Türleri:** Satış Geliri (satışlardan otomatik) vs Satış Dışı Gelir (manuel)
+- **Net Kâr Hesaplama:** Brüt Kâr - Toplam Gider, Kâr Marjı %, Zarar durumunda kırmızı uyarı
+
+#### Görsel Raporlama:
+- **Gider Dağılımı:** Kategori bazlı pasta grafik
+- **En Yüksek 3 Gider:** Yüzde ile progress bar gösterimi
+- **6 Aylık Trend:** Alan grafik ile gelir/gider/kâr karşılaştırması
+- **Trend Yorumu:** "Geçen aya göre %X artış/azalış" otomatik yorumlar
+
+#### Tekrarlayan Gider Sistemi:
+- Kategori, tutar, ayın günü seçimi
+- "Bu Ay İçin Oluştur" butonu ile otomatik gider oluşturma
+- Aktif/Pasif durumu, düzenleme ve silme
+
+#### Bütçe Takibi:
+- Aylık toplam bütçe tanımlama
+- Gerçekleşen/Bütçe karşılaştırması
+- Progress bar ile kullanım yüzdesi
+- Bütçe aşımı durumunda uyarı
+
+#### Yeni Backend Endpoint'leri:
+- `GET/POST /api/incomes` - Satış dışı gelirler
+- `GET/POST /api/budgets` - Bütçe yönetimi
+- `GET/POST/PUT/DELETE /api/recurring-expenses` - Tekrarlayan giderler
+- `POST /api/recurring-expenses/generate` - Otomatik gider oluşturma
+- `GET /api/accounting/trend` - 6 aylık trend verisi
+- Güncellenmiş `GET /api/accounting/summary` - Kapsamlı özet
+
 ### 31 Ocak 2026 - Satış Listesinde Teklif PDF İndirme
 - Tekliften oluşturulmuş satışlar için PDF indirme butonu eklendi
 - Satış listesinde teklif numarası gösteren satışlarda mavi Download ikonu
 - Tıklandığında orijinal teklif PDF'i indirilir
-- Backend `/api/quotes/{quote_id}/pdf` endpoint'i kullanılıyor
+
+### 31 Ocak 2026 - Sidebar Alt Menü Düzeltmesi
+- Alt menüler artık varsayılan olarak kapalı geliyor
+- Sadece tıklandığında açılıyor
 
 ### 31 Ocak 2026 - Yeni Satış Ekranı Geliştirmesi
 - **Hızlı Müşteri Ekleme:** "+ Müşteri Ekle" butonu ile satış ekranından direkt müşteri oluşturma
