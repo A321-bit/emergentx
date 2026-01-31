@@ -286,9 +286,8 @@ const Sidebar = ({ isOpen, onClose }) => {
           {(hasPermission('customer_categories_manage') || hasPermission('customer_sources_manage')) && 
             renderNavItem('/customer-settings', Tags, 'Müşteri Ayarları')}
           
-          {/* Teklifler */}
-          {(hasPermission('quotes_view') || hasPermission('quotes_manage')) && 
-            renderNavItem('/quotes', FileText, 'Teklifler')}
+          {/* Teklifler (Alt menü: Tüm Teklifler, Aranacaklar) */}
+          {hasQuotesAccess && renderExpandableMenu('quotes', FileText, 'Teklifler', quotesSubItems, isQuotesActive)}
           
           {/* Bayiler (Alt menü: Bayi Listesi, Bayi Grupları) */}
           {hasDealersAccess && renderExpandableMenu('dealers', Building2, 'Bayiler', dealersSubItems, isDealersActive)}
