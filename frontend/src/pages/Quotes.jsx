@@ -758,6 +758,19 @@ const Quotes = () => {
     }
   };
 
+  const handleDeleteCallLog = async (callId) => {
+    if (!window.confirm('Bu arama randevusunu silmek istediğinize emin misiniz?')) return;
+    
+    try {
+      await axios.delete(`${API_URL}/api/quotes/${callQuote.id}/call-logs/${callId}`);
+      setCallLogs(prev => prev.filter(c => c.id !== callId));
+      toast.success('Arama randevusu silindi');
+      fetchData();
+    } catch (error) {
+      toast.error('Silme işlemi başarısız');
+    }
+  };
+
   const formatDateTR = (dateStr) => {
     if (!dateStr) return '-';
     const [year, month, day] = dateStr.split('-');
