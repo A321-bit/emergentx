@@ -69,6 +69,8 @@ const Sales = () => {
   const [statsPeriod, setStatsPeriod] = useState('monthly');
   const [systemExchangeRate, setSystemExchangeRate] = useState(34.0);
   const [showChecks, setShowChecks] = useState(true);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   
   // New customer form
   const [newCustomer, setNewCustomer] = useState({
