@@ -963,6 +963,51 @@ const Products = () => {
                   data-testid="product-description-input"
                 />
               </div>
+
+              {/* PDF Bilgileri - Kısa Açıklama ve Faydalar */}
+              <div className="col-span-2 pt-4 border-t">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <span className="text-primary">📄</span> PDF Teklif Bilgileri
+                </h4>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="short_description">Kısa Açıklama (PDF'te görünecek)</Label>
+                    <Input
+                      id="short_description"
+                      value={formData.short_description}
+                      onChange={(e) => setFormData({...formData, short_description: e.target.value})}
+                      placeholder="Örn: Yüksek verimli monokristal panel"
+                      maxLength={100}
+                      data-testid="product-short-description-input"
+                    />
+                    <p className="text-xs text-muted-foreground">Maksimum 100 karakter</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Fayda Maddeleri (PDF'te ikonlu gösterilecek)</Label>
+                    <div className="space-y-2">
+                      {[0, 1, 2].map((index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="text-primary font-bold w-6">✓</span>
+                          <Input
+                            value={formData.benefits[index] || ''}
+                            onChange={(e) => {
+                              const newBenefits = [...formData.benefits];
+                              newBenefits[index] = e.target.value;
+                              setFormData({...formData, benefits: newBenefits});
+                            }}
+                            placeholder={`Fayda ${index + 1}: Örn: 25 yıl performans garantisi`}
+                            maxLength={60}
+                            data-testid={`product-benefit-${index}-input`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Her madde maksimum 60 karakter</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Price Preview */}
