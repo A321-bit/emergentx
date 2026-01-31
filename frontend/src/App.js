@@ -31,6 +31,7 @@ import Employees from "./pages/Employees";
 import Attendance from "./pages/Attendance";
 import Payroll from "./pages/Payroll";
 import Settings from "./pages/Settings";
+import QuoteTemplates from "./pages/QuoteTemplates";
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/payroll" element={<Payroll />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/quote-templates" element={<QuoteTemplates />} />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
