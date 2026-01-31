@@ -948,6 +948,7 @@ const Accounting = () => {
                     <TableHead>Tür</TableHead>
                     <TableHead>Açıklama</TableHead>
                     <TableHead className="text-right">Tutar</TableHead>
+                    <TableHead className="text-center">Ödeme</TableHead>
                     {canManage && <TableHead className="text-right">İşlem</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -955,7 +956,7 @@ const Accounting = () => {
                   {expenses.map((exp) => {
                     const IconComponent = CATEGORY_ICONS[exp.category_name] || Package;
                     return (
-                      <TableRow key={exp.id}>
+                      <TableRow key={exp.id} className={!exp.is_paid ? 'bg-red-50/50 dark:bg-red-900/10' : ''}>
                         <TableCell className="text-sm">{formatDate(exp.expense_date)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -979,6 +980,34 @@ const Accounting = () => {
                         <TableCell className="text-right font-mono font-medium text-red-600">
                           {formatCurrency(exp.amount_tl || exp.amount)}
                         </TableCell>
+                        <TableCell className="text-center">
+                          {canManage ? (
+                            <Button
+                              variant={exp.is_paid ? "default" : "outline"}
+                              size="sm"
+                              className={`h-7 px-2 ${exp.is_paid 
+                                ? 'bg-green-500 hover:bg-green-600 text-white' 
+                                : 'border-red-300 text-red-600 hover:bg-red-50'}`}
+                              onClick={() => exp.is_paid ? handleMarkUnpaid(exp.id) : handleMarkPaid(exp.id)}
+                            >
+                              {exp.is_paid ? (
+                                <>
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Ödendi
+                                </>
+                              ) : (
+                                <>
+                                  <CircleOff className="h-3 w-3 mr-1" />
+                                  Bekliyor
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Badge variant={exp.is_paid ? 'default' : 'destructive'} className="text-xs">
+                              {exp.is_paid ? 'Ödendi' : 'Bekliyor'}
+                            </Badge>
+                          )}
+                        </TableCell>
                         {canManage && (
                           <TableCell className="text-right">
                             <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(exp.id)} className="text-destructive h-8 w-8">
@@ -991,7 +1020,7 @@ const Accounting = () => {
                   })}
                   {expenses.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Bu dönemde gider kaydı bulunamadı
                       </TableCell>
                     </TableRow>
