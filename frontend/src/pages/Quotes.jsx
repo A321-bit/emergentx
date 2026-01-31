@@ -813,8 +813,8 @@ const Quotes = () => {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
-                          {/* Durum değiştirme - sadece belirli durumlarda */}
-                          {canManage && !['satisa_dondu', 'iptal', 'olumsuz'].includes(quote.status) && (
+                          {/* Durum değiştirme - her zaman aktif */}
+                          {canManage && (
                             <Select value={quote.status} onValueChange={(v) => handleStatusChange(quote.id, v)}>
                               <SelectTrigger className="w-8 h-8 p-0 border-0 focus:ring-0" title="Durum Değiştir">
                                 <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", statusInfo.color)}>
@@ -843,7 +843,7 @@ const Quotes = () => {
                               <ShoppingCart className="h-4 w-4" />
                             </Button>
                           )}
-                          {canManage && !['satisa_dondu'].includes(quote.status) && (
+                          {canManage && (
                             <Button 
                               variant="ghost" 
                               size="icon" 
