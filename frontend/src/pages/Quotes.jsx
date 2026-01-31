@@ -235,12 +235,25 @@ const Quotes = () => {
   const [quoteNotes, setQuoteNotes] = useState([]);
   const [newNoteText, setNewNoteText] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
+  
+  // Call scheduling
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [callQuote, setCallQuote] = useState(null);
+  const [callDate, setCallDate] = useState('');
+  const [callTime, setCallTime] = useState('');
+  const [callNotes, setCallNotes] = useState('');
+  const [upcomingCalls, setUpcomingCalls] = useState([]);
+  const [callLogs, setCallLogs] = useState([]);
+  const [loadingCalls, setLoadingCalls] = useState(false);
+  const [completeCallId, setCompleteCallId] = useState(null);
+  const [completeCallResult, setCompleteCallResult] = useState('');
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('quotes_manage');
   const isAdmin = user?.permissions?.includes('all');
 
   useEffect(() => {
     fetchData();
+    fetchUpcomingCalls();
   }, []);
 
   // URL'den müşteri parametresini kontrol et ve otomatik wizard aç
