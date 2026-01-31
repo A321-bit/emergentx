@@ -49,6 +49,7 @@ function App() {
               <Route path="/customers" element={<Customers />} />
               <Route path="/customer-settings" element={<CustomerSettings />} />
               <Route path="/quotes" element={<Quotes />} />
+              <Route path="/quotes/callbacks" element={<Callbacks />} />
               <Route path="/dealer-groups" element={<DealerGroups />} />
               <Route path="/dealers" element={<Dealers />} />
               <Route path="/sales" element={<Sales />} />
