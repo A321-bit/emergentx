@@ -3085,6 +3085,154 @@ async def upload_quote_cover(file: UploadFile = File(...), current_user: dict = 
     
     return {"quote_cover_image": cover_url}
 
+# ==================== QUOTE TEMPLATE ROUTES (Kategori Bazlı Teklif Şablonları) ====================
+
+# Quote template categories with default settings
+QUOTE_TEMPLATE_CATEGORIES = [
+    {"id": "on_grid", "name": "On Grid Teklif", "description": "Şebekeye bağlı güneş enerji sistemleri"},
+    {"id": "off_grid", "name": "Off Grid Teklif", "description": "Şebekeden bağımsız güneş enerji sistemleri"},
+    {"id": "hybrid", "name": "Hibrit Sistem Teklifi", "description": "Hem şebeke hem batarya destekli sistemler"},
+    {"id": "solar_irrigation", "name": "Solar Sulama Sistem Teklifi", "description": "Tarımsal sulama için güneş enerji sistemleri"},
+]
+
+@api_router.get("/settings/quote-templates")
+async def get_quote_templates(current_user: dict = Depends(get_current_user)):
+    """Get all quote template categories with their cover images"""
+    templates = await db.quote_templates.find({"is_active": True}, {"_id": 0}).to_list(10)
+    
+    # Build response with all categories
+    result = []
+    for cat in QUOTE_TEMPLATE_CATEGORIES:
+        template = next((t for t in templates if t.get("category_id") == cat["id"]), None)
+        result.append({
+            "category_id": cat["id"],
+            "category_name": cat["name"],
+            "description": cat["description"],
+            "cover_image": template.get("cover_image") if template else None,
+            "additional_settings": template.get("additional_settings", {}) if template else {}
+        })
+    
+    return result
+
+@api_router.get("/settings/quote-templates/{category_id}")
+async def get_quote_template(category_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a specific quote template by category"""
+    category = next((c for c in QUOTE_TEMPLATE_CATEGORIES if c["id"] == category_id), None)
+    if not category:
+        raise HTTPException(status_code=404, detail="Şablon kategorisi bulunamadı")
+    
+    template = await db.quote_templates.find_one({"category_id": category_id, "is_active": True}, {"_id": 0})
+    
+    return {
+        "category_id": category["id"],
+        "category_name": category["name"],
+        "description": category["description"],
+        "cover_image": template.get("cover_image") if template else None,
+        "additional_settings": template.get("additional_settings", {}) if template else {}
+    }
+
+@api_router.post("/settings/quote-templates/{category_id}/upload-cover")
+async def upload_quote_template_cover(
+    category_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Upload cover image for a specific quote template category"""
+    category = next((c for c in QUOTE_TEMPLATE_CATEGORIES if c["id"] == category_id), None)
+    if not category:
+        raise HTTPException(status_code=404, detail="Şablon kategorisi bulunamadı")
+    
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Sadece resim dosyası yüklenebilir")
+    
+    file_ext = file.filename.split(".")[-1]
+    filename = f"quote_template_{category_id}_{uuid.uuid4()}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    cover_url = f"/uploads/{filename}"
+    
+    # Update or create template record
+    await db.quote_templates.update_one(
+        {"category_id": category_id},
+        {
+            "$set": {
+                "category_id": category_id,
+                "category_name": category["name"],
+                "cover_image": cover_url,
+                "is_active": True,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_by": current_user.get("email", "")
+            },
+            "$setOnInsert": {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "category_id": category_id,
+        "category_name": category["name"],
+        "cover_image": cover_url
+    }
+
+@api_router.delete("/settings/quote-templates/{category_id}/cover")
+async def delete_quote_template_cover(
+    category_id: str,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Delete cover image for a specific quote template category"""
+    category = next((c for c in QUOTE_TEMPLATE_CATEGORIES if c["id"] == category_id), None)
+    if not category:
+        raise HTTPException(status_code=404, detail="Şablon kategorisi bulunamadı")
+    
+    # Remove cover image from template
+    result = await db.quote_templates.update_one(
+        {"category_id": category_id},
+        {"$set": {"cover_image": None, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Kapak görseli silindi", "category_id": category_id}
+
+@api_router.put("/settings/quote-templates/{category_id}")
+async def update_quote_template_settings(
+    category_id: str,
+    settings_data: dict,
+    current_user: dict = Depends(require_permission("settings_manage"))
+):
+    """Update additional settings for a quote template"""
+    category = next((c for c in QUOTE_TEMPLATE_CATEGORIES if c["id"] == category_id), None)
+    if not category:
+        raise HTTPException(status_code=404, detail="Şablon kategorisi bulunamadı")
+    
+    # Update template settings
+    await db.quote_templates.update_one(
+        {"category_id": category_id},
+        {
+            "$set": {
+                "category_id": category_id,
+                "category_name": category["name"],
+                "additional_settings": settings_data.get("additional_settings", {}),
+                "is_active": True,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_by": current_user.get("email", "")
+            },
+            "$setOnInsert": {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    template = await db.quote_templates.find_one({"category_id": category_id}, {"_id": 0})
+    return template
+
 # ==================== EXCHANGE RATE ROUTES ====================
 
 @api_router.get("/settings/exchange-rates")
