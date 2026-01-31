@@ -1005,10 +1005,10 @@ class PremiumQuotePDFGenerator:
         if short_description and len(short_description) > 100:
             short_description = short_description[:97] + "..."
         
-        # Image settings - 120x100px as requested
-        img_width = 42 * mm   # ~120px
-        img_height = 35 * mm  # ~100px
-        text_width = width - img_width - 20  # Remaining space for text
+        # Image settings - fit within card height (card is 115px, leave room for padding)
+        img_width = 32 * mm   # ~90px
+        img_height = 32 * mm  # ~90px - square format fits better
+        text_width = width - img_width - 25  # Remaining space for text
         
         # Try to load image with proper aspect ratio (NO OVERFLOW)
         product_image = None
