@@ -244,7 +244,8 @@ const Accounting = () => {
         amount_tl: expenseForm.currency === 'USD' 
           ? parseFloat(expenseForm.amount) * parseFloat(expenseForm.exchange_rate)
           : parseFloat(expenseForm.amount),
-        expense_date: new Date(expenseForm.expense_date).toISOString()
+        expense_date: new Date(expenseForm.expense_date).toISOString(),
+        due_date: expenseForm.due_date ? new Date(expenseForm.due_date).toISOString() : null
       };
       
       await axios.post(`${API_URL}/api/expenses`, data);
@@ -256,6 +257,7 @@ const Accounting = () => {
         currency: 'TRY',
         exchange_rate: '34.50',
         expense_date: new Date().toISOString().split('T')[0],
+        due_date: '',
         description: ''
       });
       fetchData();
