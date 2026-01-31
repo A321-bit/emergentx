@@ -4188,6 +4188,9 @@ async def get_accounting_summary(
     total_expenses_tl = 0
     fixed_expenses_tl = 0
     variable_expenses_tl = 0
+    paid_expenses_tl = 0
+    unpaid_expenses_tl = 0
+    unpaid_expenses_count = 0
     expenses_by_category = {}
     top_expenses = []
     
@@ -4205,6 +4208,13 @@ async def get_accounting_summary(
             if start_date <= exp_date <= end_date:
                 amount = exp.get("amount_tl", exp.get("amount", 0))
                 total_expenses_tl += amount
+                
+                # Ödeme durumu
+                if exp.get("is_paid", False):
+                    paid_expenses_tl += amount
+                else:
+                    unpaid_expenses_tl += amount
+                    unpaid_expenses_count += 1
                 
                 # Sabit/Değişken ayrımı
                 exp_type = exp.get("expense_type", "variable")
