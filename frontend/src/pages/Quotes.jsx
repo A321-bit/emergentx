@@ -682,37 +682,12 @@ const Quotes = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-        {/* Hepsi kartı - küçük */}
-        <Card 
-          className={cn(
-            "cursor-pointer hover:shadow-md transition-all",
-            statusFilter === 'all' && "ring-2 ring-primary"
-          )} 
-          onClick={() => setStatusFilter('all')}
-        >
-          <CardContent className="p-3 flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gray-500 bg-opacity-20">
-              <Filter className="h-4 w-4 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-xl font-bold">{quotes.length}</p>
-              <p className="text-xs text-muted-foreground">Hepsi</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {QUOTE_STATUS_OPTIONS.slice(0, 4).map(status => {
           const count = quotes.filter(q => q.status === status.value).length;
           const Icon = status.icon;
           return (
-            <Card 
-              key={status.value} 
-              className={cn(
-                "cursor-pointer hover:shadow-md transition-all",
-                statusFilter === status.value && "ring-2 ring-primary"
-              )} 
-              onClick={() => setStatusFilter(status.value)}
-            >
+            <Card key={status.value} className="cursor-pointer hover:shadow-md" onClick={() => setStatusFilter(status.value)}>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className={cn("p-2 rounded-lg", status.color, "bg-opacity-20")}>
                   <Icon className={cn("h-5 w-5", status.color.replace('bg-', 'text-'))} />
@@ -726,13 +701,7 @@ const Quotes = () => {
           );
         })}
         {/* Olumsuz kartı */}
-        <Card 
-          className={cn(
-            "cursor-pointer hover:shadow-md border-red-200 transition-all",
-            statusFilter === 'olumsuz' && "ring-2 ring-red-500"
-          )} 
-          onClick={() => setStatusFilter('olumsuz')}
-        >
+        <Card className="cursor-pointer hover:shadow-md border-red-200" onClick={() => setStatusFilter('olumsuz')}>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-red-500 bg-opacity-20">
               <XCircle className="h-5 w-5 text-red-500" />
