@@ -1098,6 +1098,72 @@ MADDE 6 - GENEL HÜKÜMLER
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Card Providers Tab */}
+        <TabsContent value="cardproviders" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">Kart Çekilen Sistem / Tedarikçiler</CardTitle>
+              <CardDescription>
+                Satış ekranında kart ödemesi girildiğinde seçilebilecek tedarikçileri yönetin (PayTR, Endesan vb.)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add new provider */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Yeni tedarikçi adı (örn: PayTR)"
+                  value={newCardProviderName}
+                  onChange={(e) => setNewCardProviderName(e.target.value)}
+                  className="flex-1"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCardProvider()}
+                />
+                <Button onClick={handleAddCardProvider} disabled={savingCardProvider}>
+                  {savingCardProvider ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Ekle
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* List providers */}
+              {cardProviders.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Henüz kart tedarikçisi eklenmemiş
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {cardProviders.map((provider) => (
+                    <div
+                      key={provider.id}
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Wallet className="h-5 w-5 text-blue-600" />
+                        <span className="font-medium">{provider.name}</span>
+                        {provider.description && (
+                          <span className="text-sm text-muted-foreground">({provider.description})</span>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteCardProvider(provider.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
