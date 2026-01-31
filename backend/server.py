@@ -18,6 +18,7 @@ from io import BytesIO
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from pdf_generator import generate_quote_pdf
+from turkey_locations import TURKEY_CITIES, TURKEY_DISTRICTS, get_all_cities, get_districts_by_city, search_cities
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
