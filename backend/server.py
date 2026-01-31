@@ -389,6 +389,24 @@ class QuoteCallbackUpdate(BaseModel):
     callback_time: str
     notes: Optional[str] = None
 
+# Call Log Model (Arama Geçmişi)
+class CallLogEntry(BaseModel):
+    id: str
+    scheduled_date: str
+    scheduled_time: str
+    notes: Optional[str] = None
+    status: str = "bekliyor"  # bekliyor, tamamlandi, iptal
+    result_notes: Optional[str] = None  # Arama sonucu notu
+    completed_at: Optional[str] = None
+    created_by: str
+    created_by_name: str
+    created_at: str
+
+class CallLogCreate(BaseModel):
+    scheduled_date: str
+    scheduled_time: str
+    notes: Optional[str] = None
+
 class QuoteDiscountUpdate(BaseModel):
     discount_type: str = "percent"
     discount_rate: float = 0
