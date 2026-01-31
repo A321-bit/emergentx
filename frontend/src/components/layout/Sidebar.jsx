@@ -318,8 +318,8 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Raporlar */}
           {hasPermission('finance_view') && renderNavItem('/reports', BarChart3, 'Raporlar')}
           
-          {/* Ayarlar */}
-          {hasPermission('settings_manage') && renderNavItem('/settings', Settings, 'Ayarlar')}
+          {/* Ayarlar (Alt menü: Genel Ayarlar, Teklif Şablonları) */}
+          {hasSettingsAccess && renderExpandableMenu('settings', Settings, 'Ayarlar', settingsSubItems, isSettingsActive)}
 
         </nav>
 
