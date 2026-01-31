@@ -105,7 +105,18 @@
 ### P2 - Orta Vadeli
 - WhatsApp üzerinden teklif gönderimi
 - PayTR entegrasyonu
-- Muhasebe modülü detaylandırma
+
+---
+
+## 💡 İYİLEŞTİRME ÖNERİLERİ (Backlog)
+
+*Gelecekte değerlendirilecek özellikler*
+
+| # | Öneri | Modül | Öncelik |
+|---|-------|-------|---------|
+| 1 | **Aylık Rapor PDF İndir** - Muhasebe verilerini tek sayfalık PDF'e dönüştürme | Muhasebe | Orta |
+| 2 | **Ödenmemiş Gider Hatırlatması** - Ay sonuna yaklaşırken e-posta/bildirim gönderme | Muhasebe | Düşük |
+| 3 | **Teklif PDF'i Yeni Sekmede Açma** - Satış detay görünümünde "Orijinal Teklifi Görüntüle" butonu | Satış | Düşük |
 
 ---
 
