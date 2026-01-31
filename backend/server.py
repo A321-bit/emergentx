@@ -2398,7 +2398,7 @@ async def delete_quote(quote_id: str, current_user: dict = Depends(require_permi
 @api_router.get("/quotes/{quote_id}/notes")
 async def get_quote_notes(quote_id: str, current_user: dict = Depends(require_permission("quotes_view"))):
     """Get all notes for a quote"""
-    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0, "notes": 1})
+    quote = await db.quotes.find_one({"id": quote_id, "is_active": True}, {"_id": 0, "notes": 1})
     if not quote:
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     return quote.get("notes", [])
