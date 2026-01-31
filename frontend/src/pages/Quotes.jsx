@@ -696,8 +696,10 @@ const Quotes = () => {
   // Call scheduling functions
   const openCallModal = async (quote) => {
     setCallQuote(quote);
-    setCallDate(new Date().toISOString().split('T')[0]);
-    setCallTime('10:00');
+    // Anlık tarih ve saat
+    const now = new Date();
+    setCallDate(now.toISOString().split('T')[0]);
+    setCallTime(now.toTimeString().slice(0, 5)); // HH:MM formatı
     setCallNotes('');
     setIsCallModalOpen(true);
     
