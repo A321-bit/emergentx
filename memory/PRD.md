@@ -6,6 +6,12 @@
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
+### 31 Ocak 2026 - Satış Listesinde Teklif PDF İndirme
+- Tekliften oluşturulmuş satışlar için PDF indirme butonu eklendi
+- Satış listesinde teklif numarası gösteren satışlarda mavi Download ikonu
+- Tıklandığında orijinal teklif PDF'i indirilir
+- Backend `/api/quotes/{quote_id}/pdf` endpoint'i kullanılıyor
+
 ### 31 Ocak 2026 - Yeni Satış Ekranı Geliştirmesi
 - **Hızlı Müşteri Ekleme:** "+ Müşteri Ekle" butonu ile satış ekranından direkt müşteri oluşturma
 - **Ürün/Paket Seçimi:** Satışa ürün veya paket ekleme, adet ve birim fiyat girişi
