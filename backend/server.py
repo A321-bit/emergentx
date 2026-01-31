@@ -1945,6 +1945,28 @@ async def get_stock_movements(product_id: Optional[str] = None, current_user: di
     movements = await db.stock_movements.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return movements
 
+# ==================== TURKEY LOCATIONS ROUTES ====================
+
+@api_router.get("/locations/cities")
+async def get_cities(search: Optional[str] = None):
+    """Tüm Türkiye illerini getir"""
+    if search:
+        return search_cities(search)
+    return get_all_cities()
+
+@api_router.get("/locations/cities/{city_id}/districts")
+async def get_districts(city_id: int, search: Optional[str] = None):
+    """Bir ile ait ilçeleri getir"""
+    districts = get_districts_by_city(city_id)
+    if not districts:
+        raise HTTPException(status_code=404, detail="İl bulunamadı")
+    
+    if search:
+        search = search.lower()
+        districts = [d for d in districts if search in d.lower()]
+    
+    return districts
+
 # ==================== CUSTOMER ROUTES ====================
 
 @api_router.post("/customers", response_model=dict)
