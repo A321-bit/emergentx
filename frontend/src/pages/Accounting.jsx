@@ -849,8 +849,8 @@ const Accounting = () => {
         </Card>
       </div>
 
-      {/* Fixed vs Variable Expenses */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Fixed vs Variable Expenses + Unpaid Warning */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -876,6 +876,37 @@ const Accounting = () => {
               </div>
               <div className="h-14 w-14 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                 <Zap className="h-7 w-7 text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ödenmemiş Giderler Uyarısı */}
+        <Card className={`border-l-4 ${summary?.unpaid_expenses_count > 0 ? 'border-l-red-500 bg-red-50 dark:bg-red-900/10' : 'border-l-green-500 bg-green-50 dark:bg-green-900/10'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  {summary?.unpaid_expenses_count > 0 && <Bell className="h-3 w-3 text-red-500 animate-pulse" />}
+                  Ödenmemiş Giderler
+                </p>
+                <p className={`text-2xl font-bold ${summary?.unpaid_expenses_count > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {formatCurrency(summary?.unpaid_expenses)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {summary?.unpaid_expenses_count > 0 
+                    ? `${summary.unpaid_expenses_count} adet bekliyor`
+                    : 'Tüm giderler ödendi ✓'}
+                </p>
+              </div>
+              <div className={`h-14 w-14 rounded-xl flex items-center justify-center ${
+                summary?.unpaid_expenses_count > 0 
+                  ? 'bg-red-100 dark:bg-red-900/30' 
+                  : 'bg-green-100 dark:bg-green-900/30'
+              }`}>
+                {summary?.unpaid_expenses_count > 0 
+                  ? <AlertTriangle className="h-7 w-7 text-red-600" />
+                  : <CheckCircle2 className="h-7 w-7 text-green-600" />}
               </div>
             </div>
           </CardContent>
