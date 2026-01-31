@@ -824,14 +824,46 @@ const Sales = () => {
             </Button>
           ))}
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Müşteri ara..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-48"
-          />
+        <div className="flex items-center gap-2">
+          {/* Tarih Filtreleme */}
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-36 h-9"
+              placeholder="Başlangıç"
+            />
+            <span className="text-muted-foreground">-</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-36 h-9"
+              placeholder="Bitiş"
+            />
+            {(dateFrom || dateTo) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+                className="h-9 px-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {/* Müşteri Arama */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Müşteri ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-48"
+            />
+          </div>
         </div>
       </div>
 
