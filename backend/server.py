@@ -4291,6 +4291,9 @@ async def get_accounting_summary(
         "total_expenses": total_expenses_tl,
         "fixed_expenses": fixed_expenses_tl,
         "variable_expenses": variable_expenses_tl,
+        "paid_expenses": paid_expenses_tl,
+        "unpaid_expenses": unpaid_expenses_tl,
+        "unpaid_expenses_count": unpaid_expenses_count,
         "expenses_by_category": expenses_by_category,
         "top_3_expenses": top_3_expenses,
         # Kar/Zarar
