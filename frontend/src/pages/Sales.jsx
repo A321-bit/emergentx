@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -31,10 +32,11 @@ import {
 import { 
   Plus, Pencil, Trash2, TrendingUp, DollarSign, Calendar, Search, RefreshCw,
   CreditCard, Banknote, Building, FileCheck, Clock, AlertTriangle, CheckCircle2,
-  ChevronDown, ChevronUp, X, UserPlus, Package, ShoppingCart, Percent
+  ChevronDown, ChevronUp, X, UserPlus, Package, ShoppingCart, Percent, Wallet, FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { cn } from '../lib/utils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -47,6 +49,8 @@ const PAYMENT_STATUS = {
 
 const Sales = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [highlightedSaleId, setHighlightedSaleId] = useState(null);
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
