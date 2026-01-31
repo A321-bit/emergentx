@@ -682,7 +682,7 @@ const Quotes = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {QUOTE_STATUS_OPTIONS.slice(0, 4).map(status => {
           const count = quotes.filter(q => q.status === status.value).length;
           const Icon = status.icon;
@@ -700,6 +700,18 @@ const Quotes = () => {
             </Card>
           );
         })}
+        {/* Olumsuz kartı */}
+        <Card className="cursor-pointer hover:shadow-md border-red-200" onClick={() => setStatusFilter('olumsuz')}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-red-500 bg-opacity-20">
+              <XCircle className="h-5 w-5 text-red-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-red-600">{quotes.filter(q => q.status === 'olumsuz').length}</p>
+              <p className="text-sm text-muted-foreground">Olumsuz</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
