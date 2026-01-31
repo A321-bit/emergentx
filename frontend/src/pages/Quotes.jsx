@@ -1019,6 +1019,21 @@ const Quotes = () => {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
+                          {/* Arama Planla butonu */}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => openCallModal(quote)} 
+                            title="Arama Planla"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 relative"
+                          >
+                            <Phone className="h-4 w-4" />
+                            {quote.call_logs && quote.call_logs.filter(c => c.status === 'bekliyor').length > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                {quote.call_logs.filter(c => c.status === 'bekliyor').length}
+                              </span>
+                            )}
+                          </Button>
                           {/* Notlar butonu */}
                           <Button 
                             variant="ghost" 
