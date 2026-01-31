@@ -4071,6 +4071,119 @@ async def mark_expense_unpaid(expense_id: str, current_user: dict = Depends(requ
     updated = await db.expenses.find_one({"id": expense_id}, {"_id": 0})
     return updated
 
+@api_router.get("/expenses/upcoming-payments")
+async def get_upcoming_payments(current_user: dict = Depends(require_permission("finance_view"))):
+    """Yaklaşan ve gecikmiş ödemeleri getir"""
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=0)
+    tomorrow_start = today_start + timedelta(days=1)
+    tomorrow_end = today_end + timedelta(days=1)
+    week_end = today_start + timedelta(days=7)
+    month_end = today_start + timedelta(days=30)
+    
+    # Sadece ödenmemiş ve vade tarihi olan giderleri al
+    expenses = await db.expenses.find({
+        "is_active": True, 
+        "is_paid": {"$ne": True},
+        "due_date": {"$ne": None}
+    }, {"_id": 0}).to_list(10000)
+    
+    overdue = []  # Gecikmiş
+    today = []    # Bugün
+    tomorrow = [] # Yarın
+    this_week = [] # Bu hafta (2-7 gün)
+    this_month = [] # Bu ay (8-30 gün)
+    
+    overdue_total = 0
+    today_total = 0
+    tomorrow_total = 0
+    week_total = 0
+    month_total = 0
+    
+    for exp in expenses:
+        try:
+            due_date_raw = exp.get("due_date")
+            if not due_date_raw:
+                continue
+                
+            if isinstance(due_date_raw, str):
+                due_date = datetime.fromisoformat(due_date_raw.replace("Z", "+00:00"))
+            elif isinstance(due_date_raw, datetime):
+                due_date = due_date_raw if due_date_raw.tzinfo else due_date_raw.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            
+            if due_date.tzinfo is None:
+                due_date = due_date.replace(tzinfo=timezone.utc)
+            
+            amount = exp.get("amount_tl", exp.get("amount", 0))
+            exp["due_date_formatted"] = due_date.strftime("%d.%m.%Y")
+            
+            # Kaç gün kaldı/geçti hesapla
+            days_diff = (due_date.date() - now.date()).days
+            exp["days_remaining"] = days_diff
+            
+            if due_date < today_start:
+                # Gecikmiş
+                overdue.append(exp)
+                overdue_total += amount
+            elif today_start <= due_date <= today_end:
+                # Bugün
+                today.append(exp)
+                today_total += amount
+            elif tomorrow_start <= due_date <= tomorrow_end:
+                # Yarın
+                tomorrow.append(exp)
+                tomorrow_total += amount
+            elif due_date <= week_end:
+                # Bu hafta
+                this_week.append(exp)
+                week_total += amount
+            elif due_date <= month_end:
+                # Bu ay
+                this_month.append(exp)
+                month_total += amount
+        except Exception:
+            continue
+    
+    # Tarihe göre sırala
+    overdue.sort(key=lambda x: x.get("due_date", ""))
+    today.sort(key=lambda x: x.get("due_date", ""))
+    tomorrow.sort(key=lambda x: x.get("due_date", ""))
+    this_week.sort(key=lambda x: x.get("due_date", ""))
+    this_month.sort(key=lambda x: x.get("due_date", ""))
+    
+    return {
+        "overdue": {
+            "items": overdue,
+            "count": len(overdue),
+            "total": overdue_total
+        },
+        "today": {
+            "items": today,
+            "count": len(today),
+            "total": today_total
+        },
+        "tomorrow": {
+            "items": tomorrow,
+            "count": len(tomorrow),
+            "total": tomorrow_total
+        },
+        "this_week": {
+            "items": this_week,
+            "count": len(this_week),
+            "total": week_total
+        },
+        "this_month": {
+            "items": this_month,
+            "count": len(this_month),
+            "total": month_total
+        },
+        "total_pending": overdue_total + today_total + tomorrow_total + week_total + month_total,
+        "total_count": len(overdue) + len(today) + len(tomorrow) + len(this_week) + len(this_month)
+    }
+
 @api_router.get("/expenses/stats")
 async def get_expense_stats(current_user: dict = Depends(require_permission("finance_view"))):
     now = datetime.now(timezone.utc)
