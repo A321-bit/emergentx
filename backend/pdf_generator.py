@@ -1030,24 +1030,26 @@ class PremiumQuotePDFGenerator:
         # If no image, create placeholder
         if not product_image:
             placeholder_data = [
-                [Paragraph("📦", ParagraphStyle('PlaceholderIcon', fontSize=28, alignment=TA_CENTER, textColor=TEXT_LIGHT))],
-                [Paragraph("Görsel Yok", ParagraphStyle('PlaceholderText', fontSize=8, alignment=TA_CENTER, textColor=TEXT_LIGHT))]
+                [Paragraph("📦", ParagraphStyle('PlaceholderIcon', fontSize=24, alignment=TA_CENTER, textColor=TEXT_LIGHT))],
+                [Paragraph("Görsel Yok", ParagraphStyle('PlaceholderText', fontSize=7, alignment=TA_CENTER, textColor=TEXT_LIGHT))]
             ]
-            placeholder = Table(placeholder_data, colWidths=[img_width], rowHeights=[img_height * 0.65, img_height * 0.35])
+            placeholder = Table(placeholder_data, colWidths=[img_width], rowHeights=[img_height * 0.7, img_height * 0.3])
             placeholder.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f1f5f9')),
-                ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
+                ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ]))
             product_image = placeholder
         
-        # Wrap image in a fixed-size container to prevent overflow
+        # Wrap image in a fixed-size container to STRICTLY prevent overflow
         img_container = [[product_image]]
         img_table = Table(img_container, colWidths=[img_width], rowHeights=[img_height])
         img_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('OVERFLOW', (0, 0), (-1, -1), 'HIDDEN'),  # Hide any overflow
+        ]))
             ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
             ('BACKGROUND', (0, 0), (-1, -1), colors.white),
         ]))
