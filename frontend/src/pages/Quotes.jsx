@@ -301,9 +301,20 @@ const Quotes = () => {
       const matchCustomerStatus = customerStatusFilter === 'all' || q.customer_status === customerStatusFilter;
       const matchMine = !showOnlyMine || q.created_by === user?.id;
       const matchCallback = !showUpcomingCallbacks || (q.callback_required && q.callback_date);
-      return matchSearch && matchStatus && matchCustomerStatus && matchMine && matchCallback;
+      
+      // Tarih filtreleme
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const quoteDate = q.created_at ? new Date(q.created_at).toISOString().split('T')[0] : null;
+        if (quoteDate) {
+          if (dateFrom && quoteDate < dateFrom) matchDate = false;
+          if (dateTo && quoteDate > dateTo) matchDate = false;
+        }
+      }
+      
+      return matchSearch && matchStatus && matchCustomerStatus && matchMine && matchCallback && matchDate;
     });
-  }, [quotes, searchTerm, statusFilter, customerStatusFilter, showOnlyMine, showUpcomingCallbacks, user]);
+  }, [quotes, searchTerm, statusFilter, customerStatusFilter, showOnlyMine, showUpcomingCallbacks, user, dateFrom, dateTo]);
 
   // Reset form
   const resetForm = () => {
