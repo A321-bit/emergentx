@@ -667,9 +667,21 @@ const Sales = () => {
     return <Badge className={`${statusInfo.color} text-xs`}>{statusInfo.label}</Badge>;
   };
 
-  const filteredSales = sales.filter(sale => 
-    sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSales = sales.filter(sale => {
+    const matchSearch = sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Tarih filtreleme
+    let matchDate = true;
+    if (dateFrom || dateTo) {
+      const saleDate = sale.sale_date ? sale.sale_date.split('T')[0] : null;
+      if (saleDate) {
+        if (dateFrom && saleDate < dateFrom) matchDate = false;
+        if (dateTo && saleDate > dateTo) matchDate = false;
+      }
+    }
+    
+    return matchSearch && matchDate;
+  });
 
   const currentStats = stats?.[statsPeriod] || {};
   const remaining = getRemaining();
