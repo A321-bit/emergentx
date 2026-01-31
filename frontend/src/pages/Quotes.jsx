@@ -242,7 +242,6 @@ const Quotes = () => {
   const [callDate, setCallDate] = useState('');
   const [callTime, setCallTime] = useState('');
   const [callNotes, setCallNotes] = useState('');
-  const [upcomingCalls, setUpcomingCalls] = useState([]);
   const [callLogs, setCallLogs] = useState([]);
   const [loadingCalls, setLoadingCalls] = useState(false);
   const [completeCallId, setCompleteCallId] = useState(null);
@@ -253,7 +252,6 @@ const Quotes = () => {
 
   useEffect(() => {
     fetchData();
-    fetchUpcomingCalls();
   }, []);
 
   // URL'den müşteri parametresini kontrol et ve otomatik wizard aç
