@@ -127,6 +127,9 @@
 | 1 | **Aylık Rapor PDF İndir** - Muhasebe verilerini tek sayfalık PDF'e dönüştürme | Muhasebe | Orta |
 | 2 | **Ödenmemiş Gider Hatırlatması** - Ay sonuna yaklaşırken e-posta/bildirim gönderme | Muhasebe | Düşük |
 | 3 | **Teklif PDF'i Yeni Sekmede Açma** - Satış detay görünümünde "Orijinal Teklifi Görüntüle" butonu | Satış | Düşük |
+| 4 | **Vade Yaklaştı Bildirimi** - Vadesi yaklaşan giderler için otomatik e-posta uyarısı | Muhasebe | Orta |
+| 5 | **Takvim Görünümü** - Gider vadelerini takvimde gösterme | Muhasebe | Düşük |
+| 6 | **Toplu Ödeme İşaretleme** - Birden fazla gideri tek seferde ödendi yapma | Muhasebe | Düşük |
 
 ---
 
