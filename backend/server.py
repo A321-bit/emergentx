@@ -2140,6 +2140,10 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
         "customer_phone": customer.get("phone", ""),
         "customer_email": customer.get("email", ""),
         "customer_address": customer.get("address", ""),
+        "customer_city": customer.get("city", ""),
+        "customer_district": customer.get("district", ""),
+        "customer_category_id": customer.get("category_id", ""),
+        "customer_category_name": customer.get("category_name", ""),
         "customer_status": quote_data.customer_status,
         "electricity_subscription_type": quote_data.electricity_subscription_type,  # EPDK abonelik tipi
         "include_segment_options": quote_data.include_segment_options,  # Off-Grid 3 segment seçeneği
