@@ -2047,6 +2047,14 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
     if not customer:
         raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
     
+    # Get customer category name if not already set
+    customer_category_name = customer.get("category_name", "")
+    if not customer_category_name and customer.get("category_id"):
+        category = await db.customer_categories.find_one({"id": customer.get("category_id")}, {"_id": 0})
+        if category:
+            customer_category_name = category.get("name", "")
+    customer["category_name"] = customer_category_name
+    
     # Döviz kurunu al
     exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
     usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
