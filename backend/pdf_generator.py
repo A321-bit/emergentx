@@ -431,7 +431,7 @@ class PremiumQuotePDFGenerator:
     
     # ==================== PAGE 1: COVER PAGE ====================
     def _create_cover_page(self, quote_data: dict, company_settings: dict, template_cover: str = None) -> BytesIO:
-        """Create stunning cover page - category-based or auto-generated"""
+        """Create stunning cover page - SPACE-GRADE DESIGN"""
         
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
@@ -455,100 +455,221 @@ class PremiumQuotePDFGenerator:
                 except Exception as e:
                     logger.warning(f"Could not load cover image: {e}")
         
-        # AUTO-GENERATE PREMIUM COVER
-        # Dark gradient background
-        c.setFillColor(SECONDARY_COLOR)
+        # ============ AUTO-GENERATE SPACE-GRADE COVER ============
+        
+        # Get category info for dynamic theming
+        category_name = quote_data.get('customer_category_name', 'Solar Enerji')
+        category_id = self._get_category_id(category_name)
+        
+        # Category-based color themes
+        category_themes = {
+            'on_grid': {'primary': '#0ea5e9', 'secondary': '#0c4a6e', 'accent': '#fbbf24', 'name': 'ON-GRİD SİSTEM'},
+            'off_grid': {'primary': '#22c55e', 'secondary': '#14532d', 'accent': '#fbbf24', 'name': 'OFF-GRİD SİSTEM'},
+            'hybrid': {'primary': '#8b5cf6', 'secondary': '#2e1065', 'accent': '#06b6d4', 'name': 'HİBRİT SİSTEM'},
+            'solar_irrigation': {'primary': '#06b6d4', 'secondary': '#164e63', 'accent': '#84cc16', 'name': 'SOLAR SULAMA SİSTEMİ'},
+        }
+        
+        theme = category_themes.get(category_id, {'primary': '#f59e0b', 'secondary': '#1e3a5f', 'accent': '#10b981', 'name': category_name.upper()})
+        
+        primary_color = colors.HexColor(theme['primary'])
+        secondary_color = colors.HexColor(theme['secondary'])
+        accent_color = colors.HexColor(theme['accent'])
+        
+        # ========== BACKGROUND ==========
+        # Clean white/light gray background
+        c.setFillColor(colors.HexColor('#f8fafc'))
         c.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, fill=True)
         
-        # Decorative geometric patterns
-        c.setStrokeColor(colors.HexColor('#2d4a6f'))
+        # ========== TOP ACCENT BAR ==========
+        c.setFillColor(primary_color)
+        c.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=True)
+        
+        # ========== GEOMETRIC PATTERN (RIGHT SIDE) ==========
+        # Draw subtle geometric hexagon pattern on right
+        c.setStrokeColor(colors.HexColor('#e2e8f0'))
+        c.setLineWidth(0.8)
+        
+        # Hexagonal grid pattern
+        import math
+        hex_size = 35
+        start_x = PAGE_WIDTH - 120
+        for row in range(12):
+            for col in range(4):
+                x = start_x + col * hex_size * 1.5
+                y = PAGE_HEIGHT - 80 - row * hex_size * 1.732
+                if row % 2 == 1:
+                    x += hex_size * 0.75
+                
+                # Draw hexagon
+                points = []
+                for i in range(6):
+                    angle = math.pi / 3 * i + math.pi / 6
+                    px = x + hex_size * 0.5 * math.cos(angle)
+                    py = y + hex_size * 0.5 * math.sin(angle)
+                    points.append((px, py))
+                
+                path = c.beginPath()
+                path.moveTo(points[0][0], points[0][1])
+                for px, py in points[1:]:
+                    path.lineTo(px, py)
+                path.close()
+                c.drawPath(path, stroke=True, fill=False)
+        
+        # ========== GEOMETRIC PATTERN (BOTTOM LEFT) ==========
+        c.setStrokeColor(colors.HexColor('#cbd5e1'))
         c.setLineWidth(0.5)
-        for i in range(0, int(PAGE_HEIGHT), 30):
-            c.line(0, i, PAGE_WIDTH, i)
+        start_x = -20
+        start_y = 150
+        for row in range(6):
+            for col in range(5):
+                x = start_x + col * hex_size * 1.5
+                y = start_y - row * hex_size * 1.732
+                if row % 2 == 1:
+                    x += hex_size * 0.75
+                
+                points = []
+                for i in range(6):
+                    angle = math.pi / 3 * i + math.pi / 6
+                    px = x + hex_size * 0.5 * math.cos(angle)
+                    py = y + hex_size * 0.5 * math.sin(angle)
+                    points.append((px, py))
+                
+                path = c.beginPath()
+                path.moveTo(points[0][0], points[0][1])
+                for px, py in points[1:]:
+                    path.lineTo(px, py)
+                path.close()
+                c.drawPath(path, stroke=True, fill=False)
         
-        # Golden accent bar at top
-        c.setFillColor(PRIMARY_COLOR)
-        c.rect(0, PAGE_HEIGHT - 8, PAGE_WIDTH, 8, fill=True)
-        
-        # Company logo area
+        # ========== COMPANY LOGO ==========
+        logo_y = PAGE_HEIGHT - 100
         logo_path = company_settings.get('logo')
         if logo_path:
             full_logo_path = self.upload_dir / logo_path.replace('/uploads/', '').replace('uploads/', '')
             if full_logo_path.exists():
                 try:
-                    c.drawImage(str(full_logo_path), PAGE_WIDTH/2 - 40, PAGE_HEIGHT - 120, 
-                               width=80, height=60, preserveAspectRatio=True, mask='auto')
+                    c.drawImage(str(full_logo_path), PAGE_WIDTH/2 - 50, logo_y, 
+                               width=100, height=70, preserveAspectRatio=True, mask='auto')
+                    logo_y -= 80
                 except:
                     pass
         
-        # Company name
-        company_name = company_settings.get('company_name', 'Solar Enerji')
+        # ========== COMPANY NAME ==========
+        company_name = company_settings.get('company_name', 'SOLAR ENERJİ')
+        c.setFillColor(primary_color)
+        c.setFont(FONT_BOLD, 28)
+        c.drawCentredString(PAGE_WIDTH / 2, logo_y, company_name.upper())
+        
+        # ========== MAIN TITLE SECTION ==========
+        y_main = PAGE_HEIGHT / 2 + 80
+        
+        # "GÜNEŞ ENERJİSİ SANTRALLERİ" subtitle
+        c.setFillColor(secondary_color)
+        c.setFont(FONT_BOLD, 14)
+        c.drawCentredString(PAGE_WIDTH / 2, y_main, "GÜNEŞ ENERJİSİ SANTRALLERİ")
+        
+        # Main title with primary color
+        c.setFillColor(primary_color)
+        c.setFont(FONT_BOLD, 18)
+        c.drawCentredString(PAGE_WIDTH / 2, y_main - 25, "KURULUM FİZİBİLİTE RAPORU")
+        c.drawCentredString(PAGE_WIDTH / 2, y_main - 48, "ve FİYAT TEKLİFİ")
+        
+        # ========== PV POWER DISPLAY ==========
+        # Calculate total panel power
+        items = quote_data.get('items', [])
+        total_panel_watt = 0
+        for item in items:
+            power = item.get('power_watt', 0) or 0
+            quantity = item.get('quantity', 1)
+            product_name = (item.get('product_name') or '').lower()
+            category = (item.get('category_name') or '').lower()
+            if any(x in product_name or x in category for x in ['panel', 'güneş', 'solar', 'mono', 'poli', 'topcon']):
+                total_panel_watt += power * quantity
+        
+        pv_kw = total_panel_watt / 1000
+        
+        if pv_kw > 0:
+            c.setFillColor(primary_color)
+            c.setFont(FONT_BOLD, 22)
+            c.drawCentredString(PAGE_WIDTH / 2, y_main - 90, f"PV GÜCÜ {pv_kw:.2f} kWp")
+        
+        # ========== INVESTOR INFO BOX ==========
+        box_y = y_main - 180
+        box_width = 280
+        box_height = 120
+        box_x = PAGE_WIDTH/2 - box_width/2
+        
+        # Box background
         c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 16)
-        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 150, company_name)
+        c.setStrokeColor(colors.HexColor('#e2e8f0'))
+        c.setLineWidth(1)
+        c.roundRect(box_x, box_y - box_height, box_width, box_height, 8, fill=True, stroke=True)
         
-        # Main content area - centered
-        y_center = PAGE_HEIGHT / 2 + 30
+        # Header bar inside box
+        c.setFillColor(primary_color)
+        c.roundRect(box_x, box_y - 30, box_width, 30, 8, fill=True, stroke=False)
+        # Cover bottom corners of header
+        c.rect(box_x, box_y - 30, box_width, 10, fill=True, stroke=False)
         
-        # Category badge
-        category_name = quote_data.get('customer_category_name', 'Solar Enerji')
-        c.setFillColor(PRIMARY_COLOR)
-        badge_width = 200
-        badge_height = 30
-        c.roundRect(PAGE_WIDTH/2 - badge_width/2, y_center + 80, badge_width, badge_height, 15, fill=True)
-        c.setFillColor(SECONDARY_COLOR)
+        # "YATIRIMCI" header
+        c.setFillColor(colors.white)
         c.setFont(FONT_BOLD, 12)
-        c.drawCentredString(PAGE_WIDTH / 2, y_center + 90, category_name.upper())
+        c.drawCentredString(PAGE_WIDTH / 2, box_y - 22, "YATIRIMCI")
         
-        # Main title - "TEKLİF"
-        c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 48)
-        c.drawCentredString(PAGE_WIDTH / 2, y_center + 20, "TEKLİF")
+        # Customer name
+        customer_name = quote_data.get('customer_name', '-')
+        c.setFillColor(secondary_color)
+        c.setFont(FONT_BOLD, 14)
+        c.drawCentredString(PAGE_WIDTH / 2, box_y - 55, customer_name)
         
-        # Decorative line
-        c.setStrokeColor(PRIMARY_COLOR)
-        c.setLineWidth(3)
-        c.line(PAGE_WIDTH/2 - 80, y_center - 10, PAGE_WIDTH/2 + 80, y_center - 10)
+        # Divider line
+        c.setStrokeColor(colors.HexColor('#e2e8f0'))
+        c.setLineWidth(0.5)
+        c.line(box_x + 20, box_y - 70, box_x + box_width - 20, box_y - 70)
+        
+        # Date
+        quote_date = self._format_date(quote_data.get('created_at', ''))
+        c.setFillColor(primary_color)
+        c.setFont(FONT_BOLD, 10)
+        c.drawCentredString(PAGE_WIDTH / 2, box_y - 88, f"TARİH: {quote_date}")
+        
+        # Divider line
+        c.line(box_x + 20, box_y - 98, box_x + box_width - 20, box_y - 98)
         
         # Quote number
-        quote_number = quote_data.get('quote_number', '')
-        c.setFont(FONT_NORMAL, 14)
-        c.setFillColor(colors.HexColor('#94a3b8'))
-        c.drawCentredString(PAGE_WIDTH / 2, y_center - 40, f"No: {quote_number}")
+        quote_number = quote_data.get('quote_number', '-')
+        c.setFillColor(primary_color)
+        c.setFont(FONT_BOLD, 10)
+        c.drawCentredString(PAGE_WIDTH / 2, box_y - 115, f"TEKLİF NO: {quote_number}")
         
-        # Customer section with golden border
-        customer_name = quote_data.get('customer_name', '')
-        c.setStrokeColor(PRIMARY_COLOR)
-        c.setLineWidth(2)
-        box_width = 280
-        box_height = 60
-        c.roundRect(PAGE_WIDTH/2 - box_width/2, y_center - 130, box_width, box_height, 8, stroke=True, fill=False)
+        # ========== BOTTOM CONTACT BAR ==========
+        c.setFillColor(primary_color)
+        c.rect(0, 0, PAGE_WIDTH, 45, fill=True)
         
+        # Contact info
         c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 16)
-        c.drawCentredString(PAGE_WIDTH / 2, y_center - 95, customer_name)
-        
-        # Date and validity
-        quote_date = self._format_date(quote_data.get('created_at', ''))
-        validity_days = quote_data.get('validity_days', 15)
-        
-        c.setFont(FONT_NORMAL, 10)
-        c.setFillColor(colors.HexColor('#94a3b8'))
-        c.drawCentredString(PAGE_WIDTH / 2, y_center - 160, f"Tarih: {quote_date}  •  Geçerlilik: {validity_days} Gün")
-        
-        # Bottom bar with contact info
-        c.setFillColor(PRIMARY_COLOR)
-        c.rect(0, 0, PAGE_WIDTH, 50, fill=True)
-        
-        c.setFillColor(SECONDARY_COLOR)
         c.setFont(FONT_NORMAL, 9)
+        
         contact_parts = []
+        address = company_settings.get('address', '')
+        if address:
+            # Truncate if too long
+            if len(address) > 50:
+                address = address[:47] + "..."
+            contact_parts.append(address)
+        
+        c.drawCentredString(PAGE_WIDTH / 2, 25, " • ".join(contact_parts) if contact_parts else "")
+        
+        # Phone and email on second line
+        contact_line2 = []
         if company_settings.get('phone'):
-            contact_parts.append(f"Tel: {company_settings['phone']}")
+            contact_line2.append(company_settings['phone'])
         if company_settings.get('email'):
-            contact_parts.append(company_settings['email'])
-        if contact_parts:
-            c.drawCentredString(PAGE_WIDTH / 2, 20, "  •  ".join(contact_parts))
+            contact_line2.append(company_settings['email'])
+        
+        if contact_line2:
+            c.setFont(FONT_NORMAL, 9)
+            c.drawCentredString(PAGE_WIDTH / 2, 10, " • ".join(contact_line2))
         
         c.save()
         buffer.seek(0)
