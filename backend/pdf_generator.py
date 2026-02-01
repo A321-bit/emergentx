@@ -436,16 +436,10 @@ class PremiumQuotePDFGenerator:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
-        # Check for category template cover first
-        cover_image_path = template_cover
-        
-        # Fallback to general company cover if no template
-        if not cover_image_path:
-            cover_image_path = company_settings.get('quote_cover_image')
-        
-        # If cover image exists, use full-page background
-        if cover_image_path:
-            img_path = self.upload_dir / cover_image_path.replace('/uploads/', '').replace('uploads/', '')
+        # ONLY use template cover if it exists for this specific category
+        # Do NOT fallback to general cover - use auto-generated design instead
+        if template_cover:
+            img_path = self.upload_dir / template_cover.replace('/uploads/', '').replace('uploads/', '')
             if img_path.exists():
                 try:
                     c.drawImage(str(img_path), 0, 0, width=PAGE_WIDTH, height=PAGE_HEIGHT, preserveAspectRatio=False)
