@@ -7,30 +7,43 @@
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
 ### 2 Şubat 2026 - Satış Hesaplama Hatası Düzeltildi ✅
-**P0 Bug Fix - Satış modülünde ürün miktarı veya iskonto değiştirildiğinde toplam tutarın güncellenmemesi sorunu**
+**P0 Bug Fix - Satış modülünde KDV ve Nakliye dahil genel toplam hesaplama**
 
-#### Sorun:
-- Bir satışı düzenlerken (özellikle tekliften dönüştürülen satışlarda) ürün miktarını veya iskonto değerini değiştirdiğinizde `Satış Tutarı (TL)` alanı güncellenmiyordu
-- Root cause: `handleEdit` fonksiyonunda `manual_override: true` ayarlanıyordu ve bu değer iskonto/miktar değişikliklerinde sıfırlanmıyordu
+#### Sorunlar:
+1. Ürün miktarı veya iskonto değiştirildiğinde `Satış Tutarı (TL)` alanı güncellenmiyordu
+2. KDV ve Nakliye tutarları hesaplamaya dahil edilmiyordu
 
-#### Çözüm (2 aşamalı):
-1. **Miktar/Ürün Değişikliği:** `updateItem` ve `removeItem` fonksiyonlarında `manual_override: false` eklendi
+#### Çözüm (3 aşamalı):
+1. **Miktat/Ürün Değişikliği:** `updateItem` ve `removeItem` fonksiyonlarında `manual_override: false` eklendi
 2. **İskonto Değişikliği:** İskonto değeri ve tipi değiştirildiğinde `manual_override: false` eklendi
+3. **KDV ve Nakliye Entegrasyonu:** 
+   - Backend `SaleBase` modeline `subtotal_tl`, `vat_rate`, `vat_amount_tl`, `shipping_cost`, `total_tl` alanları eklendi
+   - Frontend hesaplama formülü güncellendi: `Genel Toplam = (Ara Toplam - İskonto) + KDV + Nakliye`
+   - Düzenleme modal'ına KDV oranı ve Nakliye alanları eklendi
 
 #### Değişen Dosyalar:
+- `/app/backend/server.py`: `SaleBase` modeline KDV ve nakliye alanları eklendi
 - `/app/frontend/src/pages/Sales.jsx`:
-  - `updateItem` fonksiyonu (satır ~351-356)
-  - `removeItem` fonksiyonu (satır ~319-320)
-  - İskonto tipi Select `onValueChange` (satır ~1182)
-  - İskonto değeri Input `onChange` (satır ~1201)
+  - `formData` state'e KDV/nakliye alanları eklendi
+  - `useEffect` hesaplama mantığı güncellendi (KDV ve nakliye dahil)
+  - `handleEdit` fonksiyonu güncellendi
+  - `handleSubmit` fonksiyonu güncellendi
+  - Modal UI'a KDV oranı ve nakliye input alanları eklendi
 
-#### Test Sonuçları (iteration_7 & iteration_8):
-- ✅ Miktar değişikliğinde sale_amount_tl otomatik güncelleniyor
-- ✅ Ürün kaldırıldığında tüm toplamlar güncelleniyor
-- ✅ İskonto değeri değiştirildiğinde (%10→%5) sale_amount_tl güncelleniyor
-- ✅ İskonto 0 yapıldığında sale_amount_tl = net_total = ara_toplam oluyor
-- ✅ İskonto tipi değiştirildiğinde (%→₺) sale_amount_tl güncelleniyor
-- ✅ "Manuel düzeltme yapıldı" mesajı sadece Satış Tutarı manuel değiştirildiğinde görünüyor
+#### Hesaplama Formülü:
+```
+Ara Toplam = Σ (Miktar × Birim Fiyat)
+İskonto Sonrası = Ara Toplam - İskonto
+KDV Tutarı = İskonto Sonrası × KDV Oranı
+Genel Toplam = İskonto Sonrası + KDV Tutarı + Nakliye
+```
+
+#### Test Sonuçları:
+- ✅ Miktar değişikliğinde tüm toplamlar (Ara, İskonto Sonrası, KDV, Genel) güncelleniyor
+- ✅ İskonto değişikliğinde KDV ve Genel Toplam yeniden hesaplanıyor
+- ✅ KDV oranı değiştirildiğinde Genel Toplam güncelleniyor
+- ✅ Nakliye tutarı değiştirildiğinde Genel Toplam güncelleniyor
+- ✅ Satış Tutarı (TL) = Genel Toplam otomatik eşitleniyor
 
 ---
 
