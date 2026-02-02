@@ -816,19 +816,19 @@ class PremiumQuotePDFGenerator:
         
         # ===== SECTION 2: PRODUCTION ESTIMATES =====
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT, y, "☀ SİSTEMİNİZ NE KADAR ÜRETİR?")
-        y -= 5
+        c.setFont(FONT_BOLD, 12)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "TAHMİNİ ENERJİ ÜRETİMİ")
+        y -= 12
         
         # Subtle info text
         c.setFillColor(TEXT_LIGHT)
         c.setFont(FONT_NORMAL, 7)
-        c.drawString(MARGIN_LEFT, y - 8, "Türkiye ortalaması günlük 5 saat verimli güneşlenme süresine göre hesaplanmıştır")
-        y -= 22
+        c.drawCentredString(PAGE_WIDTH / 2, y, "Türkiye ortalaması günlük 5 saat verimli güneşlenme süresine göre hesaplanmıştır")
+        y -= 25
         
         # Production cards (horizontal layout with gradient bars)
-        prod_card_width = (CONTENT_WIDTH - 20) / 3
-        prod_card_height = 55
+        prod_card_width = (CONTENT_WIDTH - 40) / 3  # More spacing
+        prod_card_height = 50
         
         productions = [
             {
@@ -851,14 +851,14 @@ class PremiumQuotePDFGenerator:
                 'label': 'YILLIK',
                 'value': f'{yearly_production:,.0f}'.replace(',', '.'),
                 'unit': 'kWh',
-                'color': '#fecaca',
-                'accent': '#dc2626',
+                'color': '#dcfce7',
+                'accent': '#16a34a',
                 'note': '25 yıl garanti, %80 verim 25. yılda'
             }
         ]
         
         for i, prod in enumerate(productions):
-            x = MARGIN_LEFT + (i * (prod_card_width + 10))
+            x = MARGIN_LEFT + (i * (prod_card_width + 20))  # More gap
             
             # Card background
             c.setFillColor(colors.HexColor(prod['color']))
@@ -866,28 +866,28 @@ class PremiumQuotePDFGenerator:
             
             # Accent bar at left
             c.setFillColor(colors.HexColor(prod['accent']))
-            c.roundRect(x, y - prod_card_height, 5, prod_card_height, 3, fill=True)
+            c.roundRect(x, y - prod_card_height, 4, prod_card_height, 2, fill=True)
             
-            # Value
-            c.setFillColor(colors.HexColor(prod['accent']))
-            c.setFont(FONT_BOLD, 18)
-            c.drawString(x + 15, y - 25, prod['value'])
-            
-            # Unit
-            c.setFont(FONT_NORMAL, 10)
-            c.drawString(x + 15 + c.stringWidth(prod['value'], FONT_BOLD, 18) + 3, y - 25, prod['unit'])
-            
-            # Label
+            # Label at top
             c.setFillColor(TEXT_COLOR)
             c.setFont(FONT_BOLD, 8)
-            c.drawString(x + 15, y - 38, prod['label'])
+            c.drawString(x + 12, y - 12, prod['label'])
             
-            # Risk note
+            # Value (big)
+            c.setFillColor(colors.HexColor(prod['accent']))
+            c.setFont(FONT_BOLD, 16)
+            c.drawString(x + 12, y - 30, prod['value'])
+            
+            # Unit
+            c.setFont(FONT_NORMAL, 9)
+            c.drawString(x + 12 + c.stringWidth(prod['value'], FONT_BOLD, 16) + 3, y - 30, prod['unit'])
+            
+            # Risk note at bottom
             c.setFillColor(TEXT_LIGHT)
-            c.setFont(FONT_NORMAL, 6)
-            c.drawString(x + 10, y - prod_card_height + 6, prod['note'])
+            c.setFont(FONT_NORMAL, 5)
+            c.drawString(x + 8, y - prod_card_height + 5, prod['note'])
         
-        y -= prod_card_height + 18
+        y -= prod_card_height + 30  # More space after section
         
         # ===== SECTION 3: SAVINGS & AMORTIZATION (Split layout) =====
         left_width = CONTENT_WIDTH * 0.55
