@@ -554,6 +554,12 @@ const Sales = () => {
       discount_amount: parseFloat(formData.discount_amount) || 0,
       net_total: formData.net_total,
       manual_override: formData.manual_override,
+      // KDV ve Nakliye
+      subtotal_tl: formData.subtotal_tl || formData.calculated_total,
+      vat_rate: parseFloat(formData.vat_rate) || 20,
+      vat_amount_tl: formData.vat_amount_tl || 0,
+      shipping_cost: parseFloat(formData.shipping_cost) || 0,
+      total_tl: formData.total_tl || parseFloat(formData.sale_amount_tl) || 0,
       // Payments
       nakit_tl: parseFloat(formData.nakit_tl) || 0,
       kart_tl: parseFloat(formData.kart_tl) || 0,
