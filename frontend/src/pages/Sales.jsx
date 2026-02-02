@@ -706,6 +706,13 @@ const Sales = () => {
       discount_amount: '',
       net_total: 0,
       manual_override: false,
+      // KDV ve Nakliye
+      subtotal_tl: 0,
+      vat_rate: '20',
+      vat_amount_tl: 0,
+      shipping_cost: '',
+      total_tl: 0,
+      // Ödemeler
       nakit_tl: '',
       kart_tl: '',
       kart_provider_id: '',
