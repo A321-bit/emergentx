@@ -1,0 +1,97 @@
+{
+  "summary": "Tested bug fix for discount (iskonto) changes not updating sale_amount_tl. All 5 tests PASSED - the fix is working correctly.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard", "issues": ["Console warning: Chart width/height -1 - recharts component sizing issue (minor, pre-existing)"]}
+    ]
+  },
+
+  "passed_tests": [
+    "TEST 1: Discount value change (10% → 5%) correctly updates sale_amount_tl from ₺519,548.31 to ₺548,412.10",
+    "TEST 2: Discount set to 0% correctly makes sale_amount_tl = net_total = calculated_total = ₺577,275.90",
+    "TEST 3: Discount type change (% → ₺) correctly updates sale_amount_tl and resets manual_override",
+    "TEST 4: After discount change, quantity change (18 → 20) correctly updates all totals (Ara Toplam: ₺591,526.50, Net Toplam: ₺532,373.85, Satış Tutarı: ₺532,373.85)",
+    "TEST 5: 'Manuel düzeltme yapıldı' message only appears when Satış Tutarı is manually changed"
+  ],
+
+  "bug_fix_verification": {
+    "issue": "When discount value or type was changed, sale_amount_tl was not updating automatically",
+    "root_cause": "manual_override flag was not being reset to false when discount changes occurred",
+    "fix_applied": "Added manual_override: false in discount type onValueChange (line 1182) and discount value onChange (line 1201) in Sales.jsx",
+    "verification_results": {
+      "discount_value_change_test": {
+        "action": "Changed discount from 10% to 5%",
+        "before": {"discount": "10%", "net_total": "₺519,548.31", "sale_amount_tl": "₺648,457.49"},
+        "after": {"discount": "5%", "net_total": "₺548,412.10", "sale_amount_tl": "₺548,412.10"},
+        "manual_override_visible": false,
+        "result": "PASSED"
+      },
+      "discount_zero_test": {
+        "action": "Set discount to 0%",
+        "before": {"discount": "10%"},
+        "after": {"discount": "0%", "ara_toplam": "₺577,275.90", "net_total": "₺577,275.90", "sale_amount_tl": "₺577,275.90"},
+        "all_values_equal": true,
+        "result": "PASSED"
+      },
+      "discount_type_change_test": {
+        "action": "Changed discount type from % to ₺",
+        "before": {"discount_type": "%", "discount_value": "10"},
+        "after": {"discount_type": "₺", "discount_value": "0", "sale_amount_tl": "₺577,275.90"},
+        "manual_override_visible": false,
+        "result": "PASSED"
+      },
+      "quantity_after_discount_test": {
+        "action": "Changed quantity from 18 to 20 after setting 10% discount",
+        "before": {"quantity": 18, "ara_toplam": "₺577,275.90", "net_total": "₺519,548.31"},
+        "after": {"quantity": 20, "ara_toplam": "₺591,526.50", "net_total": "₺532,373.85", "sale_amount_tl": "₺532,373.85"},
+        "manual_override_visible": false,
+        "result": "PASSED"
+      },
+      "manual_override_message_test": {
+        "initial_state": "When editing sale, manual_override is true (message visible)",
+        "after_discount_change": "manual_override becomes false (message hidden)",
+        "after_quantity_change": "manual_override stays false (message hidden)",
+        "after_manual_satis_tutari_change": "manual_override becomes true (message visible)",
+        "result": "PASSED"
+      }
+    }
+  },
+
+  "test_report_links": [],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "Bug fix correctly implemented - manual_override: false added to discount type and value change handlers",
+    "Line 1182: onValueChange for discount type Select now includes manual_override: false",
+    "Line 1201: onChange for discount value Input now includes manual_override: false",
+    "Combined with previous fix (iteration_7) for updateItem and removeItem, all scenarios are now covered"
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (all 5 bug fix tests passed)"
+  },
+
+  "test_credentials": {
+    "email": "admin@solar.com",
+    "password": "admin123"
+  },
+
+  "seed_data_creation": "Used existing sale record: Remzi Rıdvan Çetin (TKL-202602-0039) with 8 items",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Bug fix for discount changes verified. The fix adds manual_override: false when discount type or value changes in Sales.jsx (lines 1182 and 1201). Combined with the previous fix for updateItem and removeItem (iteration_7), all scenarios for automatic sale_amount_tl updates are now working correctly. Test scenarios: 1) Discount value change updates sale_amount_tl, 2) Discount=0 makes all totals equal, 3) Discount type change updates sale_amount_tl, 4) Quantity change after discount change works correctly, 5) Manuel düzeltme yapıldı message only shows when Satış Tutarı is manually changed."
+}
