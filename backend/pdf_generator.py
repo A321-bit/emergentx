@@ -967,87 +967,93 @@ class PremiumQuotePDFGenerator:
         # 5-year
         c.drawString(MARGIN_LEFT + 15, proj_y, "5 Yıl:")
         c.setFillColor(SUCCESS_COLOR)
-        c.drawString(MARGIN_LEFT + 40, proj_y, f"₺{yearly_savings * 5:,.0f}".replace(',', '.'))
+        c.setFont(FONT_BOLD, 8)
+        c.drawString(MARGIN_LEFT + 45, proj_y, f"₺{yearly_savings * 5:,.0f}".replace(',', '.'))
         
         # 10-year
         c.setFillColor(TEXT_COLOR)
-        c.drawString(MARGIN_LEFT + 130, proj_y, "10 Yıl:")
+        c.setFont(FONT_NORMAL, 8)
+        c.drawString(MARGIN_LEFT + 140, proj_y, "10 Yıl:")
         c.setFillColor(SUCCESS_COLOR)
-        c.drawString(MARGIN_LEFT + 165, proj_y, f"₺{yearly_savings * 10:,.0f}".replace(',', '.'))
+        c.setFont(FONT_BOLD, 8)
+        c.drawString(MARGIN_LEFT + 175, proj_y, f"₺{yearly_savings * 10:,.0f}".replace(',', '.'))
         
         # 25-year
         c.setFillColor(TEXT_COLOR)
-        c.drawString(MARGIN_LEFT + 270, proj_y, "25 Yıl:")
+        c.setFont(FONT_NORMAL, 8)
+        c.drawString(MARGIN_LEFT + 280, proj_y, "25 Yıl:")
         c.setFillColor(SUCCESS_COLOR)
         c.setFont(FONT_BOLD, 9)
-        c.drawString(MARGIN_LEFT + 305, proj_y, f"₺{yearly_savings * 25:,.0f}".replace(',', '.'))
+        c.drawString(MARGIN_LEFT + 315, proj_y, f"₺{yearly_savings * 25:,.0f}".replace(',', '.'))
         
-        y -= 38
+        y -= 35
         
-        # ===== SECTION 4: ENVIRONMENTAL IMPACT (Stunning visual) =====
-        c.setFillColor(colors.HexColor('#166534'))
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT, y, "🌍 DÜNYAYA KATKIMIZ")
-        y -= 8
+        # ===== SECTION 4: ENVIRONMENTAL IMPACT =====
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_BOLD, 12)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "ÇEVRESEL KATKI")
+        y -= 12
         
         c.setFillColor(TEXT_LIGHT)
         c.setFont(FONT_NORMAL, 7)
-        c.drawString(MARGIN_LEFT, y - 3, "Gelecek nesillere bırakacağınız en güzel miras: temiz bir dünya")
-        y -= 18
+        c.drawCentredString(PAGE_WIDTH / 2, y, "Gelecek nesillere bırakacağınız en güzel miras: temiz bir dünya")
+        y -= 22
         
-        # Environmental cards (4 cards)
-        env_card_width = (CONTENT_WIDTH - 30) / 4
-        env_card_height = 65
+        # Environmental cards (4 cards with more spacing)
+        env_card_width = (CONTENT_WIDTH - 45) / 4
+        env_card_height = 55
         
         env_impacts = [
             {
-                'icon': '🌱',
                 'value': f'{yearly_co2_saved:.0f}',
-                'unit': 'kg',
-                'label': 'CO₂ Azaltımı/Yıl',
+                'unit': 'kg CO₂',
+                'label': 'Yıllık Azaltım',
                 'color': '#dcfce7',
                 'accent': '#16a34a'
             },
             {
-                'icon': '🌳',
                 'value': f'{trees_equivalent:.0f}',
                 'unit': 'ağaç',
-                'label': 'Dikilen Ağaç Eşdeğeri',
+                'label': 'Ağaç Eşdeğeri',
                 'color': '#d1fae5',
                 'accent': '#059669'
             },
             {
-                'icon': '🚗',
-                'value': f'{car_km_equivalent/1000:.1f}K',
+                'value': f'{car_km_equivalent/1000:.0f}K',
                 'unit': 'km',
-                'label': 'Araç Yolculuğu Dengelendi',
+                'label': 'Araç Dengeleme',
                 'color': '#cffafe',
                 'accent': '#0891b2'
             },
             {
-                'icon': '⚡',
                 'value': f'{yearly_co2_saved * 25 / 1000:.0f}',
                 'unit': 'ton',
-                'label': '25 Yılda Toplam CO₂',
+                'label': '25 Yıl Toplam',
                 'color': '#e0e7ff',
                 'accent': '#4f46e5'
             }
         ]
         
         for i, env in enumerate(env_impacts):
-            x = MARGIN_LEFT + (i * (env_card_width + 10))
+            x = MARGIN_LEFT + (i * (env_card_width + 15))
             
             # Card background
             c.setFillColor(colors.HexColor(env['color']))
-            c.roundRect(x, y - env_card_height, env_card_width, env_card_height, 8, fill=True)
+            c.roundRect(x, y - env_card_height, env_card_width, env_card_height, 6, fill=True)
             
-            # Icon at top
-            c.setFont(FONT_NORMAL, 16)
-            c.drawCentredString(x + env_card_width/2, y - 15, env['icon'])
-            
-            # Value
+            # Value at center
             c.setFillColor(colors.HexColor(env['accent']))
             c.setFont(FONT_BOLD, 14)
+            c.drawCentredString(x + env_card_width/2, y - 20, env['value'])
+            
+            # Unit
+            c.setFont(FONT_NORMAL, 8)
+            c.drawCentredString(x + env_card_width/2, y - 32, env['unit'])
+            
+            # Label at bottom
+            c.setFillColor(TEXT_COLOR)
+            c.setFont(FONT_NORMAL, 6)
+            c.drawCentredString(x + env_card_width/2, y - env_card_height + 8, env['label'])
             value_text = f"{env['value']} {env['unit']}"
             c.drawCentredString(x + env_card_width/2, y - 35, value_text)
             
