@@ -565,6 +565,15 @@ const Sales = () => {
 
   const handleEdit = (sale) => {
     setEditingSale(sale);
+    
+    // Ensure items have correct line_total calculated
+    const itemsWithTotals = (sale.items || []).map(item => ({
+      ...item,
+      quantity: item.quantity || 1,
+      unit_price: item.unit_price || 0,
+      line_total: (parseFloat(item.quantity) || 1) * (parseFloat(item.unit_price) || 0)
+    }));
+    
     setFormData({
       customer_id: sale.customer_id || '',
       customer_name: sale.customer_name,
@@ -576,14 +585,14 @@ const Sales = () => {
       exchange_rate: sale.exchange_rate?.toString() || systemExchangeRate.toString(),
       sale_date: sale.sale_date?.split('T')[0] || '',
       notes: sale.notes || '',
-      // Items
-      items: sale.items || [],
-      calculated_total: sale.calculated_total || 0,
+      // Items with recalculated line_total
+      items: itemsWithTotals,
+      calculated_total: itemsWithTotals.reduce((sum, item) => sum + (item.line_total || 0), 0),
       discount_type: sale.discount_percent > 0 ? 'percent' : 'amount',
       discount_percent: sale.discount_percent?.toString() || '',
       discount_amount: sale.discount_amount?.toString() || '',
       net_total: sale.net_total || 0,
-      manual_override: sale.manual_override || false,
+      manual_override: true, // Set to true when editing to prevent auto-override
       // Payments
       nakit_tl: sale.nakit_tl?.toString() || '',
       kart_tl: sale.kart_tl?.toString() || '',
