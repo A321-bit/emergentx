@@ -1,10 +1,34 @@
 # Solar Energy Sales Management System - PRD
 
-## Son Güncelleme: 31 Ocak 2026
+## Son Güncelleme: 2 Şubat 2026
 
 ---
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
+
+### 2 Şubat 2026 - Satış Hesaplama Hatası Düzeltildi ✅
+**P0 Bug Fix - Satış modülünde ürün miktarı değiştirildiğinde toplam tutarın güncellenmemesi sorunu**
+
+#### Sorun:
+- Bir satışı düzenlerken (özellikle tekliften dönüştürülen satışlarda) ürün miktarını değiştirdiğinizde `Satış Tutarı (TL)` alanı güncellenmiyordu
+- Root cause: `handleEdit` fonksiyonunda `manual_override: true` ayarlanıyordu, bu da `useEffect`'in `sale_amount_tl`'yi otomatik güncellemesini engelliyordu
+
+#### Çözüm:
+- `updateItem` fonksiyonunda miktar (`quantity`), birim fiyat (`unit_price`) veya ürün seçimi (`item_id`) değiştirildiğinde `manual_override: false` ayarlanıyor
+- `removeItem` fonksiyonunda da aynı mantık eklendi
+- Bu sayede item değişikliklerinde `sale_amount_tl` otomatik olarak yeniden hesaplanıyor
+
+#### Değişen Dosyalar:
+- `/app/frontend/src/pages/Sales.jsx` - `updateItem` (satır ~351-356) ve `removeItem` (satır ~319-320) fonksiyonları
+
+#### Test Sonuçları:
+- ✅ Miktar değişikliğinde line_total doğru hesaplanıyor
+- ✅ Miktar değişikliğinde calculated_total (Ara Toplam) güncelleniyor
+- ✅ Miktar değişikliğinde net_total güncelleniyor
+- ✅ Miktar değişikliğinde sale_amount_tl (Satış Tutarı) otomatik güncelleniyor
+- ✅ Ürün kaldırıldığında tüm toplamlar doğru güncelleniyor
+
+---
 
 ### 31 Ocak 2026 - PREMİUM PDF TEKLİF ŞABLONU 🆕🎨
 **Dünya standartlarında, profesyonel 7+ sayfalık PDF teklif sistemi**
