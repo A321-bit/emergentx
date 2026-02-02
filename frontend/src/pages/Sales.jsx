@@ -375,19 +375,32 @@ const Sales = () => {
       discount = parseFloat(formData.discount_amount) || 0;
     }
     
-    const net = calculated - discount;
+    const subtotalAfterDiscount = calculated - discount;
+    
+    // KDV hesapla
+    const vatRate = parseFloat(formData.vat_rate) || 0;
+    const vatAmount = subtotalAfterDiscount * (vatRate / 100);
+    
+    // Nakliye (KDV dahil olarak girilir, direkt eklenir)
+    const shipping = parseFloat(formData.shipping_cost) || 0;
+    
+    // Genel toplam = (Ara toplam - İskonto) + KDV + Nakliye
+    const grandTotal = subtotalAfterDiscount + vatAmount + shipping;
     
     setFormData(prev => ({
       ...prev,
       calculated_total: calculated,
-      net_total: net,
+      subtotal_tl: calculated,
+      net_total: subtotalAfterDiscount,
+      vat_amount_tl: vatAmount,
+      total_tl: grandTotal,
       // If not manual override, update sale amount
       ...(!prev.manual_override && calculated > 0 ? {
-        sale_amount_tl: net.toFixed(2),
-        sale_amount_usd: prev.exchange_rate ? (net / parseFloat(prev.exchange_rate)).toFixed(2) : ''
+        sale_amount_tl: grandTotal.toFixed(2),
+        sale_amount_usd: prev.exchange_rate ? (grandTotal / parseFloat(prev.exchange_rate)).toFixed(2) : ''
       } : {})
     }));
-  }, [formData.items, formData.discount_percent, formData.discount_amount, formData.discount_type]);
+  }, [formData.items, formData.discount_percent, formData.discount_amount, formData.discount_type, formData.vat_rate, formData.shipping_cost]);
 
   // Currency conversion handlers
   const handleUsdInput = (field, value) => {
