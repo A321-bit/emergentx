@@ -2,62 +2,74 @@
 The user wants to build a comprehensive Solar Energy Sales Management System.
 
 The most recent user requests were:
-1.  **Accounting Module Overhaul**: The user requested a complete rebuild of the Muhasebe (Accounting) page to transform it from a simple list into a powerful financial control panel. This included:
-    *   Monthly/period-based filtering.
-    *   KPI cards for income, expenses, profit, and budget.
-    *   Distinction between Fixed and Variable expenses.
-    *   Category-based expense distribution charts.
-    *   A system for recurring expenses.
-    *   Separation of Sales vs. Non-Sales income.
-    *   Accurate Net Profit calculation.
-    *   6-month trend analysis.
-    *   A feature to track the payment status of expenses (Ödendi/Ödenmedi).
-    *   A feature to add a due date (Vade Tarihi) to expenses and a dashboard to view upcoming/overdue payments.
-    *   A system to automatically transfer personnel salaries and bonuses from the personnel module into the expense records, with detailed per-employee tracking.
-2.  **City/District Selection**: The user wants to replace the free-text  and  fields in the customer creation form with dropdowns populated from a comprehensive list of all cities and districts in Turkey. The user should have the option to select from the list or enter the data manually.
-3.  **Data Persistence Clarification**: The user asked for confirmation that their data (customers, quotes, etc.) is safe and will not be deleted during application redeployments.
-4.  **Sidebar Menu Fix**: The user noticed that sub-menus in the sidebar were always open on page load and requested that they be collapsed by default.
+1.  **Category-Based PDF Templates**: The user requested a new settings page to upload different PDF cover pages for different quote categories (On-Grid, Off-Grid, etc.).
+2.  **Complete PDF Redesign**: The user provided a highly detailed, multi-page specification for a complete overhaul of the generated quote PDF. This included:
+    *   A new cover page structure.
+    *   A Value Proposition page.
+    *   A visually improved System Analysis page.
+    *   A new Product Cards page layout (initially two-column, later changed to a single-column, full-width design).
+    *   Specific rules for image sizing, text overflow, and content hierarchy.
+    *   Preservation of existing calculation logic for pricing and savings.
+3.  **New Product Fields for PDF**: To support the new PDF design, the user requested new fields in the product creation form for a Short Description and three Benefit bullet points, which should appear on the PDF product cards.
+4.  **Sales Calculation Bug**: The user reported a bug where, in the Sales module, editing an item's quantity in the collection/payment modal causes the total amount to be calculated incorrectly.
+5.  **PDF Image Overflow Bug**: The user noticed that product images were overflowing their designated card boundaries in the generated PDF and requested a fix.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A full-stack application (React/FastAPI/MongoDB). The system features modules for Customers, Sales, Quotes, Callbacks (Aranacaklar), Personnel, and Settings.
+A full-stack application (React/FastAPI/MongoDB) with modules for Customers, Sales, Quotes, Callbacks, Personnel, Products, and Settings.
 
-The most significant recent change is a complete, feature-rich overhaul of the **Accounting () module**. It now functions as a comprehensive financial dashboard with KPIs, charts, trend analysis, expense payment tracking, due date management, and automated personnel expense integration.
-
-The backend remains a single  file, which has grown significantly more complex. The frontend uses React with Shadcn UI components.
+Recent work includes:
+-   A new **Teklif Şablonları (Quote Templates)** page under Settings, allowing users to upload custom PDF cover images for different system categories.
+-   A complete and complex refactor of the backend **** to match the user's new, highly detailed multi-page PDF specification.
+-   The **Product model and forms** have been updated with new fields for Short Description and Benefits to populate the new PDF.
+-   The **Sidebar** has been restructured to group General Settings and Quote Templates under a collapsible Ayarlar menu.
 
 **Last working item**:
--   **Last item agent was working**: Implementing the city and district selection feature for the customer creation form. The agent has created a data source (), added the necessary backend endpoints to serve city and district data, and updated the  frontend to replace the text inputs with combobox-style dropdowns.
+-   **Last item agent was working**: Fixing a bug in the  page. The user reported that when a sale is converted from a quote, and they later edit the quantity of an item in the sales record, the total price calculation becomes incorrect (saçmalamaya başlıyor).
 -   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: screenshot tool. The agent has verified that the İl (City) dropdown populates correctly with all 81 cities and that the manual entry option is present. The next step is to verify that selecting a city correctly populates the İlçe (District) dropdown and that the data saves correctly upon form submission.
+-   **Which testing method agent to use?**: frontend testing agent. The test should involve:
+    1.  Navigating to the Satışlar (Sales) page.
+    2.  Clicking the Tahsilat (or edit) button on a sale that was converted from a quote.
+    3.  Changing the quantity of one of the items in the modal.
+    4.  Verifying that the item's line total and the sale's grand total update correctly and logically.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** (P0) Finalize and Test City/District Selection Feature
-    -   **Description**: The city/district selection feature in the customer creation/edit modal is partially implemented. The final steps are to verify that the district dropdown populates dynamically based on the selected city and to test the full end-to-end flow of creating/updating a customer with the new dropdowns.
-    -   **Attempted fixes**: The agent successfully implemented the backend and the city dropdown UI.
+-   **Issue 1:** (P0) Sales Total Calculation Bug
+    -   **Description**: When editing a sale (especially one converted from a quote), changing an item's quantity causes incorrect automatic recalculation of the total sale amount.
+    -   **Attempted fixes**: The agent identified that when loading a sale for editing in , the  array might be missing calculated fields like . A fix was applied in  to recalculate these totals when the editing modal is opened. This fix has not yet been verified.
     -   **Next debug checklist**:
-        1.  In , confirm the  hook that fetches districts is correctly triggered when the  state changes.
-        2.  Use the screenshot tool to select a city (e.g., İstanbul) and verify the district dropdown is populated with the correct districts (Adalar, Bakırköy, etc.).
-        3.  Create a new customer using the dropdowns and verify the  and  fields are saved correctly in the database.
-    -   **Why fix this issue and what will be achieved with the fix?**: This will complete the user's request for standardized and user-friendly address entry, reducing data entry errors.
+        1.  In , review the  hook that recalculates  to ensure it correctly handles the  flag and dependencies.
+        2.  Use the screenshot tool or frontend testing agent to replicate the user's flow: go to the Sales page, edit a sale, change a quantity, and observe the , , and  fields for correctness.
+        3.  Check the browser's console for any state update errors during this process.
+    -   **Why fix this issue and what will be achieved with the fix?**: This is a critical financial bug that undermines the reliability of the sales and accounting modules. Fixing it will ensure accurate financial records.
     -   **Status**: IN PROGRESS
     -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: Frontend
 
+-   **Issue 2:** (P2) Finalize and Test City/District Selection Feature
+    -   **Description**: The city/district combobox selection in the customer creation form was partially implemented but was paused due to a shift in user priorities. The dynamic population of the district dropdown based on the city selection needs to be tested and finalized.
+    -   **Next debug checklist**:
+        1.  In , verify the  that fetches districts triggers on city change.
+        2.  Test creating and updating a customer to ensure the data saves correctly.
+    -   **Why fix this issue and what will be achieved with the fix?**: Standardizes address data entry and improves user experience.
+    -   **Status**: NOT STARTED (Paused)
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: Frontend
+
 **In progress Task List**:
--   **Task 1:** (P2) Off-Grid 3-Segment Pricing System.
-    -   **Where to resume**: Core logic in  and UI in  are partially complete.
-    -   **What will be achieved with this?** This will allow generating a single PDF with three different price points (Economic, Standard, Premium) for Off-Grid systems.
-    -   **Status**: BLOCKED (Paused by user).
-    -   **Should Test frontend/backend/both after fix?** Both.
-    -   **Blocked on something**: User has requested to halt further work on this for the time being.
+-   **Task 1:** (P1) Off-Grid 3-Segment Pricing System
+    -   **Where to resume**: Paused during implementation in  and .
+    -   **What will be achieved with this?**: Generation of a single PDF with three pricing tiers for Off-Grid systems.
+    -   **Status**: BLOCKED (User requested to pause work).
+    -   **Should Test frontend/backend/both after fix?**: Both.
+    -   **Blocked on something**: User request.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **P1: Personnel & Payroll Module (Phases 3-5):** Implement Advance (Avans), Bonus (Prim), and Employee expense management, followed by PDF payroll generation. (Note: Bonus and salary expenses are now automated, but Avans and PDF generation are pending).
+-   **P1: Personnel & Payroll Module (Phases 3-5):** Implement Advance (Avans), Bonus (Prim), and Employee expense management, followed by PDF payroll generation.
 -   **P2: XML B2B Integration:** Implement product import from a B2B XML feed.
 
 **Future Tasks (from PRD & user suggestions):**
@@ -66,99 +78,102 @@ The backend remains a single  file, which has grown significantly more complex. 
 -   **Accounting Module PDF Report:** Add a button to download a comprehensive monthly financial report as a PDF.
 -   **Dashboard Widgets:** Add a Yaklaşan Ödemeler (Upcoming Payments) widget to the main dashboard.
 -   **Refactor :** Break down the monolithic file into routers and models.
--   **Refactor :** Decompose the massive , , and  pages into smaller, manageable components.
+-   **Refactor :** Decompose the massive , , , and  pages into smaller, manageable components.
+-   **Refactor :** The new PDF generator is now a large, complex monolith that should be broken down into modular components for each page/section.
 
 **Completed work in this session**
--   **PDF Download for Quote-Generated Sales**: Added a download button to the Sales list to get the PDF of the original quote.
--   **Sidebar Menu UI Fix**: Corrected the sidebar behavior so that sub-menus are collapsed by default.
--   **Accounting Module Complete Overhaul**:
-    -   Implemented a new, modern UI for .
-    -   Added a dynamic date-picker for monthly filtering.
-    -   Created KPI cards for Total Income, Total Expense (split by Fixed/Variable), Gross Profit, and Net Profit (with Zarar warning).
-    -   Implemented an expense distribution pie chart and a Top 3 Expenses list.
-    -   Added a 6-month financial trend chart.
-    -   Added expense payment tracking: expenses can be marked as Paid, and unpaid expenses are highlighted.
-    -   Created an Unpaid Expenses summary card.
-    -   Added due date tracking for expenses, with an Upcoming Payments dashboard panel showing overdue, due today, tomorrow, etc.
-    -   Automated personnel expense creation: A new tab allows transferring all employee salaries and bonuses for the month into the expenses list with a single click, creating detailed, per-person expense records.
--   **Data Persistence Explanation**: Provided a clear, formatted explanation to the user about how data is preserved during deployments.
--   **City/District Selection (In Progress)**: Began implementation of dropdowns for city/district selection in the customer form.
+-   **Category-Based PDF Templates**: Implemented a new Teklif Şablonları page under Settings for uploading category-specific PDF cover images.
+-   **Sidebar Restructuring**: Converted the Ayarlar menu item into a collapsible parent for Genel Ayarlar and Teklif Şablonları.
+-   **Premium PDF Quote Redesign**:
+    -   Overhauled  to generate a professional, multi-page PDF based on detailed user specifications.
+    -   Implemented a new single-column product card layout with larger images, product names, short descriptions, and up to three icon-based benefit points.
+    -   Fixed an issue where product images were overflowing their containers in the PDF.
+-   **New Product Fields for PDF**:
+    -   Added Short Description () and Benefits () fields to the Product model in .
+    -   Updated the  page to include form inputs for these new fields in the product creation/edit modal.
+-   **Data Flow Fixes**:
+    -   Modified quote creation/update logic to ensure product , , and  are copied into the quote items for use in the PDF.
+    -   Fixed a bug where the  was not being correctly fetched and stored in new quotes.
+-   **Bug Investigation**: Investigated and confirmed that the system correctly allows adding more than two products to a quote, identifying the user's issue as a potential workflow error (not clicking the Ekle button).
+-   **Dynamic Cover Page (Reverted)**: Implemented a fully dynamic, auto-generated PDF cover page design that pulled customer and quote data, but reverted the change as per the user's request to prioritize user-uploaded images.
+
+**Earlier issues found/mentioned but not fixed**
+-   The city/district selection feature (Issue 2 in Pending/In progress Issue list) was in progress but was superseded by the user's high-priority request for the PDF redesign.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI, Pydantic
--   **Frontend:** React, Shadcn/UI, Recharts (for graphs), 
+-   **Backend:** FastAPI, Pydantic, ReportLab (for complex PDF generation)
+-   **Frontend:** React, Shadcn/UI,  (for toasts)
 -   **Database:** MongoDB
 -   **Authentication:** JWT
 
 **key DB schema**
--   ****: Heavily modified. New fields added: , , ,  (fixed/variable), , .
--   ****: Modified. New field added: .
--   ****: The  and  fields are now intended to be used with the new dropdown system.
+-   ****: Modified to add  and .
+-   ****: New collection to store  mappings.
+-   ****: The  array objects were modified to include , , , and  copied from the source product. The main quote document was also updated to include .
+-   ****: The  array structure is the source of the current bug being investigated.
 
 **All files of reference**
--   : Heavily modified to add a large number of endpoints for the new accounting module and the city/district data.
--   : Completely overwritten with a new implementation for the financial dashboard.
--   : Modified to replace text inputs for city/district with  components.
--   : Modified to add the PDF download icon and handler.
--   : Modified to change the initial state of .
--   : New file created to hold the city and district data.
--   : Updated to reflect completed work and log new user-approved improvement ideas.
+-   : Massively rewritten. This file now contains all the logic for the new, complex PDF layout. It's a critical file to understand.
+-   : Modified various endpoints (, , ) to handle new data fields and fix data flow issues.
+-   : Modified to apply a potential fix for the total calculation bug. This is the location of the current issue.
+-   : Modified to add new UI elements for the Short Description and Benefits fields.
+-   : New page created for this feature.
+-   : Modified to handle nested/collapsible menu items.
+-   : Updated to reflect completed work.
 
 **Areas that need refactoring**:
--   : Now critically oversized (over 5000 lines). Breaking this into routers (), models (), and services is the highest priority refactoring task.
--   : This new file is extremely large and complex (~1600 lines). The various sections (KPIs, charts, tabs, modals) must be extracted into their own components to be maintainable.
--   : The customer modal logic is growing and could be extracted into a separate component.
+-   : This is the most pressing new piece of technical debt. It's a large, monolithic script that handles the entire PDF creation process. It should be broken down into smaller classes or functions for each page type (Cover, ValueProp, Products, etc.) to improve maintainability.
+-   : Remains critically oversized and needs to be split into a router-based architecture.
+-    and : These page components are becoming large and complex, containing modal logic, form handling, and data fetching all in one file. The modal/form logic should be extracted into separate components.
 
 **key api endpoints**
--   **GET **: Returns a list of all cities in Turkey.
--   **GET **: Returns districts for a given city.
--   **GET **: The main endpoint for the accounting dashboard, returns all KPIs and chart data.
--   **GET **: Returns data for the 6-month trend chart.
--   **PUT **: Marks an expense as paid or unpaid.
--   **GET **: Returns a summary of upcoming and overdue expenses.
--   **POST **: Creates expense records for all active personnel salaries and bonuses.
+-   ****: Upload a cover image for a specific quote category.
+-   ****: Retrieve all configured quote template covers.
+-   ** & **: Logic was updated to embed new product fields (, , ) directly into the quote items.
+-   ** & **: Updated to save the new  and  fields.
 
 **Critical Info for New Agent**
--   The user is highly engaged and provides detailed, multi-part feature requests. Expect to build comprehensive modules, not just small features.
--   The immediate task is to finish and test the city/district selection feature on the  page.
--   The new  page is the application's centerpiece but is also a significant piece of technical debt due to its size. Be cautious when making changes there.
--   The agent has started a good practice of adding user-approved İyileştirme Önerileri (Improvement Suggestions) to the . Continue this.
--   The user appreciates proactive suggestions and detailed implementations that consider edge cases they might not have thought of (e.g., the Upcoming Payments panel).
+-   The immediate task is to solve the calculation bug in the **** page. The user is blocked by this.
+-   The user is highly detail-oriented and provides very specific, prescriptive instructions, especially for UI/UX and document design. Adhere to them closely.
+-   The user's priorities can shift rapidly. The agent was in the middle of a feature (city/district dropdowns) before the user initiated a large-scale PDF redesign.
+-   The new  is powerful but complex and fragile. Changes there should be made with caution.
+-   Always verify financial calculations ( bug) and visual layouts (PDF generation) thoroughly, as these are the user's primary concerns.
 
 **documents and test reports created in this job**
+-   
 -    (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Add a due date to expenses and show me upcoming/overdue payments.
-2.  **Agent**: Implemented due dates and an upcoming payments panel.
-3.  **User**: Automate personnel expense creation. Pull salaries and bonuses from the personnel list and add them as expenses. Show per-person details.
-4.  **Agent**: Implemented the personnel expense automation system.
-5.  **User**: Will my data (customers, quotes, etc.) be deleted when I redeploy?
-6.  **Agent**: Responded with a detailed explanation confirming that data is safe and stored separately from the code.
-7.  **User**: Change the customer creation form to use dropdowns for Turkish cities and districts. It should support both selection and manual entry.
-8.  **Agent**: Acknowledged and started implementation.
-9.  **User**:  (continue)
-10. **Agent**: Continued with the implementation of the city/district feature.
+1.  **User**: Fix the bug where changing item quantity in the Sales edit/collection modal messes up the total calculation.
+2.  **Agent**: Acknowledged and started investigating .
+3.  **User**: Reverted request for dynamic PDF cover, wants to use his uploaded designs.
+4.  **Agent**: Acknowledged and reverted the code to prioritize user-uploaded images.
+5.  **User**: Complained that the dynamic space-themed cover was not used and his own was, asking for a credit refund.
+6.  **Agent**: Diagnosed that a general fallback cover image was overriding the category-specific logic and fixed it.
+7.  **User**: Okay, design the dynamic cover for me. Make it space standard.
+8.  **Agent**: Implemented a new dynamic, auto-generated PDF cover page.
+9.  **User**: Is it logical to have the system auto-generate a cover with customer data, or should I design it myself? (Shared an example image).
+10. **Agent**: Explained the pros/cons and recommended the auto-generated approach for efficiency.
 
 **Project Health Check:**
--   **Broken:** None.
--   **Mocked:** Some of the newly created sub-menu items under Muhasebe in the sidebar (e.g., Puantaj, Bordro) likely point to placeholder pages or are not yet fully implemented.
+-   **Broken:** The total calculation logic in the Sales edit modal is currently broken, which is a critical bug.
+-   **Mocked:** None.
 
 **3rd Party Integrations**
--   None added.
+-   None.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO. The accounting module was tested manually with extensive screenshots and  commands.
+-   **Testing agent used after significant changes:** YES,  was used once to validate the major PDF generation overhaul. It reported all tests passed.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None.
--   **Known regressions:** None.
+-   **Test files created:** None
+-   **Known regressions:** The sales calculation bug might be a regression introduced during recent refactoring, but its exact origin is unconfirmed.
 
 **Credentials to test flow:**
 -   **Email:** 
 -   **Password:** 
 
 **What agent forgot to execute**
--   The agent did not forget anything but was in the middle of verifying the city/district feature when the session ended. The final step of testing the dynamic district dropdown and the save functionality is pending.</analysis>
+-   The agent did not forget any tasks but had to pivot away from the City/District Selection feature due to a user-driven change in priorities. The most critical pending action is to fully test and verify the fix for the sales calculation bug.</analysis>
