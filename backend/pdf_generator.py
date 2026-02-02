@@ -1044,46 +1044,31 @@ class PremiumQuotePDFGenerator:
             # Value at center
             c.setFillColor(colors.HexColor(env['accent']))
             c.setFont(FONT_BOLD, 14)
-            c.drawCentredString(x + env_card_width/2, y - 20, env['value'])
+            c.drawCentredString(x + env_card_width/2, y - 18, env['value'])
             
             # Unit
-            c.setFont(FONT_NORMAL, 8)
-            c.drawCentredString(x + env_card_width/2, y - 32, env['unit'])
+            c.setFont(FONT_NORMAL, 7)
+            c.drawCentredString(x + env_card_width/2, y - 30, env['unit'])
             
             # Label at bottom
             c.setFillColor(TEXT_COLOR)
             c.setFont(FONT_NORMAL, 6)
             c.drawCentredString(x + env_card_width/2, y - env_card_height + 8, env['label'])
-            value_text = f"{env['value']} {env['unit']}"
-            c.drawCentredString(x + env_card_width/2, y - 35, value_text)
-            
-            # Label (wrapped)
-            c.setFillColor(TEXT_COLOR)
-            c.setFont(FONT_NORMAL, 6)
-            # Split label into two lines if needed
-            label_words = env['label'].split()
-            if len(label_words) > 2:
-                line1 = ' '.join(label_words[:2])
-                line2 = ' '.join(label_words[2:])
-                c.drawCentredString(x + env_card_width/2, y - 50, line1)
-                c.drawCentredString(x + env_card_width/2, y - 58, line2)
-            else:
-                c.drawCentredString(x + env_card_width/2, y - 54, env['label'])
         
-        y -= env_card_height + 12
+        y -= env_card_height + 20
         
         # ===== BOTTOM BANNER =====
-        banner_height = 35
+        banner_height = 30
         c.setFillColor(SECONDARY_COLOR)
-        c.roundRect(MARGIN_LEFT, y - banner_height, CONTENT_WIDTH, banner_height, 8, fill=True)
+        c.roundRect(MARGIN_LEFT, y - banner_height, CONTENT_WIDTH, banner_height, 6, fill=True)
         
         c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 11)
-        c.drawCentredString(PAGE_WIDTH / 2, y - 15, "🎯 Elektrik Zamlarından Etkilenmeyin - Kendi Enerjinizi Üretin!")
+        c.setFont(FONT_BOLD, 10)
+        c.drawCentredString(PAGE_WIDTH / 2, y - 12, "Elektrik Zamlarından Etkilenmeyin - Kendi Enerjinizi Üretin!")
         
         c.setFont(FONT_NORMAL, 7)
         c.setFillColor(colors.HexColor('#94a3b8'))
-        c.drawCentredString(PAGE_WIDTH / 2, y - 28, "Panel garantisi 25 yıl • İnverter garantisi 10 yıl • Profesyonel montaj ekibi")
+        c.drawCentredString(PAGE_WIDTH / 2, y - 24, "Panel garantisi 25 yıl  •  İnverter garantisi 10 yıl  •  Profesyonel montaj")
         
         # Footer
         self._draw_page_footer(c, 3)
