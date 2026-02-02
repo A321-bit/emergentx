@@ -571,6 +571,14 @@ class SaleBase(BaseModel):
     discount_amount: float = 0  # İskonto tutarı (TL)
     net_total: float = 0  # İskonto sonrası tutar
     manual_override: bool = False  # Manuel tutar düzeltmesi yapıldı mı?
+    # KDV ve Nakliye (tekliften gelen satışlar için)
+    subtotal_tl: float = 0  # Ara toplam (KDV hariç)
+    subtotal_usd: float = 0  # Ara toplam USD
+    vat_rate: float = 20  # KDV oranı
+    vat_amount_tl: float = 0  # KDV tutarı
+    shipping_cost: float = 0  # Nakliye & Montaj (KDV dahil)
+    total_tl: float = 0  # Genel toplam (ara toplam - iskonto + KDV + nakliye)
+    total_usd: float = 0  # Genel toplam USD
     # Çoklu ödeme alanları
     nakit_tl: float = 0  # Nakit ödeme
     kart_tl: float = 0  # Kart ile ödeme
