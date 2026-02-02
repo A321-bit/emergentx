@@ -615,9 +615,12 @@ class PremiumQuotePDFGenerator:
         buffer.seek(0)
         return buffer
     
-    # ==================== PAGE 3: SYSTEM ANALYSIS ====================
+    # ==================== PAGE 3: SYSTEM ANALYSIS (PREMIUM REDESIGN) ====================
     def _create_analysis_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create system analysis page with production & savings (FORMULAS PRESERVED)"""
+        """
+        PREMIUM System Analysis Page - Sales-focused, visually stunning design
+        Features: Component explanations, amortization, carbon impact, risk disclaimers
+        """
         
         items = quote_data.get('items', [])
         
@@ -696,138 +699,395 @@ class PremiumQuotePDFGenerator:
         yearly_co2_saved = yearly_production * co2_per_kwh
         trees_equivalent = yearly_co2_saved / 22
         
+        # Amortization calculation
+        total_price = quote_data.get('total_tl', 0) or quote_data.get('subtotal_tl', 0) or 0
+        if yearly_savings > 0 and total_price > 0:
+            amortization_years = total_price / yearly_savings
+            amort_years = int(amortization_years)
+            amort_months = int((amortization_years - amort_years) * 12)
+        else:
+            amort_years = 0
+            amort_months = 0
+        
+        # Car km equivalent (average car emits 120g CO2/km)
+        car_km_equivalent = (yearly_co2_saved * 1000) / 120  # kg to g, then divide by 120g/km
+        
         # CREATE PAGE
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
-        # White background
+        # ===== GRADIENT HEADER =====
+        # Draw gradient effect with multiple rectangles
+        header_height = 70
+        gradient_steps = 20
+        for i in range(gradient_steps):
+            ratio = i / gradient_steps
+            r = int(30 + (59 - 30) * ratio)  # From dark navy to lighter
+            g = int(58 + (130 - 58) * ratio)
+            b = int(95 + (246 - 95) * ratio)
+            c.setFillColor(colors.HexColor(f'#{r:02x}{g:02x}{b:02x}'))
+            step_height = header_height / gradient_steps
+            c.rect(0, PAGE_HEIGHT - (i + 1) * step_height, PAGE_WIDTH, step_height + 1, fill=True, stroke=False)
+        
+        # Header title
         c.setFillColor(colors.white)
-        c.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, fill=True)
+        c.setFont(FONT_BOLD, 22)
+        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 35, "YATIRIMINIZIN GERİ DÖNÜŞÜ")
+        c.setFont(FONT_NORMAL, 10)
+        c.setFillColor(colors.HexColor('#94a3b8'))
+        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 52, "Güneş enerjisiyle tasarrufunuz başlıyor")
         
-        # Header bar
-        c.setFillColor(SECONDARY_COLOR)
-        c.rect(0, PAGE_HEIGHT - 60, PAGE_WIDTH, 60, fill=True)
+        y = PAGE_HEIGHT - 95
         
-        c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 18)
-        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 38, "SİSTEM ANALİZİ")
-        
-        y = PAGE_HEIGHT - 100
-        
-        # System capacity cards (3 in a row)
-        card_width = (CONTENT_WIDTH - 30) / 3
-        card_height = 70
-        
-        capacities = []
-        if panel_kw > 0:
-            capacities.append(('PANEL GÜCÜ', f'{panel_kw:.1f} kW', '#f59e0b', '☀'))
-        if inverter_kw > 0:
-            capacities.append(('İNVERTER', f'{inverter_kw:.1f} kW', '#3b82f6', '⚡'))
-        if battery_kwh > 0:
-            capacities.append(('BATARYA', f'{battery_kwh:.1f} kWh', '#10b981', '🔋'))
-        
-        for i, (label, value, color, icon) in enumerate(capacities):
-            x = MARGIN_LEFT + (i * (card_width + 15))
-            
-            # Card background
-            c.setFillColor(colors.HexColor(color))
-            c.roundRect(x, y - card_height, card_width, card_height, 8, fill=True)
-            
-            # Value (big)
-            c.setFillColor(colors.white)
-            c.setFont(FONT_BOLD, 22)
-            c.drawCentredString(x + card_width/2, y - 35, value)
-            
-            # Label
-            c.setFont(FONT_NORMAL, 9)
-            c.drawCentredString(x + card_width/2, y - 55, label)
-        
-        y -= 100
-        
-        # Production section
+        # ===== SECTION 1: SYSTEM COMPONENTS (3 Premium Cards) =====
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_BOLD, 12)
-        c.drawString(MARGIN_LEFT, y, "TAHMİNİ ÜRETİM DEĞERLERİ")
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT, y, "SİSTEMİNİZİN KALBİ")
+        y -= 8
         
-        y -= 25
+        card_width = (CONTENT_WIDTH - 20) / 3
+        card_height = 85
         
-        # Production table
-        prod_data = [
-            ['Günlük Üretim', f'{daily_production:.1f} kWh'],
-            ['Aylık Üretim', f'{monthly_production:.0f} kWh'],
-            ['Yıllık Üretim', f'{yearly_production:.0f} kWh'],
+        # Component definitions with sales-focused descriptions
+        components = []
+        if panel_kw > 0:
+            components.append({
+                'title': 'GÜNEŞ PANELİ',
+                'value': f'{panel_kw:.1f} kW',
+                'color': '#f59e0b',
+                'gradient_end': '#fbbf24',
+                'icon': '☀',
+                'desc': 'Çatınız artık para üretiyor'
+            })
+        if inverter_kw > 0:
+            components.append({
+                'title': 'İNVERTER',
+                'value': f'{inverter_kw:.1f} kW',
+                'color': '#3b82f6',
+                'gradient_end': '#60a5fa',
+                'icon': '⚡',
+                'desc': 'Sisteminizin akıllı beyni'
+            })
+        if battery_kwh > 0:
+            components.append({
+                'title': 'BATARYA',
+                'value': f'{battery_kwh:.1f} kWh',
+                'color': '#10b981',
+                'gradient_end': '#34d399',
+                'icon': '🔋',
+                'desc': 'Gece de güneş enerjisi'
+            })
+        
+        # Ensure we have 3 cards (fill with placeholder if needed)
+        while len(components) < 3:
+            components.append({
+                'title': 'AKTİF İZLEME',
+                'value': '7/24',
+                'color': '#8b5cf6',
+                'gradient_end': '#a78bfa',
+                'icon': '📊',
+                'desc': 'Anlık performans takibi'
+            })
+        
+        for i, comp in enumerate(components[:3]):
+            x = MARGIN_LEFT + (i * (card_width + 10))
+            
+            # Card with subtle gradient
+            c.setFillColor(colors.HexColor(comp['color']))
+            c.roundRect(x, y - card_height, card_width, card_height, 10, fill=True)
+            
+            # Lighter accent bar at top
+            c.setFillColor(colors.HexColor(comp['gradient_end']))
+            c.roundRect(x, y - 8, card_width, 8, 10, fill=True)
+            c.rect(x, y - 12, card_width, 8, fill=True, stroke=False)
+            
+            # Icon circle
+            c.setFillColor(colors.white)
+            c.setStrokeColor(colors.HexColor(comp['gradient_end']))
+            c.setLineWidth(2)
+            
+            # Value (big, white)
+            c.setFillColor(colors.white)
+            c.setFont(FONT_BOLD, 20)
+            c.drawCentredString(x + card_width/2, y - 38, comp['value'])
+            
+            # Title
+            c.setFont(FONT_BOLD, 8)
+            c.drawCentredString(x + card_width/2, y - 52, comp['title'])
+            
+            # Description (sales pitch)
+            c.setFont(FONT_NORMAL, 7)
+            c.setFillColor(colors.HexColor('#ffffff'))
+            c.drawCentredString(x + card_width/2, y - 72, comp['desc'])
+        
+        y -= card_height + 20
+        
+        # ===== SECTION 2: PRODUCTION ESTIMATES =====
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT, y, "☀ SİSTEMİNİZ NE KADAR ÜRETİR?")
+        y -= 5
+        
+        # Subtle info text
+        c.setFillColor(TEXT_LIGHT)
+        c.setFont(FONT_NORMAL, 7)
+        c.drawString(MARGIN_LEFT, y - 8, "Türkiye ortalaması günlük 5 saat verimli güneşlenme süresine göre hesaplanmıştır")
+        y -= 22
+        
+        # Production cards (horizontal layout with gradient bars)
+        prod_card_width = (CONTENT_WIDTH - 20) / 3
+        prod_card_height = 55
+        
+        productions = [
+            {
+                'label': 'GÜNLÜK',
+                'value': f'{daily_production:.1f}',
+                'unit': 'kWh',
+                'color': '#fef3c7',
+                'accent': '#f59e0b',
+                'note': '±%15 hava koşuluna göre değişir'
+            },
+            {
+                'label': 'AYLIK',
+                'value': f'{monthly_production:.0f}',
+                'unit': 'kWh',
+                'color': '#fed7aa',
+                'accent': '#ea580c',
+                'note': 'Yaz↑ Kış↓ yıllık dengede kazanç'
+            },
+            {
+                'label': 'YILLIK',
+                'value': f'{yearly_production:,.0f}'.replace(',', '.'),
+                'unit': 'kWh',
+                'color': '#fecaca',
+                'accent': '#dc2626',
+                'note': '25 yıl garanti, %80 verim 25. yılda'
+            }
         ]
         
-        for label, value in prod_data:
-            c.setFillColor(HEADER_BG)
-            c.roundRect(MARGIN_LEFT, y - 25, CONTENT_WIDTH, 25, 4, fill=True)
+        for i, prod in enumerate(productions):
+            x = MARGIN_LEFT + (i * (prod_card_width + 10))
             
-            c.setFillColor(TEXT_COLOR)
+            # Card background
+            c.setFillColor(colors.HexColor(prod['color']))
+            c.roundRect(x, y - prod_card_height, prod_card_width, prod_card_height, 8, fill=True)
+            
+            # Accent bar at left
+            c.setFillColor(colors.HexColor(prod['accent']))
+            c.roundRect(x, y - prod_card_height, 5, prod_card_height, 3, fill=True)
+            
+            # Value
+            c.setFillColor(colors.HexColor(prod['accent']))
+            c.setFont(FONT_BOLD, 18)
+            c.drawString(x + 15, y - 25, prod['value'])
+            
+            # Unit
             c.setFont(FONT_NORMAL, 10)
-            c.drawString(MARGIN_LEFT + 10, y - 18, label)
+            c.drawString(x + 15 + c.stringWidth(prod['value'], FONT_BOLD, 18) + 3, y - 25, prod['unit'])
             
-            c.setFont(FONT_BOLD, 11)
-            c.drawRightString(PAGE_WIDTH - MARGIN_RIGHT - 10, y - 18, value)
+            # Label
+            c.setFillColor(TEXT_COLOR)
+            c.setFont(FONT_BOLD, 8)
+            c.drawString(x + 15, y - 38, prod['label'])
             
-            y -= 30
+            # Risk note
+            c.setFillColor(TEXT_LIGHT)
+            c.setFont(FONT_NORMAL, 6)
+            c.drawString(x + 10, y - prod_card_height + 6, prod['note'])
         
-        y -= 20
+        y -= prod_card_height + 18
         
-        # Savings section
-        c.setFillColor(SUCCESS_COLOR)
-        c.setFont(FONT_BOLD, 12)
-        c.drawString(MARGIN_LEFT, y, f"TAHMİNİ TASARRUF ({savings_label.upper()})")
+        # ===== SECTION 3: SAVINGS & AMORTIZATION (Split layout) =====
+        left_width = CONTENT_WIDTH * 0.55
+        right_width = CONTENT_WIDTH * 0.42
         
-        y -= 30
-        
-        # Big savings number
-        c.setFillColor(colors.HexColor('#ecfdf5'))
-        c.roundRect(MARGIN_LEFT, y - 70, CONTENT_WIDTH, 70, 10, fill=True)
-        
-        c.setFillColor(SUCCESS_COLOR)
-        c.setFont(FONT_BOLD, 28)
-        c.drawCentredString(PAGE_WIDTH / 2, y - 35, f"₺{yearly_savings:,.0f}".replace(',', '.'))
-        
-        c.setFont(FONT_NORMAL, 10)
-        c.drawCentredString(PAGE_WIDTH / 2, y - 55, "Yıllık Tahmini Tasarruf")
-        
-        y -= 100
-        
-        # Multi-year projections
+        # LEFT: Savings
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(MARGIN_LEFT, y, f"3 Yıllık: ₺{yearly_savings * 3:,.0f}".replace(',', '.'))
-        c.drawString(MARGIN_LEFT + 120, y, f"5 Yıllık: ₺{yearly_savings * 5:,.0f}".replace(',', '.'))
-        c.drawString(MARGIN_LEFT + 240, y, f"10 Yıllık: ₺{yearly_savings * 10:,.0f}".replace(',', '.'))
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT, y, f"💰 CEBİNİZDE KALACAK PARA")
+        y -= 15
         
-        y -= 40
+        # Big savings box
+        savings_box_height = 70
+        c.setFillColor(colors.HexColor('#ecfdf5'))
+        c.roundRect(MARGIN_LEFT, y - savings_box_height, left_width, savings_box_height, 12, fill=True)
         
-        # Environmental impact
+        # Border accent
+        c.setStrokeColor(SUCCESS_COLOR)
+        c.setLineWidth(3)
+        c.roundRect(MARGIN_LEFT, y - savings_box_height, left_width, savings_box_height, 12, fill=False, stroke=True)
+        
+        # Savings value
+        c.setFillColor(SUCCESS_COLOR)
+        c.setFont(FONT_BOLD, 32)
+        savings_text = f"₺{yearly_savings:,.0f}".replace(',', '.')
+        c.drawCentredString(MARGIN_LEFT + left_width/2, y - 35, savings_text)
+        
+        # Label
+        c.setFont(FONT_NORMAL, 10)
+        c.setFillColor(colors.HexColor('#065f46'))
+        c.drawCentredString(MARGIN_LEFT + left_width/2, y - 55, f"Yıllık {savings_label}")
+        
+        # RIGHT: Amortization (next to savings)
+        right_x = MARGIN_LEFT + left_width + 10
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(right_x, y + 15, "⏱ AMORTİSMAN")
+        
+        # Amortization box
+        c.setFillColor(colors.HexColor('#fef3c7'))
+        c.roundRect(right_x, y - savings_box_height, right_width, savings_box_height, 12, fill=True)
+        
+        # Border
+        c.setStrokeColor(PRIMARY_COLOR)
+        c.setLineWidth(3)
+        c.roundRect(right_x, y - savings_box_height, right_width, savings_box_height, 12, fill=False, stroke=True)
+        
+        # Amortization value
+        c.setFillColor(PRIMARY_DARK)
+        c.setFont(FONT_BOLD, 26)
+        if amort_years > 0:
+            amort_text = f"{amort_years} Yıl {amort_months} Ay"
+        else:
+            amort_text = "Hesaplanıyor"
+        c.drawCentredString(right_x + right_width/2, y - 32, amort_text)
+        
+        # Label
+        c.setFont(FONT_NORMAL, 8)
+        c.setFillColor(colors.HexColor('#92400e'))
+        c.drawCentredString(right_x + right_width/2, y - 50, "Yatırım geri dönüş süresi")
+        
+        # Remaining profit note
+        c.setFont(FONT_NORMAL, 6)
+        if amort_years > 0:
+            remaining_years = 25 - amort_years
+            c.drawCentredString(right_x + right_width/2, y - savings_box_height + 8, f"Kalan {remaining_years}+ yıl tamamen kâr!")
+        
+        y -= savings_box_height + 18
+        
+        # Multi-year projections bar
+        c.setFillColor(colors.HexColor('#f8fafc'))
+        c.roundRect(MARGIN_LEFT, y - 25, CONTENT_WIDTH, 25, 6, fill=True)
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_BOLD, 8)
+        proj_y = y - 17
+        
+        # 5-year
+        c.drawString(MARGIN_LEFT + 10, proj_y, "5 Yıl:")
+        c.setFillColor(SUCCESS_COLOR)
+        c.drawString(MARGIN_LEFT + 40, proj_y, f"₺{yearly_savings * 5:,.0f}".replace(',', '.'))
+        
+        # 10-year
+        c.setFillColor(TEXT_COLOR)
+        c.drawString(MARGIN_LEFT + 130, proj_y, "10 Yıl:")
+        c.setFillColor(SUCCESS_COLOR)
+        c.drawString(MARGIN_LEFT + 165, proj_y, f"₺{yearly_savings * 10:,.0f}".replace(',', '.'))
+        
+        # 25-year
+        c.setFillColor(TEXT_COLOR)
+        c.drawString(MARGIN_LEFT + 270, proj_y, "25 Yıl:")
+        c.setFillColor(SUCCESS_COLOR)
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(MARGIN_LEFT + 305, proj_y, f"₺{yearly_savings * 25:,.0f}".replace(',', '.'))
+        
+        y -= 38
+        
+        # ===== SECTION 4: ENVIRONMENTAL IMPACT (Stunning visual) =====
         c.setFillColor(colors.HexColor('#166534'))
-        c.setFont(FONT_BOLD, 12)
-        c.drawString(MARGIN_LEFT, y, "ÇEVRESEL ETKİ")
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT, y, "🌍 DÜNYAYA KATKIMIZ")
+        y -= 8
         
-        y -= 30
+        c.setFillColor(TEXT_LIGHT)
+        c.setFont(FONT_NORMAL, 7)
+        c.drawString(MARGIN_LEFT, y - 3, "Gelecek nesillere bırakacağınız en güzel miras: temiz bir dünya")
+        y -= 18
         
-        env_box_width = (CONTENT_WIDTH - 15) / 2
+        # Environmental cards (4 cards)
+        env_card_width = (CONTENT_WIDTH - 30) / 4
+        env_card_height = 65
         
-        # CO2 card
-        c.setFillColor(colors.HexColor('#f0fdf4'))
-        c.roundRect(MARGIN_LEFT, y - 50, env_box_width, 50, 8, fill=True)
-        c.setFillColor(colors.HexColor('#166534'))
-        c.setFont(FONT_BOLD, 16)
-        c.drawCentredString(MARGIN_LEFT + env_box_width/2, y - 25, f"{yearly_co2_saved:.0f} kg")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawCentredString(MARGIN_LEFT + env_box_width/2, y - 42, "Yıllık CO₂ Tasarrufu")
+        env_impacts = [
+            {
+                'icon': '🌱',
+                'value': f'{yearly_co2_saved:.0f}',
+                'unit': 'kg',
+                'label': 'CO₂ Azaltımı/Yıl',
+                'color': '#dcfce7',
+                'accent': '#16a34a'
+            },
+            {
+                'icon': '🌳',
+                'value': f'{trees_equivalent:.0f}',
+                'unit': 'ağaç',
+                'label': 'Dikilen Ağaç Eşdeğeri',
+                'color': '#d1fae5',
+                'accent': '#059669'
+            },
+            {
+                'icon': '🚗',
+                'value': f'{car_km_equivalent/1000:.1f}K',
+                'unit': 'km',
+                'label': 'Araç Yolculuğu Dengelendi',
+                'color': '#cffafe',
+                'accent': '#0891b2'
+            },
+            {
+                'icon': '⚡',
+                'value': f'{yearly_co2_saved * 25 / 1000:.0f}',
+                'unit': 'ton',
+                'label': '25 Yılda Toplam CO₂',
+                'color': '#e0e7ff',
+                'accent': '#4f46e5'
+            }
+        ]
         
-        # Trees card
-        c.setFillColor(colors.HexColor('#f0fdf4'))
-        c.roundRect(MARGIN_LEFT + env_box_width + 15, y - 50, env_box_width, 50, 8, fill=True)
-        c.setFillColor(colors.HexColor('#166534'))
-        c.setFont(FONT_BOLD, 16)
-        c.drawCentredString(MARGIN_LEFT + env_box_width + 15 + env_box_width/2, y - 25, f"{trees_equivalent:.0f} ağaç")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawCentredString(MARGIN_LEFT + env_box_width + 15 + env_box_width/2, y - 42, "Yıllık Ağaç Eşdeğeri")
+        for i, env in enumerate(env_impacts):
+            x = MARGIN_LEFT + (i * (env_card_width + 10))
+            
+            # Card background
+            c.setFillColor(colors.HexColor(env['color']))
+            c.roundRect(x, y - env_card_height, env_card_width, env_card_height, 8, fill=True)
+            
+            # Icon at top
+            c.setFont(FONT_NORMAL, 16)
+            c.drawCentredString(x + env_card_width/2, y - 15, env['icon'])
+            
+            # Value
+            c.setFillColor(colors.HexColor(env['accent']))
+            c.setFont(FONT_BOLD, 14)
+            value_text = f"{env['value']} {env['unit']}"
+            c.drawCentredString(x + env_card_width/2, y - 35, value_text)
+            
+            # Label (wrapped)
+            c.setFillColor(TEXT_COLOR)
+            c.setFont(FONT_NORMAL, 6)
+            # Split label into two lines if needed
+            label_words = env['label'].split()
+            if len(label_words) > 2:
+                line1 = ' '.join(label_words[:2])
+                line2 = ' '.join(label_words[2:])
+                c.drawCentredString(x + env_card_width/2, y - 50, line1)
+                c.drawCentredString(x + env_card_width/2, y - 58, line2)
+            else:
+                c.drawCentredString(x + env_card_width/2, y - 54, env['label'])
+        
+        y -= env_card_height + 12
+        
+        # ===== BOTTOM BANNER =====
+        banner_height = 35
+        c.setFillColor(SECONDARY_COLOR)
+        c.roundRect(MARGIN_LEFT, y - banner_height, CONTENT_WIDTH, banner_height, 8, fill=True)
+        
+        c.setFillColor(colors.white)
+        c.setFont(FONT_BOLD, 11)
+        c.drawCentredString(PAGE_WIDTH / 2, y - 15, "🎯 Elektrik Zamlarından Etkilenmeyin - Kendi Enerjinizi Üretin!")
+        
+        c.setFont(FONT_NORMAL, 7)
+        c.setFillColor(colors.HexColor('#94a3b8'))
+        c.drawCentredString(PAGE_WIDTH / 2, y - 28, "Panel garantisi 25 yıl • İnverter garantisi 10 yıl • Profesyonel montaj ekibi")
         
         # Footer
         self._draw_page_footer(c, 3)
