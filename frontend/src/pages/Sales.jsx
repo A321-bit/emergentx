@@ -601,6 +601,8 @@ const Sales = () => {
       line_total: (parseFloat(item.quantity) || 1) * (parseFloat(item.unit_price) || 0)
     }));
     
+    const calculatedTotal = itemsWithTotals.reduce((sum, item) => sum + (item.line_total || 0), 0);
+    
     setFormData({
       customer_id: sale.customer_id || '',
       customer_name: sale.customer_name,
@@ -614,12 +616,18 @@ const Sales = () => {
       notes: sale.notes || '',
       // Items with recalculated line_total
       items: itemsWithTotals,
-      calculated_total: itemsWithTotals.reduce((sum, item) => sum + (item.line_total || 0), 0),
+      calculated_total: calculatedTotal,
       discount_type: sale.discount_percent > 0 ? 'percent' : 'amount',
       discount_percent: sale.discount_percent?.toString() || '',
       discount_amount: sale.discount_amount?.toString() || '',
       net_total: sale.net_total || 0,
       manual_override: true, // Set to true when editing to prevent auto-override
+      // KDV ve Nakliye (tekliften gelen satışlar için)
+      subtotal_tl: sale.subtotal_tl || calculatedTotal,
+      vat_rate: sale.vat_rate?.toString() || '20',
+      vat_amount_tl: sale.vat_amount_tl || 0,
+      shipping_cost: sale.shipping_cost?.toString() || '',
+      total_tl: sale.total_tl || sale.sale_amount_tl || 0,
       // Payments
       nakit_tl: sale.nakit_tl?.toString() || '',
       kart_tl: sale.kart_tl?.toString() || '',
