@@ -477,6 +477,8 @@ class CompanySettings(BaseModel):
     bank_accounts: Optional[List[dict]] = None  # Array of bank account objects
     # Card providers (Kart Çekilen Sistemler)
     card_providers: Optional[List[dict]] = None  # [{id, name, description}]
+    # Installment options (Taksit Seçenekleri)
+    installment_options: Optional[List[dict]] = None  # [{bank_name, installments, rate}]
     # Legacy single bank fields (for backward compatibility)
     bank_name: Optional[str] = None
     bank_branch: Optional[str] = None
