@@ -7,26 +7,30 @@
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
 ### 2 Şubat 2026 - Satış Hesaplama Hatası Düzeltildi ✅
-**P0 Bug Fix - Satış modülünde ürün miktarı değiştirildiğinde toplam tutarın güncellenmemesi sorunu**
+**P0 Bug Fix - Satış modülünde ürün miktarı veya iskonto değiştirildiğinde toplam tutarın güncellenmemesi sorunu**
 
 #### Sorun:
-- Bir satışı düzenlerken (özellikle tekliften dönüştürülen satışlarda) ürün miktarını değiştirdiğinizde `Satış Tutarı (TL)` alanı güncellenmiyordu
-- Root cause: `handleEdit` fonksiyonunda `manual_override: true` ayarlanıyordu, bu da `useEffect`'in `sale_amount_tl`'yi otomatik güncellemesini engelliyordu
+- Bir satışı düzenlerken (özellikle tekliften dönüştürülen satışlarda) ürün miktarını veya iskonto değerini değiştirdiğinizde `Satış Tutarı (TL)` alanı güncellenmiyordu
+- Root cause: `handleEdit` fonksiyonunda `manual_override: true` ayarlanıyordu ve bu değer iskonto/miktar değişikliklerinde sıfırlanmıyordu
 
-#### Çözüm:
-- `updateItem` fonksiyonunda miktar (`quantity`), birim fiyat (`unit_price`) veya ürün seçimi (`item_id`) değiştirildiğinde `manual_override: false` ayarlanıyor
-- `removeItem` fonksiyonunda da aynı mantık eklendi
-- Bu sayede item değişikliklerinde `sale_amount_tl` otomatik olarak yeniden hesaplanıyor
+#### Çözüm (2 aşamalı):
+1. **Miktar/Ürün Değişikliği:** `updateItem` ve `removeItem` fonksiyonlarında `manual_override: false` eklendi
+2. **İskonto Değişikliği:** İskonto değeri ve tipi değiştirildiğinde `manual_override: false` eklendi
 
 #### Değişen Dosyalar:
-- `/app/frontend/src/pages/Sales.jsx` - `updateItem` (satır ~351-356) ve `removeItem` (satır ~319-320) fonksiyonları
+- `/app/frontend/src/pages/Sales.jsx`:
+  - `updateItem` fonksiyonu (satır ~351-356)
+  - `removeItem` fonksiyonu (satır ~319-320)
+  - İskonto tipi Select `onValueChange` (satır ~1182)
+  - İskonto değeri Input `onChange` (satır ~1201)
 
-#### Test Sonuçları:
-- ✅ Miktar değişikliğinde line_total doğru hesaplanıyor
-- ✅ Miktar değişikliğinde calculated_total (Ara Toplam) güncelleniyor
-- ✅ Miktar değişikliğinde net_total güncelleniyor
-- ✅ Miktar değişikliğinde sale_amount_tl (Satış Tutarı) otomatik güncelleniyor
-- ✅ Ürün kaldırıldığında tüm toplamlar doğru güncelleniyor
+#### Test Sonuçları (iteration_7 & iteration_8):
+- ✅ Miktar değişikliğinde sale_amount_tl otomatik güncelleniyor
+- ✅ Ürün kaldırıldığında tüm toplamlar güncelleniyor
+- ✅ İskonto değeri değiştirildiğinde (%10→%5) sale_amount_tl güncelleniyor
+- ✅ İskonto 0 yapıldığında sale_amount_tl = net_total = ara_toplam oluyor
+- ✅ İskonto tipi değiştirildiğinde (%→₺) sale_amount_tl güncelleniyor
+- ✅ "Manuel düzeltme yapıldı" mesajı sadece Satış Tutarı manuel değiştirildiğinde görünüyor
 
 ---
 
