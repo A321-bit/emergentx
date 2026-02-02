@@ -316,7 +316,8 @@ const Sales = () => {
   const removeItem = (index) => {
     setFormData(prev => {
       const newItems = prev.items.filter((_, i) => i !== index);
-      return { ...prev, items: newItems };
+      // Reset manual_override when items change so sale_amount_tl updates automatically
+      return { ...prev, items: newItems, manual_override: false };
     });
   };
 
