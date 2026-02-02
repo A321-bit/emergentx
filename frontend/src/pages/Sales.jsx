@@ -1207,7 +1207,7 @@ const Sales = () => {
 
                   {/* Totals */}
                   <div className="bg-white dark:bg-slate-800 p-3 rounded mt-2">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       <div>
                         <Label className="text-xs text-muted-foreground">Ara Toplam</Label>
                         <p className="font-bold">{formatCurrency(formData.calculated_total)}</p>
@@ -1244,8 +1244,52 @@ const Sales = () => {
                         </div>
                       </div>
                       <div>
-                        <Label className="text-xs text-muted-foreground">Net Toplam</Label>
-                        <p className="font-bold text-green-600">{formatCurrency(formData.net_total)}</p>
+                        <Label className="text-xs text-muted-foreground">İskonto Sonrası</Label>
+                        <p className="font-bold">{formatCurrency(formData.net_total)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">KDV ({formData.vat_rate}%)</Label>
+                        <p className="font-bold text-blue-600">{formatCurrency(formData.vat_amount_tl)}</p>
+                      </div>
+                    </div>
+                    {/* KDV ve Nakliye Satırı */}
+                    <div className="grid grid-cols-4 gap-4 mt-3 pt-3 border-t">
+                      <div>
+                        <Label className="text-xs">KDV Oranı (%)</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="20"
+                          className="h-8"
+                          value={formData.vat_rate}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            vat_rate: e.target.value,
+                            manual_override: false
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Nakliye & Montaj (KDV dahil)</Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">₺</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0"
+                            className="h-8 pl-5"
+                            value={formData.shipping_cost}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              shipping_cost: e.target.value,
+                              manual_override: false
+                            }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs text-muted-foreground">Genel Toplam</Label>
+                        <p className="font-bold text-xl text-green-600">{formatCurrency(formData.total_tl)}</p>
                       </div>
                     </div>
                   </div>
