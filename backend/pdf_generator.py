@@ -889,85 +889,83 @@ class PremiumQuotePDFGenerator:
         
         y -= prod_card_height + 30  # More space after section
         
-        # ===== SECTION 3: SAVINGS & AMORTIZATION (Split layout) =====
-        left_width = CONTENT_WIDTH * 0.55
-        right_width = CONTENT_WIDTH * 0.42
-        
-        # LEFT: Savings
+        # ===== SECTION 3: SAVINGS & AMORTIZATION =====
+        # Title centered
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT, y, f"💰 CEBİNİZDE KALACAK PARA")
-        y -= 15
+        c.setFont(FONT_BOLD, 12)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "YILLIK TASARRUF VE GERİ DÖNÜŞ")
+        y -= 25
         
-        # Big savings box
-        savings_box_height = 70
+        # Two boxes side by side with more gap
+        left_width = CONTENT_WIDTH * 0.48
+        right_width = CONTENT_WIDTH * 0.48
+        box_height = 65
+        gap = CONTENT_WIDTH * 0.04
+        
+        # LEFT: Savings box
         c.setFillColor(colors.HexColor('#ecfdf5'))
-        c.roundRect(MARGIN_LEFT, y - savings_box_height, left_width, savings_box_height, 12, fill=True)
+        c.roundRect(MARGIN_LEFT, y - box_height, left_width, box_height, 10, fill=True)
         
-        # Border accent
+        # Border
         c.setStrokeColor(SUCCESS_COLOR)
-        c.setLineWidth(3)
-        c.roundRect(MARGIN_LEFT, y - savings_box_height, left_width, savings_box_height, 12, fill=False, stroke=True)
+        c.setLineWidth(2)
+        c.roundRect(MARGIN_LEFT, y - box_height, left_width, box_height, 10, fill=False, stroke=True)
         
-        # Savings value
-        c.setFillColor(SUCCESS_COLOR)
-        c.setFont(FONT_BOLD, 32)
-        savings_text = f"₺{yearly_savings:,.0f}".replace(',', '.')
-        c.drawCentredString(MARGIN_LEFT + left_width/2, y - 35, savings_text)
-        
-        # Label
-        c.setFont(FONT_NORMAL, 10)
+        # Label at top
         c.setFillColor(colors.HexColor('#065f46'))
-        c.drawCentredString(MARGIN_LEFT + left_width/2, y - 55, f"Yıllık {savings_label}")
+        c.setFont(FONT_NORMAL, 8)
+        c.drawCentredString(MARGIN_LEFT + left_width/2, y - 12, f"Yıllık {savings_label}")
         
-        # RIGHT: Amortization (next to savings)
-        right_x = MARGIN_LEFT + left_width + 10
+        # Savings value (big)
+        c.setFillColor(SUCCESS_COLOR)
+        c.setFont(FONT_BOLD, 28)
+        savings_text = f"₺{yearly_savings:,.0f}".replace(',', '.')
+        c.drawCentredString(MARGIN_LEFT + left_width/2, y - 42, savings_text)
         
-        c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(right_x, y + 15, "⏱ AMORTİSMAN")
+        # RIGHT: Amortization box
+        right_x = MARGIN_LEFT + left_width + gap
         
-        # Amortization box
         c.setFillColor(colors.HexColor('#fef3c7'))
-        c.roundRect(right_x, y - savings_box_height, right_width, savings_box_height, 12, fill=True)
+        c.roundRect(right_x, y - box_height, right_width, box_height, 10, fill=True)
         
         # Border
         c.setStrokeColor(PRIMARY_COLOR)
-        c.setLineWidth(3)
-        c.roundRect(right_x, y - savings_box_height, right_width, savings_box_height, 12, fill=False, stroke=True)
+        c.setLineWidth(2)
+        c.roundRect(right_x, y - box_height, right_width, box_height, 10, fill=False, stroke=True)
+        
+        # Label at top
+        c.setFillColor(colors.HexColor('#92400e'))
+        c.setFont(FONT_NORMAL, 8)
+        c.drawCentredString(right_x + right_width/2, y - 12, "Yatırım Geri Dönüş Süresi")
         
         # Amortization value
         c.setFillColor(PRIMARY_DARK)
-        c.setFont(FONT_BOLD, 26)
+        c.setFont(FONT_BOLD, 24)
         if amort_years > 0:
             amort_text = f"{amort_years} Yıl {amort_months} Ay"
         else:
             amort_text = "Hesaplanıyor"
-        c.drawCentredString(right_x + right_width/2, y - 32, amort_text)
-        
-        # Label
-        c.setFont(FONT_NORMAL, 8)
-        c.setFillColor(colors.HexColor('#92400e'))
-        c.drawCentredString(right_x + right_width/2, y - 50, "Yatırım geri dönüş süresi")
+        c.drawCentredString(right_x + right_width/2, y - 40, amort_text)
         
         # Remaining profit note
-        c.setFont(FONT_NORMAL, 6)
         if amort_years > 0:
             remaining_years = 25 - amort_years
-            c.drawCentredString(right_x + right_width/2, y - savings_box_height + 8, f"Kalan {remaining_years}+ yıl tamamen kâr!")
+            c.setFont(FONT_NORMAL, 7)
+            c.setFillColor(colors.HexColor('#b45309'))
+            c.drawCentredString(right_x + right_width/2, y - box_height + 8, f"Kalan {remaining_years}+ yıl tamamen kâr!")
         
-        y -= savings_box_height + 18
+        y -= box_height + 25
         
         # Multi-year projections bar
-        c.setFillColor(colors.HexColor('#f8fafc'))
-        c.roundRect(MARGIN_LEFT, y - 25, CONTENT_WIDTH, 25, 6, fill=True)
+        c.setFillColor(colors.HexColor('#f1f5f9'))
+        c.roundRect(MARGIN_LEFT, y - 22, CONTENT_WIDTH, 22, 5, fill=True)
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_BOLD, 8)
-        proj_y = y - 17
+        c.setFont(FONT_NORMAL, 8)
+        proj_y = y - 15
         
         # 5-year
-        c.drawString(MARGIN_LEFT + 10, proj_y, "5 Yıl:")
+        c.drawString(MARGIN_LEFT + 15, proj_y, "5 Yıl:")
         c.setFillColor(SUCCESS_COLOR)
         c.drawString(MARGIN_LEFT + 40, proj_y, f"₺{yearly_savings * 5:,.0f}".replace(',', '.'))
         
