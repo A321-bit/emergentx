@@ -1179,7 +1179,7 @@ const Sales = () => {
                         <div className="flex gap-1">
                           <Select
                             value={formData.discount_type}
-                            onValueChange={(val) => setFormData(prev => ({ ...prev, discount_type: val, discount_percent: '', discount_amount: '' }))}
+                            onValueChange={(val) => setFormData(prev => ({ ...prev, discount_type: val, discount_percent: '', discount_amount: '', manual_override: false }))}
                           >
                             <SelectTrigger className="w-16 h-8">
                               <SelectValue />
@@ -1197,7 +1197,8 @@ const Sales = () => {
                             value={formData.discount_type === 'percent' ? formData.discount_percent : formData.discount_amount}
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
-                              [formData.discount_type === 'percent' ? 'discount_percent' : 'discount_amount']: e.target.value
+                              [formData.discount_type === 'percent' ? 'discount_percent' : 'discount_amount']: e.target.value,
+                              manual_override: false
                             }))}
                           />
                         </div>
