@@ -2951,14 +2951,27 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
     # Get quote templates for category-based covers
     quote_templates = await db.quote_templates.find({"is_active": True}, {"_id": 0}).to_list(10)
     
+    # Check if this is an Off-Grid quote (use new premium PDF generator)
+    category_name = quote.get("customer_category_name", "").lower()
+    is_offgrid = 'off' in category_name or 'off-grid' in category_name or 'offgrid' in category_name
+    
     # Generate PDF
     try:
-        pdf_buffer = generate_quote_pdf(
-            quote_data=quote,
-            company_settings=company_settings,
-            upload_dir=str(UPLOAD_DIR),
-            quote_templates=quote_templates
-        )
+        if is_offgrid:
+            # Use new OFF-GRID Premium PDF Generator
+            pdf_buffer = generate_offgrid_quote_pdf(
+                quote_data=quote,
+                company_settings=company_settings,
+                uploads_dir=str(UPLOAD_DIR)
+            )
+        else:
+            # Use standard PDF generator for other categories
+            pdf_buffer = generate_quote_pdf(
+                quote_data=quote,
+                company_settings=company_settings,
+                upload_dir=str(UPLOAD_DIR),
+                quote_templates=quote_templates
+            )
         
         # Create filename
         quote_number = quote.get("quote_number", quote_id)
