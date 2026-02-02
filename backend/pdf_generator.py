@@ -54,17 +54,18 @@ MARGIN_RIGHT = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
 CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-# Premium Color Palette
-PRIMARY_COLOR = colors.HexColor('#f59e0b')      # Warm Amber
-PRIMARY_DARK = colors.HexColor('#d97706')       # Dark Amber
-SECONDARY_COLOR = colors.HexColor('#1e3a5f')    # Deep Navy Blue
-ACCENT_COLOR = colors.HexColor('#10b981')       # Emerald Green
-TEXT_COLOR = colors.HexColor('#1e293b')         # Slate 800
-TEXT_LIGHT = colors.HexColor('#64748b')         # Slate 500
-HEADER_BG = colors.HexColor('#f8fafc')          # Slate 50
-BORDER_COLOR = colors.HexColor('#e2e8f0')       # Slate 200
-SUCCESS_COLOR = colors.HexColor('#059669')      # Emerald 600
-WARNING_COLOR = colors.HexColor('#ea580c')      # Orange 600
+# AKTÜRK ENERJİ Kurumsal Renk Paleti
+PRIMARY_COLOR = colors.HexColor('#247dc0')      # Aktürk Mavi (ENERJİ)
+PRIMARY_DARK = colors.HexColor('#1a5a8a')       # Koyu Mavi
+PRIMARY_LIGHT = colors.HexColor('#7ba5d1')      # Açık Mavi
+SECONDARY_COLOR = colors.HexColor('#404041')    # Aktürk Gri (AKTÜRK)
+ACCENT_COLOR = colors.HexColor('#10b981')       # Yeşil (başarı/tasarruf için)
+TEXT_COLOR = colors.HexColor('#404041')         # Koyu Gri (metin)
+TEXT_LIGHT = colors.HexColor('#858585')         # Açık Gri
+HEADER_BG = colors.HexColor('#f0f5fa')          # Çok açık mavi arka plan
+BORDER_COLOR = colors.HexColor('#dae4f0')       # Mavi-gri border
+SUCCESS_COLOR = colors.HexColor('#059669')      # Yeşil (tasarruf)
+WARNING_COLOR = colors.HexColor('#ea580c')      # Turuncu (uyarı)
 
 # Column widths for product table
 COL_MIKTAR = 0.10 * CONTENT_WIDTH
