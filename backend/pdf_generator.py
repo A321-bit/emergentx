@@ -737,90 +737,82 @@ class PremiumQuotePDFGenerator:
         c.setFillColor(colors.HexColor('#94a3b8'))
         c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 52, "Güneş enerjisiyle tasarrufunuz başlıyor")
         
-        y = PAGE_HEIGHT - 95
+        y = PAGE_HEIGHT - 100
         
-        # ===== SECTION 1: SYSTEM COMPONENTS (3 Premium Cards) =====
+        # ===== SECTION 1: SYSTEM COMPONENTS =====
+        # Centered title
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT, y, "SİSTEMİNİZİN KALBİ")
-        y -= 8
+        c.setFont(FONT_BOLD, 13)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "KURULACAK SİSTEM ÖZELLİKLERİ")
+        y -= 30
         
-        card_width = (CONTENT_WIDTH - 20) / 3
-        card_height = 85
+        card_width = (CONTENT_WIDTH - 40) / 3  # More spacing between cards
+        card_height = 75
         
-        # Component definitions with sales-focused descriptions
+        # Component definitions with technical descriptions on top
         components = []
         if panel_kw > 0:
             components.append({
+                'top_label': 'Saatlik Üretim Gücü',
                 'title': 'GÜNEŞ PANELİ',
                 'value': f'{panel_kw:.1f} kW',
                 'color': '#f59e0b',
-                'gradient_end': '#fbbf24',
-                'icon': '☀',
-                'desc': 'Çatınız artık para üretiyor'
+                'gradient_end': '#fbbf24'
             })
         if inverter_kw > 0:
             components.append({
+                'top_label': 'Anlık Maximum Tüketim',
                 'title': 'İNVERTER',
                 'value': f'{inverter_kw:.1f} kW',
                 'color': '#3b82f6',
-                'gradient_end': '#60a5fa',
-                'icon': '⚡',
-                'desc': 'Sisteminizin akıllı beyni'
+                'gradient_end': '#60a5fa'
             })
         if battery_kwh > 0:
             components.append({
+                'top_label': 'Enerji Depolama Kapasitesi',
                 'title': 'BATARYA',
                 'value': f'{battery_kwh:.1f} kWh',
                 'color': '#10b981',
-                'gradient_end': '#34d399',
-                'icon': '🔋',
-                'desc': 'Gece de güneş enerjisi'
+                'gradient_end': '#34d399'
             })
         
-        # Ensure we have 3 cards (fill with placeholder if needed)
+        # Fill with monitoring if less than 3 components
         while len(components) < 3:
             components.append({
+                'top_label': 'Sistem İzleme',
                 'title': 'AKTİF İZLEME',
                 'value': '7/24',
                 'color': '#8b5cf6',
-                'gradient_end': '#a78bfa',
-                'icon': '📊',
-                'desc': 'Anlık performans takibi'
+                'gradient_end': '#a78bfa'
             })
         
         for i, comp in enumerate(components[:3]):
-            x = MARGIN_LEFT + (i * (card_width + 10))
+            x = MARGIN_LEFT + (i * (card_width + 20))  # More gap between cards
             
-            # Card with subtle gradient
+            # Top label (above card)
+            c.setFillColor(TEXT_LIGHT)
+            c.setFont(FONT_NORMAL, 8)
+            c.drawCentredString(x + card_width/2, y + 5, comp['top_label'])
+            
+            # Card background
             c.setFillColor(colors.HexColor(comp['color']))
             c.roundRect(x, y - card_height, card_width, card_height, 10, fill=True)
             
             # Lighter accent bar at top
             c.setFillColor(colors.HexColor(comp['gradient_end']))
-            c.roundRect(x, y - 8, card_width, 8, 10, fill=True)
-            c.rect(x, y - 12, card_width, 8, fill=True, stroke=False)
+            c.roundRect(x, y - 6, card_width, 6, 10, fill=True)
+            c.rect(x, y - 10, card_width, 6, fill=True, stroke=False)
             
-            # Icon circle
+            # Value (big, white, centered)
             c.setFillColor(colors.white)
-            c.setStrokeColor(colors.HexColor(comp['gradient_end']))
-            c.setLineWidth(2)
+            c.setFont(FONT_BOLD, 24)
+            c.drawCentredString(x + card_width/2, y - 40, comp['value'])
             
-            # Value (big, white)
-            c.setFillColor(colors.white)
-            c.setFont(FONT_BOLD, 20)
-            c.drawCentredString(x + card_width/2, y - 38, comp['value'])
-            
-            # Title
-            c.setFont(FONT_BOLD, 8)
-            c.drawCentredString(x + card_width/2, y - 52, comp['title'])
-            
-            # Description (sales pitch)
-            c.setFont(FONT_NORMAL, 7)
-            c.setFillColor(colors.HexColor('#ffffff'))
-            c.drawCentredString(x + card_width/2, y - 72, comp['desc'])
+            # Title (bottom of card)
+            c.setFont(FONT_BOLD, 9)
+            c.drawCentredString(x + card_width/2, y - 60, comp['title'])
         
-        y -= card_height + 20
+        y -= card_height + 35  # More space after section
         
         # ===== SECTION 2: PRODUCTION ESTIMATES =====
         c.setFillColor(TEXT_COLOR)
