@@ -346,7 +346,14 @@ const Sales = () => {
       // Recalculate line total
       newItems[index].line_total = (parseFloat(newItems[index].quantity) || 0) * (parseFloat(newItems[index].unit_price) || 0);
       
-      return { ...prev, items: newItems };
+      // When quantity or unit_price changes, reset manual_override so sale_amount_tl updates automatically
+      const shouldResetOverride = field === 'quantity' || field === 'unit_price' || field === 'item_id';
+      
+      return { 
+        ...prev, 
+        items: newItems,
+        ...(shouldResetOverride ? { manual_override: false } : {})
+      };
     });
   };
 
