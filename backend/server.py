@@ -1554,7 +1554,7 @@ async def upload_product_images(product_id: str, files: List[UploadFile] = File(
         with open(file_path, "wb") as f:
             f.write(content)
         
-        uploaded_urls.append(f"/uploads/{filename}")
+        uploaded_urls.append(f"/api/uploads/{filename}")
     
     # Add to existing images
     existing_images = product.get("images", [])
@@ -1580,7 +1580,7 @@ async def upload_product_datasheet(product_id: str, file: UploadFile = File(...)
     with open(file_path, "wb") as f:
         f.write(content)
     
-    datasheet_url = f"/uploads/{filename}"
+    datasheet_url = f"/api/uploads/{filename}"
     await db.products.update_one({"id": product_id}, {"$set": {"datasheet_url": datasheet_url}})
     
     return {"datasheet_url": datasheet_url}
@@ -3101,7 +3101,7 @@ async def upload_logo(file: UploadFile = File(...), current_user: dict = Depends
     with open(file_path, "wb") as f:
         f.write(content)
     
-    logo_url = f"/uploads/{filename}"
+    logo_url = f"/api/uploads/{filename}"
     
     await db.company_settings.update_one(
         {"id": "company_settings"},
@@ -3125,7 +3125,7 @@ async def upload_quote_cover(file: UploadFile = File(...), current_user: dict = 
     with open(file_path, "wb") as f:
         f.write(content)
     
-    cover_url = f"/uploads/{filename}"
+    cover_url = f"/api/uploads/{filename}"
     
     await db.company_settings.update_one(
         {"id": "company_settings"},
@@ -3203,7 +3203,7 @@ async def upload_quote_template_cover(
     with open(file_path, "wb") as f:
         f.write(content)
     
-    cover_url = f"/uploads/{filename}"
+    cover_url = f"/api/uploads/{filename}"
     
     # Update or create template record
     await db.quote_templates.update_one(
