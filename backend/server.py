@@ -6022,6 +6022,7 @@ async def execute_xml_import(
                     "images": xml_product["images"][:5] if xml_product["images"] else [],  # Max 5 images
                     "datasheet_url": xml_product["datasheet_url"],
                     "stock_quantity": 100 if xml_product["in_stock"] else 0,
+                    "stock_location": "supplier",  # XML'den gelen ürünler Tedarikçi Stok
                     "unit": "adet",
                     "xml_product_code": xml_product["product_code"],
                     "xml_supplier": supplier_name,
