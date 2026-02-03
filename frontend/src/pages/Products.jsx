@@ -637,6 +637,16 @@ const Products = () => {
                   <TableCell className="text-right tabular-nums">
                     {product.stock_quantity} {product.unit}
                   </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-xs font-medium",
+                      product.stock_location === 'akturk' 
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    )}>
+                      {product.stock_location === 'akturk' ? 'Aktürk' : 'Tedarikçi'}
+                    </span>
+                  </TableCell>
                   {canViewPrices && (
                     <TableCell className="text-right currency text-muted-foreground hidden xl:table-cell">
                       {product.purchase_price_without_vat != null 
