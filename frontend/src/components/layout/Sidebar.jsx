@@ -33,7 +33,8 @@ import {
   ChevronRight,
   Wallet,
   Phone,
-  FileImage
+  FileImage,
+  CloudDownload
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
