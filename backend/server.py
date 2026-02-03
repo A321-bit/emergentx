@@ -245,6 +245,7 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
     category_id: Optional[str] = None
+    product_code: Optional[str] = None  # Manuel ürün kodu
     description: Optional[str] = None
     short_description: Optional[str] = None  # PDF için kısa açıklama
     benefits: Optional[List[str]] = None  # PDF için 3 fayda maddesi
