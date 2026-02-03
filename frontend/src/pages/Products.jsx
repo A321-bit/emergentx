@@ -390,7 +390,8 @@ const Products = () => {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+                         product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.product_code?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
     return matchesSearch && matchesCategory;
   });
