@@ -278,6 +278,7 @@ const Products = () => {
     
     setFormData({
       name: product.name,
+      product_code: product.product_code || '',
       category_id: product.category_id || '',
       description: product.description || '',
       short_description: product.short_description || '',
