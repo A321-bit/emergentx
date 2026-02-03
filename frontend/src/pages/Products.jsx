@@ -295,6 +295,7 @@ const Products = () => {
       vat_rate: product.vat_rate?.toString() || '20',
       profit_margin: product.profit_margin?.toString() || '',
       stock_quantity: product.stock_quantity?.toString() || '0',
+      stock_location: product.stock_location || 'akturk',
       unit: product.unit || 'adet',
       power_watt: product.power_watt?.toString() || '',
       price_segment: product.price_segment || '',
