@@ -65,6 +65,7 @@ function App() {
               <Route path="/payroll" element={<Payroll />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/settings/quote-templates" element={<QuoteTemplates />} />
+              <Route path="/settings/xml" element={<XMLSettings />} />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
