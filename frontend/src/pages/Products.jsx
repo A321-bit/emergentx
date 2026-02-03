@@ -749,7 +749,7 @@ const Products = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="name">Ürün Adı</Label>
                 <Input
                   id="name"
@@ -757,6 +757,17 @@ const Products = () => {
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
                   data-testid="product-name-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="product_code">Ürün Kodu</Label>
+                <Input
+                  id="product_code"
+                  value={formData.product_code}
+                  onChange={(e) => setFormData({...formData, product_code: e.target.value})}
+                  placeholder="Örn: MXS-12345"
+                  data-testid="product-code-input"
                 />
               </div>
 
