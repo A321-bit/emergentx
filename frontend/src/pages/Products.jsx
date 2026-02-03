@@ -371,6 +371,7 @@ const Products = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
+      product_code: '',
       category_id: '',
       description: '',
       short_description: '',
