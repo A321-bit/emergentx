@@ -1243,6 +1243,234 @@ MADDE 6 - GENEL HÜKÜMLER
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* XML Import Tab */}
+        <TabsContent value="xmlimport" className="space-y-6">
+          {/* XML Settings Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title flex items-center gap-2">
+                <CloudDownload className="h-5 w-5" />
+                XML B2B Ürün Aktarımı
+              </CardTitle>
+              <CardDescription>
+                Tedarikçi XML feed'inden ürünleri otomatik olarak içe aktarın ve güncelleyin
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* XML URL */}
+              <div className="space-y-3">
+                <Label htmlFor="xml_url">XML Feed URL</Label>
+                <Input
+                  id="xml_url"
+                  value={xmlSettings.xml_url || ''}
+                  onChange={(e) => setXmlSettings({...xmlSettings, xml_url: e.target.value})}
+                  placeholder="https://example.com/api/xml/products"
+                  data-testid="xml-url-input"
+                />
+              </div>
+
+              {/* Settings Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Tedarikçi Adı</Label>
+                  <Input
+                    value={xmlSettings.supplier_name || ''}
+                    onChange={(e) => setXmlSettings({...xmlSettings, supplier_name: e.target.value})}
+                    placeholder="Mexxsun"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Varsayılan KDV Oranı (%)</Label>
+                  <Input
+                    type="number"
+                    value={xmlSettings.default_vat_rate || 20}
+                    onChange={(e) => setXmlSettings({...xmlSettings, default_vat_rate: parseFloat(e.target.value) || 20})}
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Varsayılan Kar Marjı (%)</Label>
+                  <Input
+                    type="number"
+                    value={xmlSettings.default_profit_margin || 30}
+                    onChange={(e) => setXmlSettings({...xmlSettings, default_profit_margin: parseFloat(e.target.value) || 30})}
+                    min="0"
+                    max="200"
+                  />
+                </div>
+              </div>
+
+              {/* Auto Sync Settings */}
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-1">
+                  <Label className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Otomatik Senkronizasyon
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Her {xmlSettings.sync_interval_hours || 24} saatte bir otomatik güncelle
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="number"
+                    className="w-20"
+                    value={xmlSettings.sync_interval_hours || 24}
+                    onChange={(e) => setXmlSettings({...xmlSettings, sync_interval_hours: parseInt(e.target.value) || 24})}
+                    min="1"
+                    max="168"
+                  />
+                  <span className="text-sm text-muted-foreground">saat</span>
+                  <Switch
+                    checked={xmlSettings.auto_sync_enabled || false}
+                    onCheckedChange={(checked) => setXmlSettings({...xmlSettings, auto_sync_enabled: checked})}
+                  />
+                </div>
+              </div>
+
+              {/* Last Sync Info */}
+              {xmlSettings.last_sync && (
+                <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-medium">Son Senkronizasyon:</span>
+                    <span>{new Date(xmlSettings.last_sync).toLocaleString('tr-TR')}</span>
+                  </div>
+                  {xmlSettings.last_sync_result?.stats && (
+                    <div className="mt-2 text-sm text-green-600 dark:text-green-400">
+                      {xmlSettings.last_sync_result.stats.created} yeni ürün, 
+                      {' '}{xmlSettings.last_sync_result.stats.updated} güncelleme, 
+                      {' '}{xmlSettings.last_sync_result.stats.skipped_no_price} fiyatsız atlandı
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button onClick={handleSaveXmlSettings} variant="outline">
+                  <Save className="h-4 w-4 mr-2" />
+                  Ayarları Kaydet
+                </Button>
+                <Button onClick={handleXmlPreview} disabled={xmlPreviewing} variant="outline">
+                  {xmlPreviewing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Eye className="h-4 w-4 mr-2" />
+                  )}
+                  Önizleme
+                </Button>
+                <Button onClick={handleXmlImport} disabled={xmlImporting}>
+                  {xmlImporting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  Aktarımı Başlat
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* XML Preview Results */}
+          {xmlPreview && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="section-title">XML Önizleme Sonuçları</CardTitle>
+                <CardDescription>
+                  Aktarılacak ürünlerin özeti
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Statistics */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                    <div className="text-3xl font-bold text-blue-600">{xmlPreview.total_products}</div>
+                    <div className="text-sm text-muted-foreground">Toplam Ürün</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                    <div className="text-3xl font-bold text-green-600">{xmlPreview.with_price}</div>
+                    <div className="text-sm text-muted-foreground">Fiyatlı</div>
+                  </div>
+                  <div className="text-center p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+                    <div className="text-3xl font-bold text-amber-600">{xmlPreview.without_price}</div>
+                    <div className="text-sm text-muted-foreground">Fiyatsız</div>
+                  </div>
+                  <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg">
+                    <div className="text-3xl font-bold text-emerald-600">{xmlPreview.in_stock}</div>
+                    <div className="text-sm text-muted-foreground">Stokta Var</div>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-950/30 rounded-lg">
+                    <div className="text-3xl font-bold text-red-600">{xmlPreview.out_of_stock}</div>
+                    <div className="text-sm text-muted-foreground">Stokta Yok</div>
+                  </div>
+                </div>
+
+                {/* Categories */}
+                <div>
+                  <h4 className="font-medium mb-3">Kategoriler</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(xmlPreview.categories || {}).map(([cat, count]) => (
+                      <Badge key={cat} variant="outline" className="text-sm">
+                        {cat}: {count}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sample Products */}
+                <div>
+                  <h4 className="font-medium mb-3">Örnek Ürünler (İlk 10)</h4>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {xmlPreview.sample_products?.map((product, index) => (
+                      <div key={index} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                        {product.images?.[0] && (
+                          <img 
+                            src={product.images[0]} 
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">{product.category_name}</div>
+                        </div>
+                        <div className="text-right">
+                          {product.price_usd ? (
+                            <div className="font-semibold text-green-600">${product.price_usd.toFixed(2)}</div>
+                          ) : (
+                            <div className="text-amber-600 text-sm">Fiyat Yok</div>
+                          )}
+                          <Badge variant={product.in_stock ? "default" : "secondary"} className="text-xs">
+                            {product.in_stock ? "Stokta" : "Tükendi"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                      <p className="font-medium">Aktarım Bilgisi</p>
+                      <ul className="mt-1 list-disc list-inside">
+                        <li>Fiyatsız ürünler (Fiyat Sorunuz) atlanacak</li>
+                        <li>Mevcut ürünler (aynı ürün kodu ile) güncellenecek</li>
+                        <li>Yeni kategoriler otomatik oluşturulacak</li>
+                        <li>Fiyatlar USD + KDV olarak kaydedilecek</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
