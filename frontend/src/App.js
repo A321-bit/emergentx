@@ -32,6 +32,7 @@ import Attendance from "./pages/Attendance";
 import Payroll from "./pages/Payroll";
 import Settings from "./pages/Settings";
 import QuoteTemplates from "./pages/QuoteTemplates";
+import XMLSettings from "./pages/XMLSettings";
 
 function App() {
   return (
