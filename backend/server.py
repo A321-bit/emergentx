@@ -6357,6 +6357,7 @@ async def execute_supplier_import(
                     "images": xml_product["images"][:5] if xml_product["images"] else [],
                     "datasheet_url": xml_product["datasheet_url"],
                     "stock_quantity": 100 if xml_product["in_stock"] else 0,
+                    "stock_location": "supplier",  # XML'den gelen ürünler Tedarikçi Stok
                     "unit": "adet",
                     "xml_product_code": xml_code,  # Orijinal XML kodu
                     "xml_supplier": supplier_name,
