@@ -81,7 +81,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (['/quotes', '/quotes/callbacks'].includes(location.pathname)) {
       setExpandedMenus(prev => prev.includes('quotes') ? prev : [...prev, 'quotes']);
     }
-    if (['/settings', '/settings/quote-templates'].includes(location.pathname)) {
+    if (['/settings', '/settings/quote-templates', '/settings/xml'].includes(location.pathname)) {
       setExpandedMenus(prev => prev.includes('settings') ? prev : [...prev, 'settings']);
     }
   }, [location.pathname]);
