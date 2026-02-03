@@ -50,6 +50,19 @@ const Settings = () => {
   });
   const [cardProviders, setCardProviders] = useState([]);
   const [epdk_types, setEpdkTypes] = useState([]);
+  const [xmlSettings, setXmlSettings] = useState({
+    xml_url: 'https://mexxsun.entra.net/api/xml/products/77148822',
+    auto_sync_enabled: false,
+    sync_interval_hours: 24,
+    supplier_name: 'Mexxsun',
+    default_vat_rate: 20,
+    default_profit_margin: 30,
+    last_sync: null,
+    last_sync_result: null
+  });
+  const [xmlPreview, setXmlPreview] = useState(null);
+  const [xmlImporting, setXmlImporting] = useState(false);
+  const [xmlPreviewing, setXmlPreviewing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingRates, setSavingRates] = useState(false);
