@@ -225,6 +225,7 @@ class TokenResponse(BaseModel):
 class ProductBase(BaseModel):
     name: str
     category_id: str
+    product_code: Optional[str] = None  # Manuel ürün kodu
     description: Optional[str] = None
     short_description: Optional[str] = None  # PDF için kısa açıklama
     benefits: Optional[List[str]] = None  # PDF için 3 fayda maddesi
