@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, status, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse, Response
 from dotenv import load_dotenv
@@ -19,6 +19,10 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from pdf_generator import generate_quote_pdf
 from turkey_locations import TURKEY_CITIES, TURKEY_DISTRICTS, get_all_cities, get_districts_by_city, search_cities
+import xml.etree.ElementTree as ET
+import httpx
+import asyncio
+import re
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
