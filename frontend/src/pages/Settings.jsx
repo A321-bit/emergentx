@@ -94,6 +94,65 @@ const Settings = () => {
     }
   };
 
+  const fetchXmlSettings = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/settings/xml-import`);
+      setXmlSettings(response.data);
+    } catch (error) {
+      console.error('XML ayarları yüklenemedi');
+    }
+  };
+
+  const handleSaveXmlSettings = async () => {
+    try {
+      await axios.put(`${API_URL}/api/settings/xml-import`, xmlSettings);
+      toast.success('XML ayarları kaydedildi');
+    } catch (error) {
+      toast.error('XML ayarları kaydedilemedi');
+    }
+  };
+
+  const handleXmlPreview = async () => {
+    setXmlPreviewing(true);
+    setXmlPreview(null);
+    try {
+      const response = await axios.post(`${API_URL}/api/xml-import/preview`);
+      setXmlPreview(response.data);
+      toast.success('XML verisi başarıyla alındı');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'XML önizleme hatası');
+    } finally {
+      setXmlPreviewing(false);
+    }
+  };
+
+  const handleXmlImport = async () => {
+    if (!window.confirm('XML\'den ürün aktarımı başlatılsın mı? Bu işlem mevcut ürünleri güncelleyebilir veya yeni ürünler ekleyebilir.')) {
+      return;
+    }
+    
+    setXmlImporting(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/xml-import/execute`, {
+        skip_without_price: true,
+        update_existing: true
+      });
+      
+      const stats = response.data.stats;
+      toast.success(
+        `Import tamamlandı! ${stats.created} yeni ürün eklendi, ${stats.updated} ürün güncellendi.`,
+        { duration: 5000 }
+      );
+      
+      // Refresh settings to get last sync info
+      fetchXmlSettings();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Import hatası');
+    } finally {
+      setXmlImporting(false);
+    }
+  };
+
   const handleAddCardProvider = async () => {
     if (!newCardProviderName.trim()) {
       toast.error('Tedarikçi adı zorunludur');
