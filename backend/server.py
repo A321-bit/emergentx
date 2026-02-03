@@ -5756,6 +5756,14 @@ async def delete_employee_expense(expense_id: str, current_user: dict = Depends(
 
 # ==================== XML B2B PRODUCT IMPORT API ====================
 
+# Varsayılan tedarikçi prefix'leri
+SUPPLIER_PREFIXES = {
+    "Mexxsun": "MXS",
+    "Tommatech": "TMT",
+    "Solinved": "SLV",
+    "Enerji Pazar": "ENP"
+}
+
 class XMLImportSettings(BaseModel):
     xml_url: str
     auto_sync_enabled: bool = False
