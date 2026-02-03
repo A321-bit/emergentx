@@ -234,6 +234,7 @@ class ProductBase(BaseModel):
     vat_rate: float = 20
     profit_margin: Optional[float] = None
     stock_quantity: int = 0
+    stock_location: str = "akturk"  # "akturk" = Aktürk Stok, "supplier" = Tedarikçi Stok
     unit: str = "adet"
     power_watt: Optional[float] = None  # Güç değeri (W) - Panel, İnverter, Batarya için
     price_segment: Optional[str] = None  # ekonomik, standart, premium
@@ -254,10 +255,17 @@ class ProductUpdate(BaseModel):
     vat_rate: Optional[float] = None
     profit_margin: Optional[float] = None
     stock_quantity: Optional[int] = None
+    stock_location: Optional[str] = None  # "akturk" veya "supplier"
     unit: Optional[str] = None
     power_watt: Optional[float] = None  # Güç değeri (W)
     price_segment: Optional[str] = None  # ekonomik, standart, premium
     matching_group: Optional[str] = None  # Eşleştirme grubu ID
+
+# Stock location options
+STOCK_LOCATIONS = [
+    {"value": "akturk", "label": "Aktürk Stok"},
+    {"value": "supplier", "label": "Tedarikçi Stok"},
+]
 
 # Price segment options
 PRICE_SEGMENTS = [
