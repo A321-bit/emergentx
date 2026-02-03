@@ -429,6 +429,10 @@ const Settings = () => {
             <Wallet className="h-4 w-4" />
             Kart Tedarikçileri
           </TabsTrigger>
+          <TabsTrigger value="xmlimport" className="flex items-center gap-2">
+            <CloudDownload className="h-4 w-4" />
+            XML Ürün Aktarımı
+          </TabsTrigger>
         </TabsList>
 
         {/* Company Tab */}
