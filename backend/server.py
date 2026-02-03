@@ -5752,6 +5752,327 @@ async def delete_employee_expense(expense_id: str, current_user: dict = Depends(
         raise HTTPException(status_code=404, detail="Gider bulunamadı")
     return {"message": "Gider silindi"}
 
+# ==================== XML B2B PRODUCT IMPORT API ====================
+
+class XMLImportSettings(BaseModel):
+    xml_url: str
+    auto_sync_enabled: bool = False
+    sync_interval_hours: int = 24
+    last_sync: Optional[str] = None
+    last_sync_result: Optional[dict] = None
+    supplier_name: str = "Mexxsun"
+    default_vat_rate: float = 20  # KDV oranı
+    default_profit_margin: float = 30  # Kar marjı
+
+def parse_xml_price(price_str):
+    """Parse price from XML, handling 'Fiyat Sorunuz' cases"""
+    if not price_str or price_str == "Fiyat Sorunuz":
+        return None
+    try:
+        return float(price_str)
+    except (ValueError, TypeError):
+        return None
+
+def extract_datasheet_from_description(description):
+    """Extract PDF links from description HTML"""
+    if not description:
+        return None
+    # Look for PDF links in description
+    pdf_pattern = r'href=["\']([^"\']+\.pdf)["\']'
+    matches = re.findall(pdf_pattern, description, re.IGNORECASE)
+    return matches[0] if matches else None
+
+async def fetch_and_parse_xml(xml_url: str):
+    """Fetch XML from URL and parse products"""
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        response = await client.get(xml_url)
+        response.raise_for_status()
+        
+    root = ET.fromstring(response.content)
+    products = []
+    
+    for product_elem in root.findall('.//PRODUCT'):
+        try:
+            # Extract fields
+            product_code = product_elem.findtext('PRODUCT_CODE', '').strip()
+            product_title = product_elem.findtext('PRODUCT_TITLE', '').strip()
+            price_str = product_elem.findtext('PRICE_2', '')
+            category_title = product_elem.findtext('CATEGORY_TITLE', '')
+            trademark = product_elem.findtext('TRADEMARK', '')
+            stock_status = product_elem.findtext('STOCK', '')
+            description = product_elem.findtext('DESCRIPTION', '')
+            currency = product_elem.findtext('CURRENCY', 'USD')
+            
+            # Parse price
+            price = parse_xml_price(price_str)
+            
+            # Extract images
+            images = []
+            images_elem = product_elem.find('IMAGES')
+            if images_elem is not None:
+                for img in images_elem.findall('IMAGE'):
+                    img_url = img.text
+                    if img_url:
+                        images.append(img_url.strip())
+            
+            # Extract datasheet from description
+            datasheet_url = extract_datasheet_from_description(description)
+            
+            # Check stock status
+            in_stock = stock_status and "Stokta Var" in stock_status
+            
+            products.append({
+                "product_code": product_code,
+                "name": product_title,
+                "price_usd": price,
+                "category_name": category_title,
+                "trademark": trademark,
+                "in_stock": in_stock,
+                "stock_status": stock_status,
+                "images": images,
+                "datasheet_url": datasheet_url,
+                "description": description,
+                "currency": currency
+            })
+        except Exception as e:
+            logging.error(f"Error parsing product: {e}")
+            continue
+    
+    return products
+
+@api_router.get("/settings/xml-import")
+async def get_xml_import_settings(current_user: dict = Depends(require_permission("products_manage"))):
+    """Get XML import settings"""
+    settings = await db.xml_import_settings.find_one({"id": "xml_import_settings"}, {"_id": 0})
+    if not settings:
+        settings = {
+            "id": "xml_import_settings",
+            "xml_url": "https://mexxsun.entra.net/api/xml/products/77148822",
+            "auto_sync_enabled": False,
+            "sync_interval_hours": 24,
+            "last_sync": None,
+            "last_sync_result": None,
+            "supplier_name": "Mexxsun",
+            "default_vat_rate": 20,
+            "default_profit_margin": 30
+        }
+    return settings
+
+@api_router.put("/settings/xml-import")
+async def update_xml_import_settings(settings: dict, current_user: dict = Depends(require_permission("products_manage"))):
+    """Update XML import settings"""
+    update_data = {
+        "xml_url": settings.get("xml_url", ""),
+        "auto_sync_enabled": settings.get("auto_sync_enabled", False),
+        "sync_interval_hours": settings.get("sync_interval_hours", 24),
+        "supplier_name": settings.get("supplier_name", "Mexxsun"),
+        "default_vat_rate": settings.get("default_vat_rate", 20),
+        "default_profit_margin": settings.get("default_profit_margin", 30),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.xml_import_settings.update_one(
+        {"id": "xml_import_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"message": "Ayarlar güncellendi", **update_data}
+
+@api_router.post("/xml-import/preview")
+async def preview_xml_import(current_user: dict = Depends(require_permission("products_manage"))):
+    """Preview XML data without importing"""
+    settings = await db.xml_import_settings.find_one({"id": "xml_import_settings"}, {"_id": 0})
+    if not settings or not settings.get("xml_url"):
+        raise HTTPException(status_code=400, detail="XML URL ayarlanmamış")
+    
+    try:
+        products = await fetch_and_parse_xml(settings["xml_url"])
+        
+        # Count statistics
+        total_products = len(products)
+        with_price = len([p for p in products if p["price_usd"] is not None])
+        in_stock = len([p for p in products if p["in_stock"]])
+        
+        # Get category breakdown
+        categories = {}
+        for p in products:
+            cat = p["category_name"] or "Diğer"
+            categories[cat] = categories.get(cat, 0) + 1
+        
+        return {
+            "total_products": total_products,
+            "with_price": with_price,
+            "without_price": total_products - with_price,
+            "in_stock": in_stock,
+            "out_of_stock": total_products - in_stock,
+            "categories": categories,
+            "sample_products": products[:10]  # First 10 for preview
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"XML çekilemedi: {str(e)}")
+
+@api_router.post("/xml-import/execute")
+async def execute_xml_import(
+    background_tasks: BackgroundTasks,
+    import_options: dict = None,
+    current_user: dict = Depends(require_permission("products_manage"))
+):
+    """Execute XML import - add/update products"""
+    settings = await db.xml_import_settings.find_one({"id": "xml_import_settings"}, {"_id": 0})
+    if not settings or not settings.get("xml_url"):
+        raise HTTPException(status_code=400, detail="XML URL ayarlanmamış")
+    
+    import_options = import_options or {}
+    skip_without_price = import_options.get("skip_without_price", True)
+    update_existing = import_options.get("update_existing", True)
+    
+    try:
+        products = await fetch_and_parse_xml(settings["xml_url"])
+        
+        # Get exchange rate for TL calculation
+        exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+        usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+        
+        vat_rate = settings.get("default_vat_rate", 20)
+        profit_margin = settings.get("default_profit_margin", 30)
+        supplier_name = settings.get("supplier_name", "Mexxsun")
+        
+        # Get all categories (create mapping)
+        all_categories = await db.categories.find({"is_active": True}, {"_id": 0}).to_list(1000)
+        category_map = {cat["name"].lower(): cat["id"] for cat in all_categories}
+        
+        # Get existing products by product code (for update check)
+        existing_products = await db.products.find(
+            {"xml_product_code": {"$exists": True}},
+            {"_id": 0, "id": 1, "xml_product_code": 1}
+        ).to_list(10000)
+        existing_map = {p["xml_product_code"]: p["id"] for p in existing_products}
+        
+        stats = {
+            "total_processed": 0,
+            "created": 0,
+            "updated": 0,
+            "skipped_no_price": 0,
+            "errors": 0,
+            "categories_created": 0
+        }
+        
+        for xml_product in products:
+            stats["total_processed"] += 1
+            
+            # Skip products without price if option enabled
+            if skip_without_price and xml_product["price_usd"] is None:
+                stats["skipped_no_price"] += 1
+                continue
+            
+            try:
+                # Find or create category
+                category_name = xml_product["category_name"] or "Genel"
+                category_key = category_name.lower()
+                
+                if category_key not in category_map:
+                    # Create new category
+                    new_category = {
+                        "id": str(uuid.uuid4()),
+                        "name": category_name,
+                        "description": f"XML'den içe aktarılan kategori",
+                        "default_profit_margin": profit_margin,
+                        "is_active": True,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.categories.insert_one(new_category.copy())
+                    category_map[category_key] = new_category["id"]
+                    stats["categories_created"] += 1
+                
+                category_id = category_map[category_key]
+                
+                # Calculate prices
+                purchase_price_usd = xml_product["price_usd"] or 0
+                purchase_price_with_vat = purchase_price_usd * (1 + vat_rate / 100)
+                sale_price = purchase_price_with_vat * (1 + profit_margin / 100)
+                
+                product_data = {
+                    "name": xml_product["name"],
+                    "category_id": category_id,
+                    "currency": "USD",
+                    "purchase_price_without_vat": purchase_price_usd,
+                    "purchase_price": purchase_price_with_vat,
+                    "vat_rate": vat_rate,
+                    "profit_margin": profit_margin,
+                    "sale_price": round(sale_price, 2),
+                    "images": xml_product["images"][:5] if xml_product["images"] else [],  # Max 5 images
+                    "datasheet_url": xml_product["datasheet_url"],
+                    "stock_quantity": 100 if xml_product["in_stock"] else 0,
+                    "unit": "adet",
+                    "xml_product_code": xml_product["product_code"],
+                    "xml_supplier": supplier_name,
+                    "xml_stock_status": xml_product["stock_status"],
+                    "xml_trademark": xml_product["trademark"],
+                    "xml_last_sync": datetime.now(timezone.utc).isoformat(),
+                    "is_active": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                # Check if product exists
+                if xml_product["product_code"] in existing_map:
+                    if update_existing:
+                        # Update existing product
+                        await db.products.update_one(
+                            {"id": existing_map[xml_product["product_code"]]},
+                            {"$set": product_data}
+                        )
+                        stats["updated"] += 1
+                else:
+                    # Create new product
+                    product_data["id"] = str(uuid.uuid4())
+                    product_data["created_at"] = datetime.now(timezone.utc).isoformat()
+                    await db.products.insert_one(product_data.copy())
+                    existing_map[xml_product["product_code"]] = product_data["id"]
+                    stats["created"] += 1
+                    
+            except Exception as e:
+                logging.error(f"Error importing product {xml_product.get('product_code')}: {e}")
+                stats["errors"] += 1
+        
+        # Update last sync info
+        sync_result = {
+            "sync_time": datetime.now(timezone.utc).isoformat(),
+            "stats": stats,
+            "triggered_by": current_user["name"]
+        }
+        
+        await db.xml_import_settings.update_one(
+            {"id": "xml_import_settings"},
+            {"$set": {
+                "last_sync": datetime.now(timezone.utc).isoformat(),
+                "last_sync_result": sync_result
+            }}
+        )
+        
+        return {
+            "message": "Import tamamlandı",
+            "stats": stats
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Import hatası: {str(e)}")
+
+@api_router.get("/xml-import/history")
+async def get_xml_import_history(current_user: dict = Depends(require_permission("products_view"))):
+    """Get XML import history"""
+    history = await db.xml_import_history.find({}, {"_id": 0}).sort("sync_time", -1).to_list(20)
+    return history
+
+@api_router.get("/products/xml-imported")
+async def get_xml_imported_products(current_user: dict = Depends(require_permission("products_view"))):
+    """Get products imported from XML"""
+    products = await db.products.find(
+        {"xml_product_code": {"$exists": True}, "is_active": True},
+        {"_id": 0}
+    ).sort("xml_last_sync", -1).to_list(1000)
+    return products
+
 # ==================== SALARY/PAYROLL API ====================
 
 @api_router.get("/salaries")
