@@ -3553,20 +3553,31 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
     daily_revenue_tl = sum(s.get("sale_amount_tl", 0) for s in sales 
         if s.get("sale_date") and datetime.fromisoformat(s["sale_date"].replace("Z", "+00:00")) >= today_start)
     
-    # Stock value calculation
+    # Stock value calculation - Sadece Aktürk Stok (kendi stoğumuz) hesaplanır
     stock_value_usd = 0
     stock_value_tl = 0
     stock_sale_value_usd = 0
     stock_sale_value_tl = 0
+    akturk_stock_count = 0
+    supplier_stock_count = 0
     
     if "all" in user_perms or "finance_view" in user_perms:
         products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(10000)
         
         for p in products:
+            stock_location = p.get("stock_location", "akturk")
+            quantity = p.get("stock_quantity", 0)
+            
+            # Tedarikçi stoku sayma ama değere ekleme
+            if stock_location == "supplier":
+                supplier_stock_count += quantity
+                continue
+            
+            # Aktürk Stok - değere ekle
+            akturk_stock_count += quantity
             currency = p.get("currency", "USD").upper()
             purchase_price = p.get("purchase_price", 0)
             sale_price = p.get("sale_price", 0)
-            quantity = p.get("stock_quantity", 0)
             
             if currency == "USD":
                 stock_value_usd += purchase_price * quantity
