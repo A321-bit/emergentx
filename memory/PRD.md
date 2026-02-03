@@ -340,13 +340,21 @@ Solar enerji satış yönetim sistemi - müşteri, ürün, teklif, satış, pers
 2. **Muhasebe** - Gider/gelir girişi var, detaylı muhasebe bekliyor
 
 ### ❌ Planlanmış Modüller
-1. XML B2B Entegrasyonu
+1. ~~XML B2B Entegrasyonu~~ ✅ TAMAMLANDI (3 Şubat 2026)
 2. WhatsApp Teklif Gönderimi
 3. PayTR Taksit Entegrasyonu
+4. Kurumsal Landing Page (Aktürk Enerji)
 
 ---
 
 ## API ENDPOINT'LERI
+
+### XML Import Endpoint'leri (YENİ)
+- `GET /api/settings/xml-import` - XML import ayarları
+- `PUT /api/settings/xml-import` - Ayarları güncelle
+- `POST /api/xml-import/preview` - Önizleme (ürün sayısı, kategoriler)
+- `POST /api/xml-import/execute` - Ürünleri aktar
+- `GET /api/products/xml-imported` - XML ürünlerini listele
 
 ### Ana Endpoint'ler
 - `POST /api/auth/login` - Giriş
