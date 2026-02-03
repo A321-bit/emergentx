@@ -6083,6 +6083,324 @@ async def get_xml_imported_products(current_user: dict = Depends(require_permiss
     ).sort("xml_last_sync", -1).to_list(1000)
     return products
 
+# ==================== XML SUPPLIERS (TEDARİKÇİLER) ====================
+
+@api_router.get("/xml-suppliers")
+async def get_xml_suppliers(current_user: dict = Depends(require_permission("products_view"))):
+    """Get all XML suppliers"""
+    suppliers = await db.xml_suppliers.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return suppliers
+
+@api_router.post("/xml-suppliers")
+async def create_xml_supplier(supplier: dict, current_user: dict = Depends(require_permission("products_manage"))):
+    """Create a new XML supplier"""
+    new_supplier = {
+        "id": str(uuid.uuid4()),
+        "name": supplier.get("name", ""),
+        "xml_url": supplier.get("xml_url", ""),
+        "prefix": supplier.get("prefix", ""),  # Ürün kodu prefix'i (MXS-, TMT-, vb.)
+        "default_vat_rate": supplier.get("default_vat_rate", 20),
+        "default_profit_margin": supplier.get("default_profit_margin", 30),
+        "auto_sync_enabled": supplier.get("auto_sync_enabled", False),
+        "sync_interval_hours": supplier.get("sync_interval_hours", 24),
+        "last_sync": None,
+        "last_sync_result": None,
+        "category_mappings": {},  # XML kategori -> Sistem kategori ID eşleştirmesi
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.xml_suppliers.insert_one(new_supplier.copy())
+    return new_supplier
+
+@api_router.put("/xml-suppliers/{supplier_id}")
+async def update_xml_supplier(supplier_id: str, supplier: dict, current_user: dict = Depends(require_permission("products_manage"))):
+    """Update an XML supplier"""
+    update_data = {
+        "name": supplier.get("name"),
+        "xml_url": supplier.get("xml_url"),
+        "prefix": supplier.get("prefix"),
+        "default_vat_rate": supplier.get("default_vat_rate", 20),
+        "default_profit_margin": supplier.get("default_profit_margin", 30),
+        "auto_sync_enabled": supplier.get("auto_sync_enabled", False),
+        "sync_interval_hours": supplier.get("sync_interval_hours", 24),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    # Remove None values
+    update_data = {k: v for k, v in update_data.items() if v is not None}
+    
+    result = await db.xml_suppliers.update_one(
+        {"id": supplier_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    
+    return {"message": "Tedarikçi güncellendi"}
+
+@api_router.delete("/xml-suppliers/{supplier_id}")
+async def delete_xml_supplier(supplier_id: str, current_user: dict = Depends(require_permission("products_manage"))):
+    """Delete an XML supplier (soft delete)"""
+    result = await db.xml_suppliers.update_one(
+        {"id": supplier_id},
+        {"$set": {"is_active": False}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    
+    return {"message": "Tedarikçi silindi"}
+
+@api_router.get("/xml-suppliers/{supplier_id}")
+async def get_xml_supplier(supplier_id: str, current_user: dict = Depends(require_permission("products_view"))):
+    """Get a single XML supplier"""
+    supplier = await db.xml_suppliers.find_one({"id": supplier_id, "is_active": True}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    return supplier
+
+# ==================== XML CATEGORY MAPPINGS ====================
+
+@api_router.post("/xml-suppliers/{supplier_id}/fetch-categories")
+async def fetch_supplier_xml_categories(supplier_id: str, current_user: dict = Depends(require_permission("products_manage"))):
+    """Fetch categories from supplier's XML feed"""
+    supplier = await db.xml_suppliers.find_one({"id": supplier_id, "is_active": True}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    
+    if not supplier.get("xml_url"):
+        raise HTTPException(status_code=400, detail="XML URL ayarlanmamış")
+    
+    try:
+        products = await fetch_and_parse_xml(supplier["xml_url"])
+        
+        # Extract unique categories
+        xml_categories = {}
+        for p in products:
+            cat = p["category_name"] or "Diğer"
+            if cat not in xml_categories:
+                xml_categories[cat] = {
+                    "name": cat,
+                    "product_count": 0
+                }
+            xml_categories[cat]["product_count"] += 1
+        
+        return {
+            "xml_categories": list(xml_categories.values()),
+            "total_products": len(products)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"XML çekilemedi: {str(e)}")
+
+@api_router.put("/xml-suppliers/{supplier_id}/category-mappings")
+async def update_category_mappings(supplier_id: str, mappings: dict, current_user: dict = Depends(require_permission("products_manage"))):
+    """Update category mappings for a supplier"""
+    result = await db.xml_suppliers.update_one(
+        {"id": supplier_id},
+        {"$set": {
+            "category_mappings": mappings.get("mappings", {}),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    
+    return {"message": "Kategori eşleştirmeleri güncellendi"}
+
+@api_router.post("/xml-suppliers/{supplier_id}/preview")
+async def preview_supplier_import(supplier_id: str, current_user: dict = Depends(require_permission("products_manage"))):
+    """Preview XML import for a specific supplier"""
+    supplier = await db.xml_suppliers.find_one({"id": supplier_id, "is_active": True}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    
+    if not supplier.get("xml_url"):
+        raise HTTPException(status_code=400, detail="XML URL ayarlanmamış")
+    
+    try:
+        products = await fetch_and_parse_xml(supplier["xml_url"])
+        
+        # Count statistics
+        total_products = len(products)
+        with_price = len([p for p in products if p["price_usd"] is not None])
+        in_stock = len([p for p in products if p["in_stock"]])
+        
+        # Get category breakdown with mapping status
+        category_mappings = supplier.get("category_mappings", {})
+        categories = {}
+        unmapped_count = 0
+        
+        for p in products:
+            cat = p["category_name"] or "Diğer"
+            if cat not in categories:
+                is_mapped = cat in category_mappings and category_mappings[cat]
+                categories[cat] = {
+                    "count": 0,
+                    "mapped": is_mapped,
+                    "mapped_to": category_mappings.get(cat)
+                }
+                if not is_mapped:
+                    unmapped_count += 1
+            categories[cat]["count"] += 1
+        
+        return {
+            "supplier_name": supplier["name"],
+            "prefix": supplier.get("prefix", ""),
+            "total_products": total_products,
+            "with_price": with_price,
+            "without_price": total_products - with_price,
+            "in_stock": in_stock,
+            "out_of_stock": total_products - in_stock,
+            "categories": categories,
+            "unmapped_categories": unmapped_count,
+            "sample_products": products[:10]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"XML çekilemedi: {str(e)}")
+
+@api_router.post("/xml-suppliers/{supplier_id}/import")
+async def execute_supplier_import(
+    supplier_id: str,
+    import_options: dict = None,
+    current_user: dict = Depends(require_permission("products_manage"))
+):
+    """Execute XML import for a specific supplier with category mappings"""
+    supplier = await db.xml_suppliers.find_one({"id": supplier_id, "is_active": True}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Tedarikçi bulunamadı")
+    
+    if not supplier.get("xml_url"):
+        raise HTTPException(status_code=400, detail="XML URL ayarlanmamış")
+    
+    import_options = import_options or {}
+    skip_without_price = import_options.get("skip_without_price", True)
+    update_existing = import_options.get("update_existing", True)
+    skip_unmapped = import_options.get("skip_unmapped", False)  # Eşleştirilmemiş kategorileri atla
+    
+    try:
+        products = await fetch_and_parse_xml(supplier["xml_url"])
+        
+        vat_rate = supplier.get("default_vat_rate", 20)
+        profit_margin = supplier.get("default_profit_margin", 30)
+        supplier_name = supplier.get("name", "")
+        prefix = supplier.get("prefix", "")
+        category_mappings = supplier.get("category_mappings", {})
+        
+        # Get existing products by product code (for update check)
+        existing_products = await db.products.find(
+            {"xml_supplier": supplier_name},
+            {"_id": 0, "id": 1, "xml_product_code": 1, "product_code": 1}
+        ).to_list(10000)
+        existing_map = {p.get("xml_product_code") or p.get("product_code"): p["id"] for p in existing_products}
+        
+        stats = {
+            "total_processed": 0,
+            "created": 0,
+            "updated": 0,
+            "skipped_no_price": 0,
+            "skipped_unmapped": 0,
+            "errors": 0
+        }
+        
+        for xml_product in products:
+            stats["total_processed"] += 1
+            
+            # Skip products without price if option enabled
+            if skip_without_price and xml_product["price_usd"] is None:
+                stats["skipped_no_price"] += 1
+                continue
+            
+            # Get category mapping
+            xml_category = xml_product["category_name"] or "Diğer"
+            mapped_category_id = category_mappings.get(xml_category)
+            
+            if not mapped_category_id and skip_unmapped:
+                stats["skipped_unmapped"] += 1
+                continue
+            
+            if not mapped_category_id:
+                # Skip if no mapping found
+                stats["skipped_unmapped"] += 1
+                continue
+            
+            try:
+                # Generate product code with prefix
+                xml_code = xml_product["product_code"]
+                product_code = f"{prefix}-{xml_code}" if prefix else xml_code
+                
+                # Calculate prices
+                purchase_price_usd = xml_product["price_usd"] or 0
+                purchase_price_with_vat = purchase_price_usd * (1 + vat_rate / 100)
+                sale_price = purchase_price_with_vat * (1 + profit_margin / 100)
+                
+                product_data = {
+                    "name": xml_product["name"],
+                    "category_id": mapped_category_id,
+                    "product_code": product_code,  # Prefix'li ürün kodu
+                    "currency": "USD",
+                    "purchase_price_without_vat": purchase_price_usd,
+                    "purchase_price": purchase_price_with_vat,
+                    "vat_rate": vat_rate,
+                    "profit_margin": profit_margin,
+                    "sale_price": round(sale_price, 2),
+                    "images": xml_product["images"][:5] if xml_product["images"] else [],
+                    "datasheet_url": xml_product["datasheet_url"],
+                    "stock_quantity": 100 if xml_product["in_stock"] else 0,
+                    "unit": "adet",
+                    "xml_product_code": xml_code,  # Orijinal XML kodu
+                    "xml_supplier": supplier_name,
+                    "xml_stock_status": xml_product["stock_status"],
+                    "xml_trademark": xml_product["trademark"],
+                    "xml_last_sync": datetime.now(timezone.utc).isoformat(),
+                    "is_active": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                # Check if product exists (by xml_product_code)
+                if xml_code in existing_map:
+                    if update_existing:
+                        await db.products.update_one(
+                            {"id": existing_map[xml_code]},
+                            {"$set": product_data}
+                        )
+                        stats["updated"] += 1
+                else:
+                    # Create new product
+                    product_data["id"] = str(uuid.uuid4())
+                    product_data["created_at"] = datetime.now(timezone.utc).isoformat()
+                    await db.products.insert_one(product_data.copy())
+                    existing_map[xml_code] = product_data["id"]
+                    stats["created"] += 1
+                    
+            except Exception as e:
+                logging.error(f"Error importing product {xml_product.get('product_code')}: {e}")
+                stats["errors"] += 1
+        
+        # Update supplier last sync info
+        sync_result = {
+            "sync_time": datetime.now(timezone.utc).isoformat(),
+            "stats": stats,
+            "triggered_by": current_user["name"]
+        }
+        
+        await db.xml_suppliers.update_one(
+            {"id": supplier_id},
+            {"$set": {
+                "last_sync": datetime.now(timezone.utc).isoformat(),
+                "last_sync_result": sync_result
+            }}
+        )
+        
+        return {
+            "message": "Import tamamlandı",
+            "stats": stats
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Import hatası: {str(e)}")
+
 # ==================== SALARY/PAYROLL API ====================
 
 @api_router.get("/salaries")
