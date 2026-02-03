@@ -61,6 +61,7 @@ const Products = () => {
   
   const [formData, setFormData] = useState({
     name: '',
+    product_code: '',
     category_id: '',
     description: '',
     short_description: '',  // PDF için kısa açıklama
