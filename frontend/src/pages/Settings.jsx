@@ -6,7 +6,9 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Upload, Save, Building2, Loader2, FileText, CreditCard, Image, DollarSign, RefreshCw, Plus, Trash2, Zap, Fuel, Wallet } from 'lucide-react';
+import { Switch } from '../components/ui/switch';
+import { Badge } from '../components/ui/badge';
+import { Upload, Save, Building2, Loader2, FileText, CreditCard, Image, DollarSign, RefreshCw, Plus, Trash2, Zap, Fuel, Wallet, CloudDownload, Package, Eye, Play, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
