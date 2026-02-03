@@ -166,9 +166,10 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (hasPermission('settings_manage')) {
     settingsSubItems.push({ path: '/settings', icon: Settings, label: 'Genel Ayarlar' });
     settingsSubItems.push({ path: '/settings/quote-templates', icon: FileImage, label: 'Teklif Şablonları' });
+    settingsSubItems.push({ path: '/settings/xml', icon: CloudDownload, label: 'XML Ayarları' });
   }
   const hasSettingsAccess = settingsSubItems.length > 0;
-  const isSettingsActive = ['/settings', '/settings/quote-templates'].includes(location.pathname);
+  const isSettingsActive = ['/settings', '/settings/quote-templates', '/settings/xml'].includes(location.pathname);
 
   // Render expandable menu helper
   const renderExpandableMenu = (menuId, icon, label, subItems, isActive) => {
