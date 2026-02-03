@@ -82,6 +82,7 @@ const Settings = () => {
     fetchEnergyPrices();
     fetchEpdkTypes();
     fetchCardProviders();
+    fetchXmlSettings();
   }, []);
 
   const fetchCardProviders = async () => {
