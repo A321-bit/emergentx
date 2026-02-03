@@ -905,6 +905,28 @@ const Products = () => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="stock_location">Stok Yeri</Label>
+                <Select
+                  value={formData.stock_location}
+                  onValueChange={(value) => setFormData({...formData, stock_location: value})}
+                >
+                  <SelectTrigger id="stock_location" data-testid="product-stock-location-select">
+                    <SelectValue placeholder="Stok yeri seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stockLocations.map(loc => (
+                      <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.stock_location === 'akturk' 
+                    ? 'Stok değerine yansıtılır' 
+                    : 'Tedarikçi stoğu - değere yansıtılmaz'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="power_watt">
                   Güç (W)
                   <span className="text-xs text-muted-foreground ml-1">(Panel/İnverter/Batarya için)</span>
