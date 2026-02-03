@@ -3655,11 +3655,13 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
         "profit_margin": round(profit_margin, 1),
         "daily_revenue_tl": round(daily_revenue_tl, 2),
         
-        # Stock values
+        # Stock values - Sadece Aktürk Stok
         "stock_value_usd": round(stock_value_usd, 2),
         "stock_value_tl": round(stock_value_tl, 2),
         "stock_sale_value_usd": round(stock_sale_value_usd, 2),
         "stock_sale_value_tl": round(stock_sale_value_tl, 2),
+        "akturk_stock_count": akturk_stock_count,  # Aktürk Stok adet
+        "supplier_stock_count": supplier_stock_count,  # Tedarikçi Stok adet
         
         # Dealer info
         "dealer_total_revenue": round(dealer_total_revenue, 2),
