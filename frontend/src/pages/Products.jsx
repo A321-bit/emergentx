@@ -543,6 +543,7 @@ const Products = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Medya</TableHead>
+                <TableHead>Ürün Kodu</TableHead>
                 <TableHead>Ürün Adı</TableHead>
                 <TableHead className="hidden md:table-cell">Kategori</TableHead>
                 <TableHead className="text-center hidden lg:table-cell">Para Birimi</TableHead>
@@ -572,6 +573,13 @@ const Products = () => {
                         <Image className="h-5 w-5 text-muted-foreground" />
                       )}
                     </button>
+                  </TableCell>
+                  <TableCell>
+                    {product.product_code ? (
+                      <span className="font-mono text-xs bg-muted px-2 py-1 rounded">{product.product_code}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div>
