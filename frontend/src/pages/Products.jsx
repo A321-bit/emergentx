@@ -389,6 +389,7 @@ const Products = () => {
       vat_rate: '20',
       profit_margin: '',
       stock_quantity: '0',
+      stock_location: 'akturk',
       unit: 'adet',
       power_watt: '',
       price_segment: '',
