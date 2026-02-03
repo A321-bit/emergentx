@@ -150,6 +150,7 @@ const Products = () => {
 
     const data = {
       name: formData.name,
+      product_code: formData.product_code || null,
       category_id: formData.category_id,
       description: formData.description || null,
       short_description: formData.short_description || null,
