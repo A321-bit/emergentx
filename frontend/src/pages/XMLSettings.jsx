@@ -673,11 +673,11 @@ const XMLSettings = () => {
                           </TableCell>
                           <TableCell>
                             <Select
-                              value={categoryMappings[xmlCat.name] || ''}
+                              value={categoryMappings[xmlCat.name] || 'none'}
                               onValueChange={(value) => {
                                 setCategoryMappings({
                                   ...categoryMappings,
-                                  [xmlCat.name]: value
+                                  [xmlCat.name]: value === 'none' ? '' : value
                                 });
                               }}
                             >
@@ -685,7 +685,7 @@ const XMLSettings = () => {
                                 <SelectValue placeholder="Kategori seçin..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Eşleştirme yok</SelectItem>
+                                <SelectItem value="none">Eşleştirme yok</SelectItem>
                                 {categories.map((cat) => (
                                   <SelectItem key={cat.id} value={cat.id}>
                                     {cat.name}
