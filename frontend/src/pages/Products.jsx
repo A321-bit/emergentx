@@ -71,11 +71,17 @@ const Products = () => {
     vat_rate: '20',
     profit_margin: '',
     stock_quantity: '0',
+    stock_location: 'akturk',  // 'akturk' veya 'supplier'
     unit: 'adet',
     power_watt: '',
     price_segment: '',
     matching_group: ''
   });
+
+  const stockLocations = [
+    { value: 'akturk', label: 'Aktürk Stok' },
+    { value: 'supplier', label: 'Tedarikçi Stok' }
+  ];
 
   const [priceSegments, setPriceSegments] = useState([]);
   const [matchingGroups, setMatchingGroups] = useState([]);
