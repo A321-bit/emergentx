@@ -557,6 +557,7 @@ const Products = () => {
                 <TableHead className="hidden md:table-cell">Kategori</TableHead>
                 <TableHead className="text-center hidden lg:table-cell">Para Birimi</TableHead>
                 <TableHead className="text-right">Stok</TableHead>
+                <TableHead className="hidden lg:table-cell">Stok Yeri</TableHead>
                 {canViewPrices && <TableHead className="text-right hidden xl:table-cell">Alış (KDV Hariç)</TableHead>}
                 {canViewPrices && <TableHead className="text-right hidden lg:table-cell">Maliyet</TableHead>}
                 <TableHead className="text-right">Satış Fiyatı</TableHead>
