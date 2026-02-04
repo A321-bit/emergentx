@@ -3,14 +3,16 @@ Solar Energy Sales System - PREMIUM PDF Quote Generator
 World-class professional quote document with stunning visual design
 Turkish character support with DejaVu Sans font
 
-DESIGN PHILOSOPHY:
-- Page 1: COVER - Full visual impact, category-based template
-- Page 2: VALUE PROPOSITION - Why choose us (NO PRICES)
-- Page 3: SYSTEM ANALYSIS - Benefits & production (calculations preserved)
-- Page 4: PRODUCTS SHOWCASE - 2-column card grid (NO PRICES)
-- Page 5: PRICE QUOTE - Full pricing table (unchanged logic)
-- Page 6: TERMS - Short conditions
-- Page 7+: ATTACHMENTS - Datasheets & contract
+NEW 9-PAGE STRUCTURE:
+- Page 1: KAPAK (Cover) - Full visual impact
+- Page 2: NEDEN BİZ (Why Us) - Company value proposition
+- Page 3: PROJE VERİLERİ (Project Data) - Technical project specifications
+- Page 4: SİSTEM ANALİZ (System Analysis) - Benefits & production calculations
+- Page 5: ÜRÜN LİSTESİ + FİYATLAR (Products + Pricing) - Full pricing table
+- Page 6: TEKLİF ŞARTLARI (Terms) - Short conditions
+- Page 7: BANKA + TAKSİT (Bank Info) - Payment options
+- Page 8: DATASHEET'LER (Datasheets) - Product datasheets
+- Page 9: KAPANIŞ KAPAK (Closing Cover) - Final page
 """
 
 from reportlab.lib import colors
@@ -54,8 +56,8 @@ MARGIN_RIGHT = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
 CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-# PDF Template Background Image
-PDF_TEMPLATE_BG = Path(__file__).parent / 'uploads' / 'pdf_template_background.jpeg'
+# PDF Template Background Image (New design with Aktürk Enerji branding)
+PDF_TEMPLATE_BG = Path(__file__).parent / 'uploads' / 'pdf_background_template.png'
 
 # Adjusted margins for template (to avoid logo/contact areas)
 TEMPLATE_CONTENT_TOP = PAGE_HEIGHT - 60 * mm  # Start below top sun icon
