@@ -1723,8 +1723,11 @@ class PremiumQuotePDFGenerator:
             if not datasheet_url:
                 continue
             
-            filename = datasheet_url.replace('/uploads/', '').replace('uploads/', '')
+            # Clean filename from various URL formats
+            filename = datasheet_url.replace('/api/uploads/', '').replace('/uploads/', '').replace('uploads/', '')
             full_path = self.upload_dir / filename
+            
+            logger.info(f"Looking for datasheet: {filename} at {full_path}")
             
             if full_path.exists() and str(full_path).lower().endswith('.pdf'):
                 try:
@@ -1733,7 +1736,10 @@ class PremiumQuotePDFGenerator:
                     logger.info(f"Added datasheet: {filename}")
                 except Exception as e:
                     logger.warning(f"Could not load datasheet {filename}: {e}")
+            else:
+                logger.warning(f"Datasheet not found or not PDF: {full_path}")
         
+        logger.info(f"Total datasheets collected: {len(datasheets)}")
         return datasheets
     
     # ==================== PAGE 3: PROJE VERİLERİ (PROJECT DATA) ====================
