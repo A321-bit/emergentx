@@ -722,28 +722,18 @@ class PremiumQuotePDFGenerator:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
-        # ===== GRADIENT HEADER =====
-        # Draw gradient effect with multiple rectangles
-        header_height = 70
-        gradient_steps = 20
-        for i in range(gradient_steps):
-            ratio = i / gradient_steps
-            r = int(30 + (59 - 30) * ratio)  # From dark navy to lighter
-            g = int(58 + (130 - 58) * ratio)
-            b = int(95 + (246 - 95) * ratio)
-            c.setFillColor(colors.HexColor(f'#{r:02x}{g:02x}{b:02x}'))
-            step_height = header_height / gradient_steps
-            c.rect(0, PAGE_HEIGHT - (i + 1) * step_height, PAGE_WIDTH, step_height + 1, fill=True, stroke=False)
+        # Draw template background
+        draw_template_background(c)
         
-        # Header title
-        c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 22)
-        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 35, "YATIRIMINIZIN GERİ DÖNÜŞÜ")
+        # Page title
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 20)
+        c.drawCentredString(PAGE_WIDTH / 2, TEMPLATE_CONTENT_TOP - 10, "YATIRIMINIZIN GERİ DÖNÜŞÜ")
         c.setFont(FONT_NORMAL, 10)
-        c.setFillColor(colors.HexColor('#94a3b8'))
-        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 52, "Güneş enerjisiyle tasarrufunuz başlıyor")
+        c.setFillColor(TEXT_LIGHT)
+        c.drawCentredString(PAGE_WIDTH / 2, TEMPLATE_CONTENT_TOP - 25, "Güneş enerjisiyle tasarrufunuz başlıyor")
         
-        y = PAGE_HEIGHT - 100
+        y = TEMPLATE_CONTENT_TOP - 55
         
         # ===== SECTION 1: SYSTEM COMPONENTS =====
         # Centered title
