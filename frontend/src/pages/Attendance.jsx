@@ -74,7 +74,21 @@ const Attendance = () => {
 
   const getAttendanceForDay = (employeeId, day) => {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return attendance.find(a => a.employee_id === employeeId && a.date === dateStr);
+    const existing = attendance.find(a => a.employee_id === employeeId && a.date === dateStr);
+    
+    // Varsayılan olarak "geldi" (present) kabul ediyoruz - yalnızca gelmeyenler işaretlenecek
+    if (!existing) {
+      const date = new Date(currentYear, currentMonth, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Sadece bugün veya geçmiş günler için varsayılan geldi göster
+      if (date <= today) {
+        return { employee_id: employeeId, date: dateStr, status: 'present', is_default: true };
+      }
+      return null;
+    }
+    return existing;
   };
 
   const handleStatusChange = async (employeeId, day, status) => {
