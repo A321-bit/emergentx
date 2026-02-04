@@ -2335,12 +2335,18 @@ async def get_quote(quote_id: str, current_user: dict = Depends(require_permissi
 
 @api_router.put("/quotes/{quote_id}", response_model=dict)
 async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dict = Depends(require_permission("quotes_manage"))):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Updating quote {quote_id}")
+    
     existing = await db.quotes.find_one({"id": quote_id, "is_active": True})
     if not existing:
         raise HTTPException(status_code=404, detail="Teklif bulunamadı")
     
+    logger.info(f"Quote status: {existing.get('status')}")
+    
     if existing.get("status") in ["satisa_dondu", "iptal"]:
-        raise HTTPException(status_code=400, detail="Bu teklif düzenlenemez")
+        raise HTTPException(status_code=400, detail="Bu teklif düzenlenemez (satışa dönüşmüş veya iptal edilmiş)")
     
     customer = await db.customers.find_one({"id": quote_data.customer_id}, {"_id": 0})
     if not customer:
