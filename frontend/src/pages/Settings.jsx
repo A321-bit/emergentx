@@ -866,6 +866,97 @@ MADDE 6 - GENEL HÜKÜMLER
               </form>
             </CardContent>
           </Card>
+
+          {/* Payment Notes Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">PDF Ödeme Notları</CardTitle>
+              <CardDescription>
+                Teklif PDF'inde "Önemli Notlar" bölümünde görüntülenecek maddeler
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                {(!settings.payment_notes || settings.payment_notes.length === 0) ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <p className="mb-4">Henüz ödeme notu eklenmemiş</p>
+                    <Button 
+                      type="button" 
+                      onClick={() => setSettings(prev => ({
+                        ...prev,
+                        payment_notes: ['']
+                      }))}
+                      variant="outline"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      İlk Notu Ekle
+                    </Button>
+                  </div>
+                ) : (
+                  settings.payment_notes.map((note, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-muted-foreground">Madde {index + 1}</span>
+                        </div>
+                        <Input
+                          value={note}
+                          onChange={(e) => {
+                            const newNotes = [...settings.payment_notes];
+                            newNotes[index] = e.target.value;
+                            setSettings(prev => ({ ...prev, payment_notes: newNotes }));
+                          }}
+                          placeholder="Ödeme notu girin..."
+                          data-testid={`payment-note-${index}`}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-6"
+                        onClick={() => {
+                          const newNotes = settings.payment_notes.filter((_, i) => i !== index);
+                          setSettings(prev => ({ ...prev, payment_notes: newNotes }));
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+
+                {settings.payment_notes && settings.payment_notes.length > 0 && (
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      type="button" 
+                      onClick={() => setSettings(prev => ({
+                        ...prev,
+                        payment_notes: [...(prev.payment_notes || []), '']
+                      }))}
+                      variant="outline"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Yeni Madde Ekle
+                    </Button>
+                    <Button type="submit" disabled={saving}>
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Kaydediliyor...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Kaydet
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Currency/Exchange Rate Tab */}
