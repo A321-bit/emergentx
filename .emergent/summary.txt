@@ -1,154 +1,134 @@
 <analysis>**original_problem_statement:**
-The user wants to build a comprehensive Solar Energy Sales Management System. The overall goal is to create a tool for managing sales, quotes, products, and customers, with a strong focus on generating professional, detailed PDF quotes.
+The user is building a Solar Energy Sales Management System. The project's focus has evolved significantly, with recent efforts centered on integrating a B2B product XML feed, fixing a critical image serving bug, implementing a new stock management logic, and completely restructuring the quote PDF output. The user provides very specific, iterative feedback, especially concerning the design and content of the PDF quotes.
 
-Recent user requests have been highly dynamic and have pivoted several times:
-1.  **Sales Calculation Bug**: The user reported a critical bug where editing an item's quantity, discount, VAT, or shipping in the Sales module resulted in incorrect total calculations. This was an iterative process with multiple fixes.
-2.  **PDF Redesign (Iterative)**:
-    *   The user requested a complete redesign of the System Analysis page in the quote PDF to be more visually appealing and sales-oriented.
-    *   After an initial redesign, the user provided feedback to make it cleaner and more spacious.
-    *   The user then provided a logo and requested a color scheme change based on it.
-    *   Following this, the user provided a completely new, 9-page specification for a premium investment-focused PDF for Off-Grid systems.
-    *   After the agent implemented this new 9-page PDF, the user rejected it and asked to revert to the previous state.
-3.  **Corporate Website**: The user requested a new corporate landing page for Aktürk Enerji Teknolojileri to replace the direct login screen.
-4.  **XML Product Integration**: The user's most recent request is to integrate product data from a supplier's XML feed.
+The user's latest request is to reorganize the generated PDF into a new, specific 9-part structure.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A full-stack application (React/FastAPI/MongoDB) with modules for Customers, Sales, Quotes, Callbacks, Personnel, Products, and Settings.
-
-The sales calculation bug in the  modal has been extensively worked on. The logic now handles item quantity/price changes, discount application/removal, and incorporates VAT and shipping costs into the final total. A one-time data migration was performed to add , , and  fields to existing sales records in the database.
-
-All recent, complex PDF redesign work was **reverted** at the user's request. The  is back to its state before the System Analysis page overhaul. A backup of the  file from before the major redesigns exists at .
+A full-stack application (React/FastAPI/MongoDB) with modules for sales, quotes, products, and settings. Key recent additions include:
+- A complete XML B2B integration feature, allowing the user to add suppliers (e.g., Mexxsun), map their product categories to internal ones, and import/update products with a specific supplier prefix ().
+- A fix for all image-related issues, ensuring product photos, company logos, and quote covers are served and displayed correctly by prefixing all stored image URLs with .
+- A stock management system that differentiates between Aktürk Stok (the user's own stock, which contributes to the dashboard's total stock value) and Tedarikçi Stok (stock from XML feeds, which does not).
+- The PDF generator () has been updated to use a user-provided A4 template as a background for all pages except the cover.
 
 **Last working item**:
--   **Last item agent was working**: The agent was just beginning to work on the XML product integration. The user provided an XML feed URL (), and the agent was in the process of analyzing its structure to plan the import mechanism.
--   **Status**: NOT STARTED
+-   **Last item agent was working**: The agent was in the middle of a major overhaul of the quote PDF generation logic based on a new, explicit 9-page structure defined by the user. The agent had misunderstood a previous instruction and incorrectly replaced the System Analysis page, but the user provided a clarification with the correct page order. The agent was about to start the implementation correctly.
+-   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: backend testing agent. The agent should be instructed to:
-    1.  Parse the provided XML feed.
-    2.  Map XML fields (product name, price, stock, images) to the application's  model.
-    3.  Implement logic to create new products or update existing ones based on the XML data.
-    4.  Verify that products are correctly added/updated in the database.
+-   **Which testing method agent to use?**: backend testing agent. The agent should be instructed to generate a PDF for a quote and verify that the page order and content match the new structure. Manual verification of the downloaded PDF by opening it will also be necessary to confirm the visual layout.
 -   **User Testing Done**: N
 
-**All Pending/In progress Issue list**:
--   **Issue 1:** (P0) Sales Total Calculation Bug
-    -   **Description**: A recurring and complex bug where the total sale amount in the edit modal calculates incorrectly under various conditions (changing quantity, removing discount, manual overrides, etc.). The latest iteration included incorrect handling of VAT and shipping costs.
-    -   **Attempted fixes**: The agent has gone through multiple rounds of fixes.
-        1.  Set  when item quantity/price is changed.
-        2.  Set  when discount value or type is changed.
-        3.  Added , ,  to the  model in .
-        4.  Updated the calculation  in  to correctly compute the grand total: .
-        5.  Ran a one-time migration script to populate these new fields for existing sales records converted from quotes.
-    -   **Why fix this issue and what will be achieved with the fix?**: This is a critical financial bug. A final verification from the user is needed to close this issue completely.
-    -   **Status**: USER VERIFICATION PENDING
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: Frontend
-    -   **Blocked on other issue**: None
-
 **In progress Task List**:
--   **Task 1:** (P0) XML B2B Product Integration
-    -   **Where to resume**: The agent needs to analyze the structure of the XML from  and plan the implementation. This will involve creating a new backend endpoint and a UI in the settings page to trigger the import.
-    -   **What will be achieved with this?**: Automate adding and updating products from a supplier's XML feed.
-    -   **Status**: NOT STARTED
+-   **Task 1**: (P0) Restructure Quote PDF
+    -   **Where to resume**: The agent needs to modify  to reflect the new 9-page structure. The previous, incorrect changes must be reverted.
+    -   **New PDF Structure:**
+        1.  Kapak (Cover Page) - *Existing*
+        2.  Neden Biz (Why Us Page) - *Awaiting final design from user*
+        3.  **Proje Verileri** (Project Data Page) - **New page to be created**
+        4.  Sistem Analiz (System Analysis Page) - *Existing, to be moved to this position*
+        5.  Ürün Listesi + Fiyatlar (Products + Pricing) - *Existing, needs modification to remove bank info*
+        6.  Teklif Şartları (Terms Page) - *Existing*
+        7.  **Banka + Taksit** (Bank Info + Installments) - **New separate page**
+        8.  **Datasheet'ler** (Datasheets) - **New feature to append product datasheets**
+        9.  **Kapanış Kapak** (Closing Cover Page) - **New page to be created**
+    -   **What will be achieved with this?**: The generated quote PDF will align perfectly with the user's detailed business presentation requirements.
+    -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?**: Backend
-    -   **Blocked on something**: None. This is the user's current priority.
+    -   **Blocked on something**: The final design for the Neden Biz page (Page 2) is pending from the user. A placeholder should be used for now.
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks:**
--   **P1: Corporate Landing Page**: The user requested a full corporate website for Aktürk Enerji Teknolojileri to serve as the application's entry point, with a login button for authorized users. This was requested but then superseded by the XML task.
--   **P2: Finalize City/District Selection Feature**: This was paused and needs to be completed and tested.
--   **P3: Personnel & Payroll Module (Phases 3-5):** Implement Advance, Bonus, and Employee expense management.
 
-**Future Tasks:**
--   **PDF Redesigns**: The user has shown strong interest in a more premium PDF design. This is likely to come up again.
--   **WhatsApp Quote Sending**: Integrate an API to send the generated PDF via WhatsApp.
--   **PayTR Integration**: Add installment calculation and payment options.
--   **Accounting Module PDF Report**: Add a button to download a comprehensive monthly financial report.
--   **Dashboard Widgets**: Add an Upcoming Payments widget.
--   **Refactoring**:
-    -   : Break the monolith into a router-based architecture.
-    -   : Modularize the complex PDF generation logic.
-    -   : Decompose large pages like  and  into smaller components.
+- **Upcoming Tasks:**
+    - **P1: Implement Neden Biz (Why Us) Page Design:** Integrate the user-provided full-page image for page 2, ensuring the customer's name is dynamically placed on it.
+    - **P2: Create Placeholder for Datasheet & Closing Pages:** Implement the logic to add blank pages for Datasheetler and Kapanış Kapak to complete the structure, with full implementation to follow.
+    - **P3: Add Editable Fields for PDF Content:** Create a new section in the Settings UI to allow the user to edit the static technical texts used in the Proje Verileri page.
+    - **P4: Add More XML Suppliers:** The system is ready for new suppliers. The user mentioned they will provide URLs for Tommatech, Solinved, and Enerji Pazar.
+
+- **Future Tasks:**
+    - Corporate Landing Page.
+    - Finalize City/District Selection Feature in customer forms.
+    - Personnel & Payroll Module (Advance, Bonus, Expenses).
+    - WhatsApp Quote Sending integration.
+    - PayTR Payment Integration.
+    - Comprehensive Accounting Module PDF report.
+    - Add Upcoming Payments widget to the dashboard.
 
 **Completed work in this session**
--   **Sales Calculation Bug Fix (Multi-phase)**:
-    -   Resolved an issue where changing item quantity in the sales modal did not update the total if  was active.
-    -   Resolved a follow-up issue where changing or removing the discount did not correctly reset  and recalculate the total.
-    -   **Final Fix**: Correctly incorporated , , and  into the grand total calculation in the sales edit modal.
-        -   Added , , ,  fields to the  model on the backend.
-        -   Updated  to use and display these new fields.
-        -   Created and executed a data migration script to populate these fields for existing sales that came from quotes.
-    -   The complete fix was verified via screenshots and the .
--   **PDF System Analysis Page Redesign (Reverted)**: Implemented a visually enhanced, sales-oriented System Analysis page, gathered user feedback, and then implemented a second, more spacious version. This work was later **reverted** as part of a larger rollback.
--   **Premium 9-Page PDF for Off-Grid (Reverted)**: Implemented a full, 9-page premium PDF template for the Off-Grid category based on a detailed user specification. The user rejected the final design, and all associated code ( and changes in ) was **deleted**.
-
-**Known issue recurrence from previous fork**
--   The **Sales Total Calculation Bug** has been the most prominent recurring issue in this session. The agent applied a fix, which the user tested and found a new edge case for. This cycle repeated three times (quantity change -> discount change -> VAT/shipping inclusion). The root cause is the complexity of state management around  and the various components that contribute to the final price.
+- **XML B2B Product Integration (v1 & v2)**: Implemented product import from an XML feed, followed by a major enhancement to manage multiple suppliers, map categories, and add supplier-specific product code prefixes.
+- **Image Serving Bug Fix**: Resolved a critical bug preventing any images (logos, product photos) from displaying by correcting the URL paths in the database and backend upload logic to use the  prefix.
+- **Stock Location Management**: Implemented a system to distinguish between the user's own stock (Aktürk Stok) and supplier stock (Tedarikçi Stok), ensuring only own stock is reflected in financial dashboard calculations.
+- **PDF Background Template**: Successfully integrated a user-provided image as a background template for all PDF pages (except the cover), modifying the ReportLab logic to support this.
+- **Product Code Prefix Correction**: Cleaned up the database to correct product code prefixes from  and  to  as per user request.
 
 **Code Architecture**
 
 
 **key DB schema**
--   ****: Modified. The  model now includes , , , and .
--   ****: Was planned to be modified for credit card installments but the changes were reverted.
+-   ****: Modified to include  and  (defaults to akturk).
+-   ****: New collection to store supplier details (name, URL, prefix, mappings).
+-   ****: The single document in this collection was updated to hold the  and an array of category mappings ().
 
 **All files of reference**
--   : The primary location of the bug fixes. Contains complex state management for the sales modal.
--   : The  model was updated, and the sales update/creation endpoints were affected. The PDF endpoint logic was temporarily changed and then reverted.
--   : A safe-state backup of the PDF generator before the user's major redesign requests.
+-   : The primary file for the current PDF restructuring task.
+-   : Contains all business logic, including the new XML and stock location features.
+-   : The UI for the new XML supplier management feature.
+-   : The UI for managing products, updated with new fields.
 
 **Areas that need refactoring**:
--   : The calculation logic is now extremely complex and tightly coupled within the main component. The edit modal, its state, and calculation effects should be extracted into a dedicated component/hook to improve maintainability and prevent future regressions.
--   : The user's repeated requests for redesigns highlight the fragility of this monolithic file. It urgently needs to be broken down into modular classes/functions for each PDF page/section.
--   : Still a monolith that needs to be split into a router-based architecture.
+-   : The current restructuring is the perfect opportunity to break the monolithic PDF generation function into smaller, modular functions for each page. This is high priority.
+-   : Still a monolith that would benefit from being split into a router-based architecture.
 
 **key api endpoints**
--   ****: Modified to accept and save the new , , , and  fields.
+-   ****: New CRUD endpoints for managing XML suppliers.
+-   ****: Previews products from a supplier's XML feed.
+-   ****: Triggers the product import process for a supplier.
+-   ****: Logic was modified to calculate  based only on products with .
+-   All image upload endpoints (e.g., , ): Logic was fixed to save URLs with the  prefix.
 
 **Critical Info for New Agent**
--   **User Pivots Frequently**: The user can rapidly change priorities, abandoning large, nearly-complete tasks (like the PDF redesign and landing page) for new ideas (XML integration). Be prepared to switch context and avoid getting too deep into an implementation without constant user validation.
--   **High Design Standards & Quick Rejection**: The user has very specific but hard-to-articulate design standards and has twice rejected significant, complex PDF design work after implementation. **Do not start large UI/PDF tasks without getting very granular, step-by-step approval.**
--   **Sales Calculation is a Minefield**: The calculation logic in  is fragile. The agent believes it is fixed, but the user has found edge cases before. Any changes in this file must be tested against all scenarios: quantity change, discount change, manual total override, VAT, and shipping.
--   **Current Priority is XML Integration**: The user's last firm instruction was to work on XML product import. This should be the starting point.
+-   The user's absolute highest priority is to implement the new 9-page PDF structure exactly as specified.
+-   Follow the user's last message for the correct page order. Do not repeat the previous agent's mistake of replacing the System Analysis page.
+-   The Ürünler (Products Showcase) page with product images and features should be **removed** from the PDF generation flow.
+-   The Banka Bilgileri ve Kart Taksit Seçenekleri content must be moved from the pricing page to its own new, separate page.
+-   Use placeholder content/pages for features where the final design is not yet provided (e.g., Neden Biz page, Datasheets, Closing Cover).
 
 **documents and test reports created in this job**
 -   
 -   
--    (Updated)
+-    (Updated with XML feature completion)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: I don't like the new PDF design. It's too cluttered. The sections are too close together.
-2.  **Agent**: Implemented a more spacious version of the System Analysis page.
-3.  **User**: (Shares a logo) Use these colors for the design from now on.
-4.  **Agent**: Acknowledged and prepared to change the color scheme.
-5.  **User**: (Provides a full 9-page spec) Create a brand new premium PDF for Off-Grid quotes with this exact structure and content.
-6.  **Agent**: Implemented the entire 9-page PDF and presented it to the user.
-7.  **User**: No, this is terrible. Revert it and delete all the code you wrote.
-8.  **Agent**: Reverted all PDF changes.
-9.  **User**: Can you put dynamic data onto a pre-made PDF template if I provide one?
-10. **User**: (Pivots) Let's build a corporate website for Aktürk Enerji instead of the login page.
-11. **User**: (Pivots again) Let's do the XML product import instead. Here is the link.
+- User asks about the PDF generation method (ReportLab).
+- User reports that products with IMP prefix exist and should be corrected to Mexxsun.
+- Agent corrects the product prefixes in the database.
+- User reports that product images, logos, and quote covers are broken/not showing.
+- Agent investigates and fixes the image serving issue by correcting URL prefixes in the backend and database.
+- User requests that company logos and quote covers also be fixed.
+- Agent confirms and fixes them.
+- User requests a new stock logic: XML products should not count towards total stock value. They should be Tedarikçi Stok, while manually added products are Aktürk Stok.
+- Agent implements the stock location feature.
+- User provides a background image and asks for it to be the template for all PDF pages.
+- Agent implements the background template.
+- User provides an image for the Neden Biz (Page 2) design.
+- User provides a detailed specification for a new Proje Verileri (Page 3).
+- **User clarifies the final, correct 9-page structure for the PDF after the agent misunderstood the initial request.** This is the most critical pending instruction.
 
 **Project Health Check:**
--   **Broken:** None. The sales calculation logic is believed to be fixed, but it is considered fragile.
+-   **Broken:** The PDF generation logic is currently in a broken, half-refactored state due to the ongoing restructuring. Generating a PDF will likely fail or produce an incorrect document until the new structure is fully implemented.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
--   None currently implemented. The next task is to integrate an XML feed for product data.
+-   **XML Feed**: A single XML feed from  is actively integrated for product data.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. The  was used successfully to validate the final state of the sales calculation bug fix ().
--   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Testing agent used after significant changes:** YES, for the XML integration and category mapping features.
 -   **Test files created:** None
--   **Known regressions:** None confirmed, but the sales calculation logic is a high-risk area for regressions.
+-   **Known regressions:** The entire PDF generation is temporarily non-functional pending the completion of the restructuring task.
 
 **Credentials to test flow:**
 -   **Email:** 
 -   **Password:** 
 
 **What agent forgot to execute**
-The agent did not forget tasks but was redirected by the user multiple times. The following requested tasks were planned but superseded by user pivots:
--   Corporate Landing Page development.
--   A new PDF design based on user-provided templates.</analysis>
+The agent initially misunderstood the user's PDF restructuring request, starting to overwrite the System Analysis page instead of adding a new Project Data page and re-ordering the sequence. This was corrected by the user, and the next agent must follow the new, clarified instructions precisely.</analysis>
