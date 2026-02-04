@@ -1256,13 +1256,13 @@ class PremiumQuotePDFGenerator:
     
     # ==================== PAGE 6: TERMS ====================
     def _create_terms_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create short terms page"""
-        
-        quote_terms = company_settings.get('quote_terms', '')
-        warranty_text = company_settings.get('warranty_text', '')
-        
-        if not quote_terms and not warranty_text:
-            return None
+        """
+        Create Terms Page - Corporate text format without boxes
+        - Ödeme Koşulları
+        - Önemli Notlar
+        - Garanti Süreleri
+        - Garanti Dışı Unsurlar
+        """
         
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
@@ -1270,69 +1270,105 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
+        y = TEMPLATE_CONTENT_TOP - 15
+        
         # Page title
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 20)
-        c.drawCentredString(PAGE_WIDTH / 2, TEMPLATE_CONTENT_TOP - 10, "TEKLİF ŞARTLARI")
+        c.setFont(FONT_BOLD, 16)
+        c.drawString(MARGIN_LEFT + 10, y, "Teklif Şartları")
+        y -= 25
         
-        y = TEMPLATE_CONTENT_TOP - 55
+        # ===== ÖDEME KOŞULLARI =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 10, y, "Ödeme Koşulları")
+        y -= 14
         
-        # Quote validity
-        validity_days = quote_data.get('validity_days', 15)
-        quote_date = self._format_date(quote_data.get('created_at', ''))
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
         
-        # Key terms in boxes
-        terms_items = [
-            ('📅', 'Teklif Geçerliliği', f'{validity_days} gün ({quote_date} tarihinden itibaren)'),
-            ('🚚', 'Teslim Süresi', 'Sipariş onayından itibaren 7-14 iş günü'),
-            ('🛡', 'Garanti Süresi', warranty_text if warranty_text else 'Üretici garantisi geçerlidir'),
-            ('⚡', 'Performans', 'Sistemler uluslararası standartlara uygun kurulur'),
+        odeme_items = [
+            "• Toplam bedelin %70'i, sözleşme imzasını takiben havale / peşin / kredi kartı ile tahsil edilir.",
+            "• Kalan %30, sistemin kurulumu tamamlanıp çalışır hale getirildikten sonra, belirtilen ödeme yöntemleriyle tamamlanır.",
+            "• Döviz bazlı tekliflerde ödemeler TL ile olacaksa Ziraat Bankası Efektif Satış kuru baz alınarak döviz tutarı hesaplanır.",
+            "• Döviz bazlı tekliflerde ödemeler döviz türünden yapılacaksa USD kuru üzerinden banka hesap bilgilerindeki İban üzerinden gönderim sağlanabilir."
         ]
         
-        for icon, title, desc in terms_items:
-            # Box with semi-transparent background
-            c.setFillColor(colors.HexColor('#f8fafc'))
-            c.roundRect(MARGIN_LEFT + 10, y - 45, CONTENT_WIDTH - 20, 45, 6, fill=True)
-            
-            # Icon circle
-            c.setFillColor(PRIMARY_COLOR)
-            c.circle(MARGIN_LEFT + 35, y - 22, 12, fill=True)
-            c.setFillColor(colors.white)
-            c.setFont(FONT_BOLD, 10)
-            c.drawCentredString(MARGIN_LEFT + 35, y - 26, icon)
-            
-            # Title
-            c.setFillColor(TEXT_COLOR)
-            c.setFont(FONT_BOLD, 10)
-            c.drawString(MARGIN_LEFT + 55, y - 18, title)
-            
-            # Description
-            c.setFont(FONT_NORMAL, 9)
-            c.setFillColor(TEXT_LIGHT)
-            # Truncate if too long
-            if len(desc) > 70:
-                desc = desc[:67] + "..."
-            c.drawString(MARGIN_LEFT + 55, y - 32, desc)
-            
-            y -= 55
+        for item in odeme_items:
+            c.drawString(MARGIN_LEFT + 15, y, item)
+            y -= 11
         
-        # Additional terms text (if any)
-        if quote_terms and y > TEMPLATE_CONTENT_BOTTOM + 100:
-            y -= 15
-            c.setFillColor(TEXT_COLOR)
-            c.setFont(FONT_BOLD, 10)
-            c.drawString(MARGIN_LEFT + 10, y, "Ek Koşullar:")
-            
-            y -= 18
-            c.setFont(FONT_NORMAL, 9)
-            
-            for line in quote_terms.split('\n')[:8]:  # Max 8 lines
-                if line.strip() and y > TEMPLATE_CONTENT_BOTTOM + 20:
-                    # Truncate long lines
-                    if len(line) > 85:
-                        line = line[:82] + "..."
-                    c.drawString(MARGIN_LEFT + 15, y, line)
-                    y -= 13
+        y -= 8
+        
+        # ===== ÖNEMLİ NOTLAR =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 10, y, "Önemli Notlar")
+        y -= 14
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
+        
+        # Get total page count (approximate)
+        total_pages = 8  # Default
+        
+        notlar_items = [
+            "• Sistemin kurulacağı alanın projeye uygunluğu, kurulum öncesinde Aktürk Enerji Teknolojileri tarafından onaylanacaktır.",
+            "• Sunulan teklif ve tüm dokümanlar, müşteri ile Aktürk Enerji Teknolojileri arasında gizlilik kapsamındadır.",
+            "• Dış müdahale veya hatalı kullanım sonucu oluşabilecek arızalarda, servis hizmetleri ücretli olarak sağlanabilir.",
+            f"• Bu teklif, toplam {total_pages} sayfadan oluşmakta olup, yazım hatalarında Aktürk Enerji Teknolojileri'nin düzeltme hakkı saklıdır.",
+            "• İşbu sözleşme taraflar arasında imzalanmış olup, doğabilecek uyuşmazlıklarda Ankara Mahkemeleri ve İcra Daireleri yetkilidir."
+        ]
+        
+        for item in notlar_items:
+            c.drawString(MARGIN_LEFT + 15, y, item)
+            y -= 11
+        
+        y -= 8
+        
+        # ===== GARANTİ SÜRELERİ =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 10, y, "Garanti Süreleri")
+        y -= 14
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
+        
+        garanti_items = [
+            "• Güneş Panelleri: Güneş panelleri 35 yıl elektrik üretim garantilidir.",
+            "• İnverter: Sistemde kullanılan inverter 2 yıl üretici garantisi geçerlidir.",
+            "• Batarya: Sistemde kullanılan batarya 2 yıl üretici garantisi geçerlidir.",
+            "• İşçilik ve Kurulum: Şalt malzemeler, kurulum ve işçilik 2 yıl Aktürk Enerji Teknolojileri garanti kapsamındadır."
+        ]
+        
+        for item in garanti_items:
+            c.drawString(MARGIN_LEFT + 15, y, item)
+            y -= 11
+        
+        y -= 8
+        
+        # ===== GARANTİ DIŞI UNSURLAR =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 10, y, "Garanti Dışı Unsurlar")
+        y -= 14
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
+        
+        garanti_disi_items = [
+            "• Bakım ve kullanım talimatlarına aykırı kullanım,",
+            "• Yanlış kullanım ve ihmaller,",
+            "• Mücbir sebepler, doğal felaketler,",
+            "• Aktürk Enerji Teknolojileri kapsam alanı dışındaki kazalar,",
+            "• Yetkisiz kişilerce açılmış, tamir edilmeye çalışılmış ekipmanlar garanti dışına çıkar.",
+            "• Servis ve onarım şartları için yukarıda yer almayan koşullarda uluslararası standartlar geçerlidir."
+        ]
+        
+        for item in garanti_disi_items:
+            c.drawString(MARGIN_LEFT + 15, y, item)
+            y -= 11
         
         c.save()
         buffer.seek(0)
