@@ -1683,6 +1683,520 @@ class PremiumQuotePDFGenerator:
         
         return datasheets
     
+    # ==================== PAGE 3: PROJE VERİLERİ (PROJECT DATA) ====================
+    def _create_project_data_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
+        """
+        Create Project Data Page (Proje Verileri)
+        - Project description
+        - System summary box
+        - Technical parameters
+        - Installation & commissioning
+        - Delivery & documentation
+        """
+        
+        items = quote_data.get('items', [])
+        
+        # Calculate power values
+        total_panel_watt = 0
+        total_inverter_watt = 0
+        total_battery_watt = 0
+        panel_count = 0
+        panel_single_watt = 0
+        
+        for item in items:
+            power = item.get('power_watt', 0) or 0
+            quantity = item.get('quantity', 1)
+            category = (item.get('category_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
+            product_name = (item.get('product_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
+            
+            if any(x in category or x in product_name for x in ['batarya', 'akü', 'battery', 'depolama', 'lityum']):
+                total_battery_watt += power * quantity
+            elif any(x in category or x in product_name for x in ['inverter', 'invertor', 'evirici']):
+                total_inverter_watt += power * quantity
+            elif any(x in category or x in product_name for x in ['panel', 'güneş', 'solar', 'mono', 'poli']):
+                total_panel_watt += power * quantity
+                panel_count += quantity
+                if power > 0:
+                    panel_single_watt = power
+        
+        if total_panel_watt == 0 and total_inverter_watt == 0 and total_battery_watt == 0:
+            return None
+        
+        panel_kwp = total_panel_watt / 1000
+        inverter_kw = total_inverter_watt / 1000
+        battery_kwh = total_battery_watt / 1000
+        
+        # Customer info
+        customer_name = quote_data.get('customer_name', 'Değerli Müşterimiz')
+        customer_city = quote_data.get('customer_city', 'Ankara')
+        
+        # System type
+        category_name = quote_data.get('customer_category_name', '').lower()
+        if 'off' in category_name:
+            system_type = "Off-Grid (Şebekeden Bağımsız)"
+        elif 'hybrid' in category_name or 'hibrit' in category_name:
+            system_type = "Hibrit (Depolamalı)"
+        else:
+            system_type = "On-Grid (Öz Tüketim)"
+        
+        # CREATE PAGE
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        
+        # Draw template background
+        draw_template_background(c)
+        
+        y = TEMPLATE_CONTENT_TOP - 5
+        
+        # ===== SECTION 1: PROJE VERİLERİ TITLE =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 18)
+        c.drawString(MARGIN_LEFT + 10, y, "Proje Verileri")
+        y -= 25
+        
+        # Project description paragraph
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 9)
+        
+        desc_line1 = f"{customer_name}'a ait {customer_city} ilinde bulunan proje için, mevcut çatı koşulları ve enerji"
+        desc_line2 = "tüketimi dikkate alınarak hazırlanmış Güneş Enerjisi Sistemi (GES) ön maliyet ve ön fizibilite çalışmasıdır."
+        desc_line3 = "Bu raporda yer alan tüm hesaplamalar ve teknik öngörüler, sistemin uzun vadeli performansını ve"
+        desc_line4 = "yatırım geri dönüşünü esas alacak şekilde yapılmıştır."
+        
+        c.drawString(MARGIN_LEFT + 10, y, desc_line1)
+        y -= 13
+        c.drawString(MARGIN_LEFT + 10, y, desc_line2)
+        y -= 18
+        c.drawString(MARGIN_LEFT + 10, y, desc_line3)
+        y -= 13
+        c.drawString(MARGIN_LEFT + 10, y, desc_line4)
+        y -= 25
+        
+        # ===== SECTION 2: SİSTEM GENEL ÖZETİ (BOXED) =====
+        box_height = 95
+        c.setFillColor(colors.HexColor('#f0f9ff'))  # Light blue background
+        c.roundRect(MARGIN_LEFT + 5, y - box_height, CONTENT_WIDTH - 10, box_height, 8, fill=True)
+        
+        # Box title
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 15, y - 18, "Sistem Özeti")
+        
+        # System info - 2 columns
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 9)
+        
+        col1_x = MARGIN_LEFT + 20
+        col2_x = PAGE_WIDTH / 2 + 10
+        
+        info_y = y - 38
+        
+        # Left column
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(col1_x, info_y, "Kurulu Güç:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(col1_x + 70, info_y, f"{panel_kwp:.1f} kWp")
+        
+        info_y -= 14
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(col1_x, info_y, "Kurulum Alanı:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(col1_x + 70, info_y, "Mesken Çatısı")
+        
+        info_y -= 14
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(col1_x, info_y, "Sistem Tipi:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(col1_x + 70, info_y, system_type)
+        
+        # Right column
+        info_y = y - 38
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(col2_x, info_y, "Panel Sayısı:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(col2_x + 80, info_y, f"{panel_count} Adet – {panel_single_watt:.0f} Wp")
+        
+        info_y -= 14
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(col2_x, info_y, "İnverter Gücü:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(col2_x + 80, info_y, f"{inverter_kw:.0f} kW")
+        
+        info_y -= 14
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(col2_x, info_y, "Batarya Kapasitesi:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(col2_x + 80, info_y, f"{battery_kwh:.2f} kWh" if battery_kwh > 0 else "Yok")
+        
+        y -= box_height + 20
+        
+        # ===== SECTION 3: TEKNİK VE PERFORMANS PARAMETRELERİ =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 10, y, "Teknik ve Performans Parametreleri")
+        y -= 20
+        
+        # 3 columns for technical info
+        section_width = (CONTENT_WIDTH - 30) / 3
+        
+        # --- Solar Panels ---
+        sec_x = MARGIN_LEFT + 10
+        sec_y = y
+        
+        c.setFillColor(colors.HexColor('#fef3c7'))  # Yellow background
+        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#d97706'))
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(sec_x + 8, sec_y - 15, "Güneş Panelleri")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 7)
+        panel_texts = [
+            "• Monokristal hücreli, yeni nesil",
+            "  fotovoltaik paneller kullanılacaktır.",
+            "• Yıllık performans düşüşü: %0,83",
+            "• 15. yıl sonunda %92 performans",
+            "• 35. yıl sonunda %80 performans"
+        ]
+        txt_y = sec_y - 30
+        for txt in panel_texts:
+            c.drawString(sec_x + 8, txt_y, txt)
+            txt_y -= 10
+        
+        # --- Production Calculation ---
+        sec_x = MARGIN_LEFT + 10 + section_width + 10
+        
+        c.setFillColor(colors.HexColor('#dbeafe'))  # Blue background
+        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#2563eb'))
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(sec_x + 8, sec_y - 15, "Üretim Hesaplama")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 7)
+        calc_texts = [
+            "• Hesaplamalar AB PVGIS sistemi",
+            "  üzerinden yapılmıştır.",
+            "• İl bazlı ortalama güneşlenme",
+            "  verileri kullanılmıştır.",
+            "• Aylık ve yıllık üretim çıktıları",
+            "  teklif içerisinde sunulmaktadır."
+        ]
+        txt_y = sec_y - 30
+        for txt in calc_texts:
+            c.drawString(sec_x + 8, txt_y, txt)
+            txt_y -= 10
+        
+        # --- Storage & Inverter ---
+        sec_x = MARGIN_LEFT + 10 + (section_width + 10) * 2
+        
+        c.setFillColor(colors.HexColor('#d1fae5'))  # Green background
+        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#059669'))
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(sec_x + 8, sec_y - 15, "Depolama & İnverter")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 7)
+        storage_texts = [
+            f"• {inverter_kw:.0f} kW inverter kullanılacaktır.",
+            "• Prizmatik lityum batarya ile",
+            "  enerji depolama sağlanacaktır.",
+            "• Batarya çevrim ömrü: 6000 cycle",
+            f"• Depolama kapasitesi: {battery_kwh:.2f} kWh"
+        ] if battery_kwh > 0 else [
+            f"• {inverter_kw:.0f} kW inverter kullanılacaktır.",
+            "• On-Grid sistem için batarya",
+            "  bulunmamaktadır.",
+            "• Üretilen enerji doğrudan",
+            "  tüketime yönlendirilir."
+        ]
+        txt_y = sec_y - 30
+        for txt in storage_texts:
+            c.drawString(sec_x + 8, txt_y, txt)
+            txt_y -= 10
+        
+        y -= 105
+        
+        # ===== SECTION 4: KURULUM & DEVREYE ALMA =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 11)
+        c.drawString(MARGIN_LEFT + 10, y, "Kurulum ve Devreye Alma")
+        y -= 18
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
+        
+        kurulum_items = [
+            "• Malzeme tedariği, nakliye ve anahtar teslim kurulum Aktürk Enerji Teknolojileri tarafından gerçekleştirilecektir.",
+            "• Çatıya zarar vermeyecek uygun konstrüksiyon sistemi kullanılacaktır.",
+            "• Solar kablolama, inverter ve batarya montajları uzman ekip tarafından yapılacaktır.",
+            "• Sistem devreye alınacak, test ve kontroller tamamlanacaktır.",
+            "• Mobil uygulama ve izleme sistemleri kurulup çalışır şekilde teslim edilecektir."
+        ]
+        
+        for item in kurulum_items:
+            c.drawString(MARGIN_LEFT + 15, y, item)
+            y -= 12
+        
+        y -= 10
+        
+        # ===== SECTION 5: TESLİM & BELGELER (BOTTOM BOX) =====
+        footer_box_height = 45
+        c.setFillColor(colors.HexColor('#f1f5f9'))  # Gray background
+        c.roundRect(MARGIN_LEFT + 5, y - footer_box_height, CONTENT_WIDTH - 10, footer_box_height, 6, fill=True)
+        
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(MARGIN_LEFT + 15, y - 15, "Teslim ve Belgeler")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
+        c.drawString(MARGIN_LEFT + 15, y - 28, "Tüm işlemler tamamlandıktan sonra sistem müşteri tarafından kontrol edilerek teslim alınır.")
+        c.drawString(MARGIN_LEFT + 15, y - 40, "İş tesliminde; imzalı garanti belgeleri, ürün kullanım kılavuzları ve gerekli tüm dokümanlar teslim edilecektir.")
+        
+        c.save()
+        buffer.seek(0)
+        return buffer
+    
+    # ==================== PAGE 7: BANKA + TAKSİT ====================
+    def _create_bank_info_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
+        """
+        Create Bank Info + Installment Options Page (Banka + Taksit)
+        Separate page for payment information
+        """
+        
+        bank_accounts = company_settings.get('bank_accounts', [])
+        installment_options = company_settings.get('installment_options', [])
+        
+        # If no bank accounts, skip this page
+        if not bank_accounts or len(bank_accounts) == 0:
+            return None
+        
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        
+        # Draw template background
+        draw_template_background(c)
+        
+        y = TEMPLATE_CONTENT_TOP - 5
+        
+        # ===== PAGE TITLE =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 20)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "ÖDEME SEÇENEKLERİ")
+        y -= 35
+        
+        # ===== SECTION 1: BANKA HESAP BİLGİLERİ =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(MARGIN_LEFT + 10, y, "Banka Hesap Bilgileri")
+        y -= 25
+        
+        # Bank accounts table header
+        header_height = 25
+        col_widths = [0.22 * CONTENT_WIDTH, 0.15 * CONTENT_WIDTH, 0.23 * CONTENT_WIDTH, 0.40 * CONTENT_WIDTH]
+        
+        # Header row
+        c.setFillColor(PRIMARY_COLOR)
+        c.roundRect(MARGIN_LEFT + 5, y - header_height, CONTENT_WIDTH - 10, header_height, 4, fill=True)
+        
+        c.setFillColor(colors.white)
+        c.setFont(FONT_BOLD, 9)
+        
+        x_pos = MARGIN_LEFT + 10
+        c.drawString(x_pos, y - 17, "Banka")
+        x_pos += col_widths[0]
+        c.drawString(x_pos, y - 17, "Şube")
+        x_pos += col_widths[1]
+        c.drawString(x_pos, y - 17, "Hesap Sahibi")
+        x_pos += col_widths[2]
+        c.drawString(x_pos, y - 17, "IBAN")
+        
+        y -= header_height + 5
+        
+        # Bank account rows
+        row_height = 28
+        for i, account in enumerate(bank_accounts):
+            # Alternating row background
+            if i % 2 == 0:
+                c.setFillColor(colors.HexColor('#f8fafc'))
+            else:
+                c.setFillColor(colors.white)
+            c.roundRect(MARGIN_LEFT + 5, y - row_height, CONTENT_WIDTH - 10, row_height, 3, fill=True)
+            
+            # Border
+            c.setStrokeColor(BORDER_COLOR)
+            c.setLineWidth(0.5)
+            c.roundRect(MARGIN_LEFT + 5, y - row_height, CONTENT_WIDTH - 10, row_height, 3, fill=False, stroke=True)
+            
+            c.setFillColor(TEXT_COLOR)
+            c.setFont(FONT_NORMAL, 8)
+            
+            x_pos = MARGIN_LEFT + 10
+            c.drawString(x_pos, y - 18, account.get('bank_name', '-')[:20])
+            x_pos += col_widths[0]
+            c.drawString(x_pos, y - 18, account.get('bank_branch', '-')[:15])
+            x_pos += col_widths[1]
+            c.drawString(x_pos, y - 18, account.get('account_holder', '-')[:20])
+            x_pos += col_widths[2]
+            c.drawString(x_pos, y - 18, account.get('iban', '-'))
+            
+            y -= row_height + 3
+        
+        y -= 25
+        
+        # ===== SECTION 2: KREDİ KARTI TAKSİT SEÇENEKLERİ =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(MARGIN_LEFT + 10, y, "Kredi Kartı Taksit Seçenekleri")
+        y -= 20
+        
+        # Info box
+        c.setFillColor(colors.HexColor('#fffbeb'))
+        c.roundRect(MARGIN_LEFT + 5, y - 45, CONTENT_WIDTH - 10, 45, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#d97706'))
+        c.setFont(FONT_BOLD, 10)
+        c.drawString(MARGIN_LEFT + 15, y - 18, "Taksit Bilgisi")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(MARGIN_LEFT + 15, y - 33, "Kredi kartı ile taksitli ödeme seçenekleri için lütfen satış temsilcinizle iletişime geçiniz.")
+        
+        y -= 65
+        
+        # Installment grid (if available)
+        if installment_options and len(installment_options) > 0:
+            c.setFillColor(TEXT_COLOR)
+            c.setFont(FONT_BOLD, 10)
+            c.drawString(MARGIN_LEFT + 10, y, "Taksit Tablosu")
+            y -= 25
+            
+            # Create installment table
+            inst_col_width = (CONTENT_WIDTH - 20) / 4
+            inst_row_height = 30
+            
+            for i, option in enumerate(installment_options[:8]):  # Max 8 options
+                col = i % 4
+                row = i // 4
+                
+                box_x = MARGIN_LEFT + 10 + (col * inst_col_width)
+                box_y = y - (row * (inst_row_height + 10))
+                
+                # Option box
+                c.setFillColor(colors.HexColor('#f0f9ff'))
+                c.roundRect(box_x, box_y - inst_row_height, inst_col_width - 10, inst_row_height, 4, fill=True)
+                
+                c.setFillColor(PRIMARY_COLOR)
+                c.setFont(FONT_BOLD, 10)
+                months = option.get('months', 1)
+                c.drawCentredString(box_x + (inst_col_width - 10) / 2, box_y - 12, f"{months} Taksit")
+                
+                c.setFillColor(TEXT_COLOR)
+                c.setFont(FONT_NORMAL, 8)
+                rate = option.get('rate', 0)
+                c.drawCentredString(box_x + (inst_col_width - 10) / 2, box_y - 24, f"%{rate} komisyon")
+        
+        y -= 100
+        
+        # ===== SECTION 3: ÖDEME NOTLARI =====
+        c.setFillColor(colors.HexColor('#f1f5f9'))
+        c.roundRect(MARGIN_LEFT + 5, y - 60, CONTENT_WIDTH - 10, 60, 6, fill=True)
+        
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 10)
+        c.drawString(MARGIN_LEFT + 15, y - 18, "Önemli Notlar")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
+        c.drawString(MARGIN_LEFT + 15, y - 33, "• Havale/EFT ödemelerinde açıklama kısmına teklif numaranızı yazınız.")
+        c.drawString(MARGIN_LEFT + 15, y - 45, "• Taksitli ödemelerde toplam tutara komisyon oranı eklenir.")
+        c.drawString(MARGIN_LEFT + 15, y - 57, "• Peşin ödemelerde ek indirim için satış temsilcinize danışınız.")
+        
+        c.save()
+        buffer.seek(0)
+        return buffer
+    
+    # ==================== PAGE 9: KAPANIŞ KAPAK ====================
+    def _create_closing_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
+        """
+        Create Closing Cover Page (Kapanış Kapak)
+        Final page with contact information and thank you message
+        """
+        
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        
+        # Draw template background (same as other pages)
+        draw_template_background(c)
+        
+        # Center content area
+        center_y = PAGE_HEIGHT / 2 + 50
+        
+        # Thank you message
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 28)
+        c.drawCentredString(PAGE_WIDTH / 2, center_y, "Bizi Tercih Ettiğiniz İçin")
+        c.drawCentredString(PAGE_WIDTH / 2, center_y - 40, "Teşekkür Ederiz")
+        
+        # Horizontal line
+        c.setStrokeColor(PRIMARY_COLOR)
+        c.setLineWidth(2)
+        c.line(PAGE_WIDTH / 2 - 80, center_y - 60, PAGE_WIDTH / 2 + 80, center_y - 60)
+        
+        center_y -= 100
+        
+        # Company info box
+        company_name = company_settings.get('company_name', 'Aktürk Enerji')
+        company_phone = company_settings.get('phone', '')
+        company_email = company_settings.get('email', '')
+        company_address = company_settings.get('address', '')
+        company_website = company_settings.get('website', '')
+        
+        c.setFillColor(colors.HexColor('#f0f9ff'))
+        box_width = 300
+        box_height = 100
+        box_x = (PAGE_WIDTH - box_width) / 2
+        c.roundRect(box_x, center_y - box_height, box_width, box_height, 10, fill=True)
+        
+        # Company name
+        c.setFillColor(SECONDARY_COLOR)
+        c.setFont(FONT_BOLD, 14)
+        c.drawCentredString(PAGE_WIDTH / 2, center_y - 25, company_name)
+        
+        # Contact info
+        c.setFont(FONT_NORMAL, 10)
+        c.setFillColor(TEXT_COLOR)
+        
+        info_y = center_y - 45
+        if company_phone:
+            c.drawCentredString(PAGE_WIDTH / 2, info_y, f"Tel: {company_phone}")
+            info_y -= 15
+        if company_email:
+            c.drawCentredString(PAGE_WIDTH / 2, info_y, company_email)
+            info_y -= 15
+        if company_website:
+            c.setFillColor(PRIMARY_COLOR)
+            c.drawCentredString(PAGE_WIDTH / 2, info_y, company_website)
+        
+        center_y -= 140
+        
+        # Quote reference
+        quote_number = quote_data.get('quote_number', '')
+        quote_date = self._format_date(quote_data.get('created_at', ''))
+        
+        c.setFillColor(TEXT_LIGHT)
+        c.setFont(FONT_NORMAL, 9)
+        c.drawCentredString(PAGE_WIDTH / 2, center_y, f"Teklif No: {quote_number}  •  Tarih: {quote_date}")
+        
+        c.save()
+        buffer.seek(0)
+        return buffer
+    
     def _merge_pdfs(self, pdf_buffers: list) -> BytesIO:
         """Merge multiple PDF buffers"""
         
