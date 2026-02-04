@@ -516,11 +516,26 @@ class PremiumQuotePDFGenerator:
     
     # ==================== PAGE 2: VALUE PROPOSITION ====================
     def _create_value_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create value proposition page - NO PRICES"""
+        """Create value proposition page - Uses custom image if uploaded, otherwise default design"""
         
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
+        # Check if custom "Why Us" image is uploaded
+        why_us_image = company_settings.get('why_us_image')
+        if why_us_image:
+            img_path = self.upload_dir / why_us_image.replace('/api/uploads/', '').replace('/uploads/', '').replace('uploads/', '')
+            if img_path.exists():
+                try:
+                    # Draw full page custom image
+                    c.drawImage(str(img_path), 0, 0, width=PAGE_WIDTH, height=PAGE_HEIGHT, preserveAspectRatio=False)
+                    c.save()
+                    buffer.seek(0)
+                    return buffer
+                except Exception as e:
+                    logger.warning(f"Could not load why_us image: {e}")
+        
+        # Default design if no custom image
         # Draw template background
         draw_template_background(c)
         
