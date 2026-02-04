@@ -635,6 +635,103 @@ const Settings = () => {
             </CardContent>
           </Card>
 
+          {/* Why Us Page Image Upload */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="section-title">Neden Biz Sayfa Tasarımı (2. Sayfa)</CardTitle>
+              <CardDescription>PDF teklifin 2. sayfasında tam sayfa görüntülenecek "Neden Biz" tanıtım görseli</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <div className="w-48 h-64 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
+                  {settings.why_us_image ? (
+                    <img 
+                      src={`${API_URL}${settings.why_us_image}`} 
+                      alt="Neden Biz" 
+                      className="w-full h-full object-cover"
+                      data-testid="why-us-image"
+                    />
+                  ) : (
+                    <div className="text-center p-4">
+                      <Image className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">Neden Biz Görseli</p>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      try {
+                        const response = await fetch(`${API_URL}/api/settings/upload-why-us-image`, {
+                          method: 'POST',
+                          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                          body: formData
+                        });
+                        
+                        if (response.ok) {
+                          const data = await response.json();
+                          setSettings(prev => ({ ...prev, why_us_image: data.why_us_image }));
+                          toast.success('Neden Biz görseli yüklendi');
+                        } else {
+                          toast.error('Görsel yüklenemedi');
+                        }
+                      } catch (error) {
+                        toast.error('Yükleme hatası');
+                      }
+                      e.target.value = '';
+                    }}
+                    className="hidden"
+                    id="why-us-input"
+                    data-testid="why-us-input"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('why-us-input')?.click()}
+                    data-testid="upload-why-us-btn"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Neden Biz Görseli Yükle
+                  </Button>
+                  {settings.why_us_image && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-red-500"
+                      onClick={async () => {
+                        try {
+                          await fetch(`${API_URL}/api/settings/why-us-image`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                          });
+                          setSettings(prev => ({ ...prev, why_us_image: null }));
+                          toast.success('Görsel silindi');
+                        } catch (error) {
+                          toast.error('Silme hatası');
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Görseli Sil
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Önerilen boyut: 2480x3508 piksel (A4 300 DPI)<br />
+                    Bu görsel yüklendiğinde PDF 2. sayfada tam sayfa gösterilir
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Quote Terms */}
           <Card>
             <CardHeader>
