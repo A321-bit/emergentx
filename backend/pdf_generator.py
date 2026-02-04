@@ -1400,7 +1400,7 @@ class PremiumQuotePDFGenerator:
             bank_table = self._create_bank_accounts_table(bank_accounts)
             elements.append(bank_table)
         
-        doc.build(elements)
+        doc.build(elements, onFirstPage=self._add_price_page_background, onLaterPages=self._add_price_page_background)
         buffer.seek(0)
         return buffer
     
