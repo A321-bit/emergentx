@@ -386,23 +386,39 @@ class PremiumQuotePDFGenerator:
         self.styles = create_styles()
     
     def generate(self, quote_data: dict, company_settings: dict, quote_templates: list = None) -> BytesIO:
-        """Generate complete premium PDF"""
+        """
+        Generate complete premium PDF with new 9-page structure:
+        1. Kapak (Cover)
+        2. Neden Biz (Why Us)
+        3. Proje Verileri (Project Data) - NEW
+        4. Sistem Analiz (System Analysis)
+        5. Ürün Listesi + Fiyatlar (Products + Pricing - NO bank info)
+        6. Teklif Şartları (Terms)
+        7. Banka + Taksit (Bank Info) - NEW SEPARATE PAGE
+        8. Datasheet'ler (Datasheets)
+        9. Kapanış Kapak (Closing Cover) - NEW
+        """
         pdf_parts = []
         
         # Get category for template selection
         category_id = self._get_category_id(quote_data.get('customer_category_name', ''))
         template_cover = self._get_template_cover(category_id, quote_templates)
         
-        # PAGE 1: Cover Page (Category-based or auto-generated)
+        # PAGE 1: Kapak (Cover Page)
         cover_pdf = self._create_cover_page(quote_data, company_settings, template_cover)
         if cover_pdf:
             pdf_parts.append(cover_pdf)
         
-        # PAGE 2: Value Proposition Page (NO PRICES)
+        # PAGE 2: Neden Biz (Why Us / Value Proposition)
         value_pdf = self._create_value_page(quote_data, company_settings)
         pdf_parts.append(value_pdf)
         
-        # PAGE 3: System Analysis & Benefits (calculations preserved)
+        # PAGE 3: Proje Verileri (Project Data) - NEW
+        project_pdf = self._create_project_data_page(quote_data, company_settings)
+        if project_pdf:
+            pdf_parts.append(project_pdf)
+        
+        # PAGE 4: Sistem Analiz (System Analysis & Benefits)
         category_name = quote_data.get('customer_category_name', '').lower()
         show_analysis = any(cat in category_name for cat in ['off', 'on', 'grid', 'sulama', 'hibrit'])
         if show_analysis:
@@ -410,27 +426,28 @@ class PremiumQuotePDFGenerator:
             if analysis_pdf:
                 pdf_parts.append(analysis_pdf)
         
-        # PAGE 4: Products Showcase (2-column cards, NO PRICES)
-        products_pdf = self._create_products_showcase_page(quote_data, company_settings)
-        if products_pdf:
-            pdf_parts.append(products_pdf)
-        
-        # PAGE 5: Price Quote (Full pricing table - UNCHANGED LOGIC)
-        price_pdf = self._create_price_page(quote_data, company_settings)
+        # PAGE 5: Ürün Listesi + Fiyatlar (Products + Pricing - NO bank info)
+        price_pdf = self._create_price_page(quote_data, company_settings, include_bank_info=False)
         pdf_parts.append(price_pdf)
         
-        # PAGE 6: Terms (Short conditions)
+        # PAGE 6: Teklif Şartları (Terms)
         terms_pdf = self._create_terms_page(quote_data, company_settings)
         if terms_pdf:
             pdf_parts.append(terms_pdf)
         
-        # PAGE 7+: Attachments (Contract + Datasheets)
-        contract_pdf = self._create_contract_page(quote_data, company_settings)
-        if contract_pdf:
-            pdf_parts.append(contract_pdf)
+        # PAGE 7: Banka + Taksit (Bank Info + Installments) - NEW SEPARATE PAGE
+        bank_pdf = self._create_bank_info_page(quote_data, company_settings)
+        if bank_pdf:
+            pdf_parts.append(bank_pdf)
         
+        # PAGE 8: Datasheet'ler (Product Datasheets)
         datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
         pdf_parts.extend(datasheet_pdfs)
+        
+        # PAGE 9: Kapanış Kapak (Closing Cover) - NEW
+        closing_pdf = self._create_closing_page(quote_data, company_settings)
+        if closing_pdf:
+            pdf_parts.append(closing_pdf)
         
         return self._merge_pdfs(pdf_parts)
     
