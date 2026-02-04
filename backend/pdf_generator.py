@@ -1748,13 +1748,13 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 5
+        y = TEMPLATE_CONTENT_TOP - 15  # Reduced top margin
         
         # ===== SECTION 1: PROJE VERİLERİ TITLE =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 18)
+        c.setFont(FONT_BOLD, 16)
         c.drawString(MARGIN_LEFT + 10, y, "Proje Verileri")
-        y -= 25
+        y -= 18
         
         # Project description paragraph
         c.setFillColor(TEXT_COLOR)
@@ -1766,13 +1766,13 @@ class PremiumQuotePDFGenerator:
         desc_line4 = "yatırım geri dönüşünü esas alacak şekilde yapılmıştır."
         
         c.drawString(MARGIN_LEFT + 10, y, desc_line1)
-        y -= 13
+        y -= 12
         c.drawString(MARGIN_LEFT + 10, y, desc_line2)
-        y -= 18
+        y -= 15
         c.drawString(MARGIN_LEFT + 10, y, desc_line3)
-        y -= 13
+        y -= 12
         c.drawString(MARGIN_LEFT + 10, y, desc_line4)
-        y -= 25
+        y -= 20
         
         # ===== SECTION 2: SİSTEM GENEL ÖZETİ (BOXED) =====
         box_height = 95
