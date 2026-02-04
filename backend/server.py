@@ -3143,6 +3143,39 @@ async def upload_quote_cover(file: UploadFile = File(...), current_user: dict = 
     
     return {"quote_cover_image": cover_url}
 
+@api_router.post("/settings/upload-why-us-image")
+async def upload_why_us_image(file: UploadFile = File(...), current_user: dict = Depends(require_permission("settings_manage"))):
+    """Upload custom image for 'Neden Biz' (Why Us) page - Page 2 of PDF"""
+    file_ext = file.filename.split(".")[-1].lower()
+    if file_ext not in ["jpg", "jpeg", "png", "webp"]:
+        raise HTTPException(status_code=400, detail="Sadece JPG, PNG ve WEBP formatları desteklenir")
+    
+    filename = f"why_us_page_{uuid.uuid4()}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    with open(file_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+    
+    image_url = f"/api/uploads/{filename}"
+    
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$set": {"why_us_image": image_url}},
+        upsert=True
+    )
+    
+    return {"why_us_image": image_url}
+
+@api_router.delete("/settings/why-us-image")
+async def delete_why_us_image(current_user: dict = Depends(require_permission("settings_manage"))):
+    """Delete the custom 'Neden Biz' page image"""
+    await db.company_settings.update_one(
+        {"id": "company_settings"},
+        {"$unset": {"why_us_image": ""}}
+    )
+    return {"message": "Neden Biz görseli silindi"}
+
 # ==================== QUOTE TEMPLATE ROUTES (Kategori Bazlı Teklif Şablonları) ====================
 
 # Quote template categories with default settings
