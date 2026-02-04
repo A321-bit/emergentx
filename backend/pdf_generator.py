@@ -1908,13 +1908,13 @@ class PremiumQuotePDFGenerator:
         
         # ===== SECTION 1: PROJE VERİLERİ TITLE =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 16)
+        c.setFont(FONT_BOLD, 18)
         c.drawString(MARGIN_LEFT + 10, y, "Proje Verileri")
-        y -= 18
+        y -= 22
         
         # Project description paragraph
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         
         desc_line1 = f"{customer_name}'a ait {customer_city} ilinde bulunan proje için, mevcut çatı koşulları ve enerji"
         desc_line2 = "tüketimi dikkate alınarak hazırlanmış Güneş Enerjisi Sistemi (GES) ön maliyet ve ön fizibilite çalışmasıdır."
@@ -1922,13 +1922,13 @@ class PremiumQuotePDFGenerator:
         desc_line4 = "yatırım geri dönüşünü esas alacak şekilde yapılmıştır."
         
         c.drawString(MARGIN_LEFT + 10, y, desc_line1)
-        y -= 12
-        c.drawString(MARGIN_LEFT + 10, y, desc_line2)
         y -= 15
+        c.drawString(MARGIN_LEFT + 10, y, desc_line2)
+        y -= 18
         c.drawString(MARGIN_LEFT + 10, y, desc_line3)
-        y -= 12
+        y -= 15
         c.drawString(MARGIN_LEFT + 10, y, desc_line4)
-        y -= 20
+        y -= 25
         
         # ===== SECTION 2: SİSTEM GENEL ÖZETİ (BOXED) =====
         box_height = 95
