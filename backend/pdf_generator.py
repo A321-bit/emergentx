@@ -1085,10 +1085,10 @@ class PremiumQuotePDFGenerator:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            topMargin=MARGIN_TOP + 50,  # Extra space for header
-            bottomMargin=MARGIN_BOTTOM + 20,
-            leftMargin=MARGIN_LEFT,
-            rightMargin=MARGIN_RIGHT
+            topMargin=PAGE_HEIGHT - TEMPLATE_CONTENT_TOP + 10,  # Adjusted for template
+            bottomMargin=TEMPLATE_CONTENT_BOTTOM + 10,
+            leftMargin=MARGIN_LEFT + 5,
+            rightMargin=MARGIN_RIGHT + 5
         )
         
         elements = []
@@ -1098,16 +1098,16 @@ class PremiumQuotePDFGenerator:
         elements.append(Spacer(1, 15))
         
         # Single column product cards - full width
-        card_width = CONTENT_WIDTH
-        card_height = 115  # Increased height to fit 100px image + padding
+        card_width = CONTENT_WIDTH - 10
+        card_height = 100  # Adjusted height
         
         for item in items:
             card = self._create_product_card(item, card_width, card_height)
             elements.append(card)
-            elements.append(Spacer(1, 10))
+            elements.append(Spacer(1, 8))
         
         # Note at bottom
-        elements.append(Spacer(1, 15))
+        elements.append(Spacer(1, 10))
         note_text = "<i>* Ürün görselleri temsilidir. Detaylı teknik bilgiler için datasheet'leri inceleyiniz.</i>"
         elements.append(Paragraph(note_text, ParagraphStyle(
             'NoteStyle', parent=self.styles['BodyTextSmall'], 
