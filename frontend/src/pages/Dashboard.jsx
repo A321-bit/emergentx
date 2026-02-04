@@ -235,6 +235,70 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Monthly Income/Expense Row */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Aylık Toplam Gelir */}
+          <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg shadow-emerald-500/20">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-100 text-sm font-medium">Aylık Toplam Gelir</p>
+                  <p className="text-3xl font-bold mt-1">{formatTRY(stats?.monthly_income_total)}</p>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-emerald-200">
+                    <span>Satış: {formatTRY(stats?.monthly_income_sales)}</span>
+                    <span>Diğer: {formatTRY(stats?.monthly_income_other)}</span>
+                  </div>
+                </div>
+                <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                  <TrendingUp className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Aylık Toplam Gider */}
+          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg shadow-red-500/20">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-100 text-sm font-medium">Aylık Toplam Gider</p>
+                  <p className="text-3xl font-bold mt-1">{formatTRY(stats?.monthly_expense_total)}</p>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-red-200">
+                    <span>Personel: {formatTRY(stats?.monthly_personnel_salary)}</span>
+                  </div>
+                </div>
+                <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                  <ArrowDownRight className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Aylık Net Kar/Zarar */}
+          <Card className={`border-0 shadow-lg ${stats?.monthly_is_loss 
+            ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
+            : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm font-medium ${stats?.monthly_is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
+                    Aylık Net {stats?.monthly_is_loss ? 'Zarar' : 'Kar'}
+                  </p>
+                  <p className="text-3xl font-bold mt-1">{formatTRY(Math.abs(stats?.monthly_net || 0))}</p>
+                  <p className={`text-xs mt-2 ${stats?.monthly_is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
+                    Gelir - Gider hesabı
+                  </p>
+                </div>
+                <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                  {stats?.monthly_is_loss ? <AlertTriangle className="h-7 w-7" /> : <Wallet className="h-7 w-7" />}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Daily Revenue & Payment Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Günlük Ciro */}
