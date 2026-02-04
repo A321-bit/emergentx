@@ -6,7 +6,7 @@ import {
   Package, Users, FileText, TrendingUp, Building2, DollarSign, 
   CheckCircle, Clock, XCircle, AlertTriangle, Banknote, CreditCard,
   Boxes, BarChart3, PieChart, Calendar, ArrowUpRight, ArrowDownRight,
-  FileCheck, Percent
+  FileCheck, Percent, Wallet
 } from 'lucide-react';
 import axios from 'axios';
 import {
