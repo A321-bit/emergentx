@@ -1931,23 +1931,23 @@ class PremiumQuotePDFGenerator:
         y -= 25
         
         # ===== SECTION 2: SİSTEM GENEL ÖZETİ (BOXED) =====
-        box_height = 95
+        box_height = 105
         c.setFillColor(colors.HexColor('#f0f9ff'))  # Light blue background
         c.roundRect(MARGIN_LEFT + 5, y - box_height, CONTENT_WIDTH - 10, box_height, 8, fill=True)
         
         # Box title
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 15, y - 18, "Sistem Özeti")
+        c.setFont(FONT_BOLD, 13)
+        c.drawString(MARGIN_LEFT + 15, y - 20, "Sistem Özeti")
         
         # System info - 2 columns with proper spacing
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         
         col1_x = MARGIN_LEFT + 20
-        col1_value_x = col1_x + 85  # Increased offset for values
+        col1_value_x = col1_x + 95  # Increased offset for values
         col2_x = PAGE_WIDTH / 2 + 10
-        col2_value_x = col2_x + 100  # Increased offset for values
+        col2_value_x = col2_x + 110  # Increased offset for values
         
         info_y = y - 38
         
