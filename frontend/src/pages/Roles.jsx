@@ -129,11 +129,16 @@ const Roles = () => {
     'Genel': ['dashboard_view'],
     'Kullanıcı Yönetimi': ['users_view', 'users_manage', 'roles_manage'],
     'Ürün & Kategori': ['categories_view', 'categories_manage', 'products_view', 'products_manage', 'products_prices_view'],
+    'Paketler': ['packages_view', 'packages_manage'],
     'Stok': ['stock_view', 'stock_manage'],
     'Müşteri': ['customers_view', 'customers_manage', 'customer_categories_manage', 'customer_sources_manage'],
-    'Teklifler': ['quotes_view', 'quotes_manage', 'quotes_approve'],
+    'Teklifler': ['quotes_view', 'quotes_manage', 'quotes_approve', 'quotes_pdf'],
+    'Satış': ['sales_view', 'sales_manage'],
     'Bayi Yönetimi': ['dealers_view', 'dealers_manage', 'dealer_groups_manage'],
-    'Finans & Ayarlar': ['finance_view', 'settings_manage']
+    'Finans & Muhasebe': ['finance_view', 'finance_manage', 'accounting_view', 'accounting_manage', 'expenses_view', 'expenses_manage', 'incomes_view', 'incomes_manage'],
+    'İK & Bordro': ['hr_view', 'hr_manage', 'payroll_view', 'payroll_manage', 'attendance_view', 'attendance_manage'],
+    'Raporlar': ['reports_view', 'reports_export'],
+    'Ayarlar': ['settings_manage', 'xml_import_manage']
   };
 
   if (loading) {
