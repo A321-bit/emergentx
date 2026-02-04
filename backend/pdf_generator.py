@@ -2044,9 +2044,9 @@ class PremiumQuotePDFGenerator:
         
         # ===== SECTION 4: KURULUM & DEVREYE ALMA =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 13)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 10, y, "Kurulum ve Devreye Alma")
-        y -= 20
+        y -= 15
         
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_NORMAL, 10)
@@ -2061,23 +2061,23 @@ class PremiumQuotePDFGenerator:
         
         for item in kurulum_items:
             c.drawString(MARGIN_LEFT + 15, y, item)
-            y -= 15
+            y -= 12
         
-        y -= 15
+        y -= 10
         
         # ===== SECTION 5: TESLİM & BELGELER (BOTTOM BOX) =====
-        footer_box_height = 50
+        footer_box_height = 42
         c.setFillColor(colors.HexColor('#f1f5f9'))  # Gray background
         c.roundRect(MARGIN_LEFT + 5, y - footer_box_height, CONTENT_WIDTH - 10, footer_box_height, 6, fill=True)
         
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 15, y - 17, "Teslim ve Belgeler")
+        c.setFont(FONT_BOLD, 10)
+        c.drawString(MARGIN_LEFT + 15, y - 14, "Teslim ve Belgeler")
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 10)
-        c.drawString(MARGIN_LEFT + 15, y - 32, "Tüm işlemler tamamlandıktan sonra sistem müşteri tarafından kontrol edilerek teslim alınır.")
-        c.drawString(MARGIN_LEFT + 15, y - 46, "İş tesliminde; imzalı garanti belgeleri, ürün kullanım kılavuzları ve gerekli tüm dokümanlar teslim edilecektir.")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(MARGIN_LEFT + 15, y - 26, "Tüm işlemler tamamlandıktan sonra sistem müşteri tarafından kontrol edilerek teslim alınır.")
+        c.drawString(MARGIN_LEFT + 15, y - 38, "İş tesliminde; imzalı garanti belgeleri, ürün kullanım kılavuzları ve gerekli tüm dokümanlar teslim edilecektir.")
         
         c.save()
         buffer.seek(0)
