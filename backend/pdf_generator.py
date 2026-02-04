@@ -709,7 +709,70 @@ class PremiumQuotePDFGenerator:
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 20)
         c.drawCentredString(PAGE_WIDTH / 2, y, "SİSTEM ANALİZİ")
-        y -= 35
+        y -= 30
+        
+        # ===== SECTION 0: SİSTEM GÜCÜ (3 kutucuk) =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(MARGIN_LEFT + 10, y, "Sistem Gücü")
+        y -= 20
+        
+        # 3 boxes for system power
+        power_box_width = (CONTENT_WIDTH - 30) / 3
+        power_box_height = 55
+        
+        # Panel Power
+        c.setFillColor(colors.HexColor('#fef3c7'))
+        c.roundRect(MARGIN_LEFT + 10, y - power_box_height, power_box_width, power_box_height, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#d97706'))
+        c.setFont(FONT_BOLD, 9)
+        c.drawCentredString(MARGIN_LEFT + 10 + power_box_width / 2, y - 12, "Güneş Paneli Gücü")
+        
+        c.setFont(FONT_BOLD, 20)
+        c.drawCentredString(MARGIN_LEFT + 10 + power_box_width / 2, y - 35, f"{panel_kwp:.1f} kWp")
+        
+        c.setFont(FONT_NORMAL, 7)
+        c.setFillColor(TEXT_LIGHT)
+        c.drawCentredString(MARGIN_LEFT + 10 + power_box_width / 2, y - 48, f"{panel_count} Adet Panel")
+        
+        # Inverter Power
+        c.setFillColor(colors.HexColor('#dbeafe'))
+        c.roundRect(MARGIN_LEFT + 10 + power_box_width + 10, y - power_box_height, power_box_width, power_box_height, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#2563eb'))
+        c.setFont(FONT_BOLD, 9)
+        c.drawCentredString(MARGIN_LEFT + 10 + power_box_width + 10 + power_box_width / 2, y - 12, "İnverter Gücü")
+        
+        inverter_kw = total_inverter_watt / 1000
+        c.setFont(FONT_BOLD, 20)
+        c.drawCentredString(MARGIN_LEFT + 10 + power_box_width + 10 + power_box_width / 2, y - 35, f"{inverter_kw:.0f} kW")
+        
+        c.setFont(FONT_NORMAL, 7)
+        c.setFillColor(TEXT_LIGHT)
+        c.drawCentredString(MARGIN_LEFT + 10 + power_box_width + 10 + power_box_width / 2, y - 48, "Hibrit/On-Grid")
+        
+        # Battery Capacity
+        c.setFillColor(colors.HexColor('#d1fae5'))
+        c.roundRect(MARGIN_LEFT + 10 + (power_box_width + 10) * 2, y - power_box_height, power_box_width, power_box_height, 6, fill=True)
+        
+        c.setFillColor(colors.HexColor('#059669'))
+        c.setFont(FONT_BOLD, 9)
+        c.drawCentredString(MARGIN_LEFT + 10 + (power_box_width + 10) * 2 + power_box_width / 2, y - 12, "Batarya Kapasitesi")
+        
+        c.setFont(FONT_BOLD, 20)
+        if battery_kwh > 0:
+            c.drawCentredString(MARGIN_LEFT + 10 + (power_box_width + 10) * 2 + power_box_width / 2, y - 35, f"{battery_kwh:.1f} kWh")
+            c.setFont(FONT_NORMAL, 7)
+            c.setFillColor(TEXT_LIGHT)
+            c.drawCentredString(MARGIN_LEFT + 10 + (power_box_width + 10) * 2 + power_box_width / 2, y - 48, "Lityum Batarya")
+        else:
+            c.drawCentredString(MARGIN_LEFT + 10 + (power_box_width + 10) * 2 + power_box_width / 2, y - 35, "—")
+            c.setFont(FONT_NORMAL, 7)
+            c.setFillColor(TEXT_LIGHT)
+            c.drawCentredString(MARGIN_LEFT + 10 + (power_box_width + 10) * 2 + power_box_width / 2, y - 48, "Yok")
+        
+        y -= power_box_height + 20
         
         # ===== SECTION 1: YILLIK ÜRETİM TAHMİNİ =====
         c.setFillColor(PRIMARY_COLOR)
