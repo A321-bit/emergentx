@@ -143,12 +143,37 @@ const Attendance = () => {
   // Calculate stats for selected employee(s)
   const calculateStats = (employeeId) => {
     const empAttendance = attendance.filter(a => a.employee_id === employeeId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Ay içindeki geçmiş günleri hesapla
+    const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let workingDays = 0;
+    
+    for (let day = 1; day <= daysInCurrentMonth; day++) {
+      const date = new Date(currentYear, currentMonth, day);
+      if (date <= today) {
+        workingDays++;
+      }
+    }
+    
+    // Kayıtlı devamsızlıkları say
+    const recordedAbsent = empAttendance.filter(a => a.status === 'absent').length;
+    const recordedHalfDay = empAttendance.filter(a => a.status === 'half_day').length;
+    const recordedLeave = empAttendance.filter(a => a.status === 'leave').length;
+    const recordedSick = empAttendance.filter(a => a.status === 'sick').length;
+    const recordedPresent = empAttendance.filter(a => a.status === 'present').length;
+    
+    // Kaydı olmayan günler = varsayılan geldi
+    const totalRecordedDays = recordedAbsent + recordedHalfDay + recordedLeave + recordedSick + recordedPresent;
+    const defaultPresentDays = Math.max(0, workingDays - totalRecordedDays);
+    
     return {
-      present: empAttendance.filter(a => a.status === 'present').length,
-      absent: empAttendance.filter(a => a.status === 'absent').length,
-      half_day: empAttendance.filter(a => a.status === 'half_day').length,
-      leave: empAttendance.filter(a => a.status === 'leave').length,
-      sick: empAttendance.filter(a => a.status === 'sick').length,
+      present: recordedPresent + defaultPresentDays,
+      absent: recordedAbsent,
+      half_day: recordedHalfDay,
+      leave: recordedLeave,
+      sick: recordedSick,
     };
   };
 
