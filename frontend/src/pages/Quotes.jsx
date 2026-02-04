@@ -510,6 +510,45 @@ const Quotes = () => {
     toast.success('Ürün eklendi');
   };
 
+  // Add package to quote
+  const handleAddPackage = () => {
+    if (!selectedPackage) {
+      toast.error('Lütfen paket seçin');
+      return;
+    }
+    
+    const pkg = packages.find(p => p.id === selectedPackage);
+    if (!pkg) {
+      toast.error('Paket bulunamadı');
+      return;
+    }
+    
+    // Add package as a single item with type 'package'
+    const packageTotalTL = pkg.items?.reduce((sum, item) => {
+      const itemPrice = item.unit_price_tl || (item.unit_price_usd * exchangeRate) || 0;
+      return sum + (itemPrice * (item.quantity || 1));
+    }, 0) || pkg.total_price_tl || 0;
+    
+    const newItem = {
+      product_id: pkg.id,
+      product_name: pkg.name,
+      quantity: selectedQuantity,
+      unit: 'Paket',
+      unit_price_tl: packageTotalTL,
+      unit_price_usd: packageTotalTL / exchangeRate,
+      total_price_tl: packageTotalTL * selectedQuantity,
+      sort_order: formData.items.length,
+      item_type: 'package',
+      package_items: pkg.items || [], // Store package contents for PDF
+      category_name: pkg.category_name || 'Paket'
+    };
+    
+    setFormData({ ...formData, items: [...formData.items, newItem] });
+    setSelectedPackage('');
+    setSelectedQuantity(1);
+    toast.success('Paket eklendi');
+  };
+
   // Remove item
   const handleRemoveItem = (index) => {
     const updatedItems = formData.items.filter((_, i) => i !== index);
