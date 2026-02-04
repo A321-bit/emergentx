@@ -3789,7 +3789,18 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
         
         # Exchange rates
         "exchange_rate_usd": usd_rate,
-        "exchange_rate_eur": eur_rate
+        "exchange_rate_eur": eur_rate,
+        
+        # Real-time Income/Expense for current month
+        "monthly_income_total": round(total_monthly_income, 2),
+        "monthly_income_sales": round(monthly_income_sales, 2),
+        "monthly_income_other": round(monthly_income_other, 2),
+        "monthly_expense_total": round(total_monthly_expense, 2),
+        "monthly_expense_regular": round(monthly_expenses_regular, 2),
+        "monthly_personnel_salary": round(monthly_personnel_salary, 2),
+        "monthly_recurring_total": round(monthly_recurring_total, 2),
+        "monthly_net": round(monthly_net, 2),
+        "monthly_is_loss": monthly_net < 0
     }
 
 @api_router.get("/stats/sales-by-user")
