@@ -2176,10 +2176,8 @@ class PremiumQuotePDFGenerator:
         center_y -= 100
         
         # Company info box
-        company_name = company_settings.get('company_name', 'Aktürk Enerji')
         company_phone = company_settings.get('phone', '')
         company_email = company_settings.get('email', '')
-        company_address = company_settings.get('address', '')
         company_website = company_settings.get('website', '')
         
         c.setFillColor(colors.HexColor('#f0f9ff'))
@@ -2188,10 +2186,10 @@ class PremiumQuotePDFGenerator:
         box_x = (PAGE_WIDTH - box_width) / 2
         c.roundRect(box_x, center_y - box_height, box_width, box_height, 10, fill=True)
         
-        # Company name
+        # Company name - shortened to fit
         c.setFillColor(SECONDARY_COLOR)
         c.setFont(FONT_BOLD, 14)
-        c.drawCentredString(PAGE_WIDTH / 2, center_y - 25, company_name)
+        c.drawCentredString(PAGE_WIDTH / 2, center_y - 25, "Aktürk Enerji Teknolojileri")
         
         # Contact info
         c.setFont(FONT_NORMAL, 10)
