@@ -703,19 +703,19 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 5
+        y = TEMPLATE_CONTENT_TOP - 15  # Move content up
         
         # ===== PAGE TITLE =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 20)
-        c.drawCentredString(PAGE_WIDTH / 2, y, "SİSTEM ANALİZİ")
-        y -= 30
+        c.setFont(FONT_BOLD, 18)
+        c.drawString(MARGIN_LEFT + 10, y, "Sistem Analizi")  # Left aligned, smaller
+        y -= 25
         
         # ===== SECTION 0: SİSTEM GÜCÜ (3 kutucuk) =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 14)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 10, y, "Sistem Gücü")
-        y -= 20
+        y -= 18
         
         # 3 boxes for system power
         power_box_width = (CONTENT_WIDTH - 30) / 3
