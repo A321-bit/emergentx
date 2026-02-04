@@ -1809,7 +1809,7 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 15  # Reduced top margin
+        y = TEMPLATE_CONTENT_TOP  # Start from top
         
         # ===== SECTION 1: PROJE VERİLERİ TITLE =====
         c.setFillColor(PRIMARY_COLOR)
