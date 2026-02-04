@@ -6,6 +6,64 @@
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
+### 4 Şubat 2026 - 9 Yeni Özellik Güncellemesi ✅
+**Kapsamlı Sistem Güncellemesi - Roller, Dashboard, Finans, Puantaj**
+
+#### 1. Roller ve Yetkiler Güncellemesi ✅
+- **44 adet yetki** 13 grupta organize edildi
+- Yeni gruplar: Paketler, Satış, Muhasebe, İK & Bordro, Raporlar, Ayarlar
+- Yeni yetkiler: packages_view/manage, sales_view/manage, accounting_view/manage, attendance_view/manage, reports_view/export, xml_import_manage
+
+#### 2. Paketler Özelliği ✅
+- Paketler teklif sayfasında ürün listesinde gösteriliyor
+- PDF'de paket adı ve içindeki ürünler alt alta listeleniyor
+- `_create_products_table()` metodunda paket desteği eklendi
+
+#### 3. Puantaj Varsayılan Geldi ✅
+- Tüm günler varsayılan olarak "geldi" (yeşil tik) olarak işaretli
+- Sadece gelmeyenler işaretlenecek şekilde güncellendi
+- `getAttendanceForDay()` ve `calculateStats()` fonksiyonları güncellendi
+
+#### 4. Personel Giderleri Entegrasyonu ✅
+- Muhasebe > Personel Giderleri sekmesi
+- Personel listesi ve maaş tutarları otomatik çekiliyor
+- `/api/personnel/salary-expenses` endpoint'i çalışıyor
+
+#### 5. Tekrarlayan Giderlerin Gösterimi ✅
+- Tekrarlayan giderler Giderler sekmesinde `is_recurring_generated` ile işaretli gösteriliyor
+- Otomatik badge ile "Otomatik" etiketi
+
+#### 6. Dashboard Gerçek Zamanlı Hesaplama ✅
+- **Aylık Toplam Gelir** kartı (Satış + Diğer gelirler)
+- **Aylık Toplam Gider** kartı (Personel + Giderler)
+- **Aylık Net Kar/Zarar** kartı
+- `/api/stats/dashboard` endpoint'i güncellendi
+
+#### 7. Finans Sekmesi Yenileme ✅
+- **Stok Değeri USD + TL** widget'ları
+- **Yıllık Toplam Satış Tutarı**
+- **Yıllık Toplam Gider Tutarı**
+- **Yıllık Toplam Kar Marjı**
+- **Potansiyel Kar Özeti** (USD, TL, Marj %)
+- Aylık Satış/Gider Trend grafiği
+- Gider Dağılımı pasta grafiği
+- `/api/stats/annual-finance` yeni endpoint
+
+#### 8. Kategori Bazlı Kapak Görseli ✅
+- Teklif şablonları kategori bazlı kapak seçiyor
+- `_get_template_cover()` metodu çalışıyor
+
+#### 9. Perakende/Toptan Farklı PDF Formatı ✅
+- `_generate_simple_pdf()` metodu ile 6 sayfalık basit format
+- Perakende ve Toptan kategorileri için otomatik seçim
+- `_is_simple_sale_category()` kontrolü
+
+#### Test Sonuçları:
+- ✅ Backend: 12/12 test geçti (%100)
+- ✅ Frontend: 5/5 UI doğrulaması geçti (%100)
+
+---
+
 ### 4 Şubat 2026 - PDF 9 Sayfa Yapısı ✅
 **P0 Özellik - Teklif PDF'inin Yeni Yapıyla Yeniden Düzenlenmesi**
 
