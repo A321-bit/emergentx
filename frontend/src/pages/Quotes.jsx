@@ -175,6 +175,10 @@ const Quotes = () => {
   const [loading, setLoading] = useState(true);
   const [exchangeRate, setExchangeRate] = useState(34.0);
   
+  // Product/Package selection mode
+  const [selectionMode, setSelectionMode] = useState('product'); // 'product' or 'package'
+  const [selectedPackage, setSelectedPackage] = useState('');
+  
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
