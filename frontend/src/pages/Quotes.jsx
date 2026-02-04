@@ -1351,60 +1351,122 @@ const Quotes = () => {
               <div className="space-y-4">
                 {/* Add Product */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-accent/30 rounded-lg">
-                  <div className="space-y-2">
-                    <Label>Listeden Seç</Label>
-                    <Select value={selectedProduct} onValueChange={(v) => { setSelectedProduct(v); setProductSearch(''); }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Ürün seçin..." />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {products.map(product => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} - {formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Selection Mode Toggle */}
+                  <div className="col-span-full flex gap-2 mb-2">
+                    <Button
+                      type="button"
+                      variant={selectionMode === 'product' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => { setSelectionMode('product'); setSelectedPackage(''); }}
+                    >
+                      Ürün Ekle
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={selectionMode === 'package' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => { setSelectionMode('package'); setSelectedProduct(''); setProductSearch(''); }}
+                    >
+                      Paket Ekle
+                    </Button>
                   </div>
-                  <div className="space-y-2 relative">
-                    <Label>Yazarak Ara</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Ürün adı..."
-                        value={productSearch}
-                        onChange={(e) => { setProductSearch(e.target.value); if (!e.target.value) setSelectedProduct(''); }}
-                        className="pl-9"
-                      />
-                    </div>
-                    {productSearch && !selectedProduct && filteredProducts.length > 0 && (
-                      <div className="border rounded-lg max-h-40 overflow-y-auto bg-background shadow-lg absolute z-50 left-0 right-0 top-full mt-1">
-                        {filteredProducts.slice(0, 8).map(product => (
-                          <button
-                            key={product.id}
-                            type="button"
-                            onClick={() => { setSelectedProduct(product.id); setProductSearch(product.name); }}
-                            className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center border-b last:border-b-0"
-                          >
-                            <span className="text-sm">{product.name}</span>
-                            <span className="text-xs text-muted-foreground">{formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}</span>
-                          </button>
-                        ))}
+                  
+                  {selectionMode === 'product' ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Ürün Seç</Label>
+                        <Select value={selectedProduct} onValueChange={(v) => { setSelectedProduct(v); setProductSearch(''); }}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Ürün seçin..." />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            {products.map(product => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.name} - {formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
-                  </div>
+                      <div className="space-y-2 relative">
+                        <Label>Yazarak Ara</Label>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Ürün adı..."
+                            value={productSearch}
+                            onChange={(e) => { setProductSearch(e.target.value); if (!e.target.value) setSelectedProduct(''); }}
+                            className="pl-9"
+                          />
+                        </div>
+                        {productSearch && !selectedProduct && filteredProducts.length > 0 && (
+                          <div className="border rounded-lg max-h-40 overflow-y-auto bg-background shadow-lg absolute z-50 left-0 right-0 top-full mt-1">
+                            {filteredProducts.slice(0, 8).map(product => (
+                              <button
+                                key={product.id}
+                                type="button"
+                                onClick={() => { setSelectedProduct(product.id); setProductSearch(product.name); }}
+                                className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center border-b last:border-b-0"
+                              >
+                                <span className="text-sm">{product.name}</span>
+                                <span className="text-xs text-muted-foreground">{formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="col-span-full space-y-2">
+                      <Label>Paket Seç</Label>
+                      <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Paket seçin..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {packages.map(pkg => (
+                            <SelectItem key={pkg.id} value={pkg.id}>
+                              <div className="flex flex-col">
+                                <span>{pkg.name}</span>
+                                <span className="text-xs text-muted-foreground">{pkg.items?.length || 0} ürün</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedPackage && (
+                        <div className="text-xs text-muted-foreground bg-accent/50 p-2 rounded mt-2">
+                          <p className="font-medium mb-1">Paket İçeriği:</p>
+                          {packages.find(p => p.id === selectedPackage)?.items?.map((item, i) => (
+                            <p key={i}>• {item.product_name} x {item.quantity}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
-                {selectedProduct && (
+                {/* Selected Product/Package Add Button */}
+                {(selectedProduct || selectedPackage) && (
                   <div className="flex items-center gap-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                     <div className="flex-1">
-                      <p className="font-medium">{products.find(p => p.id === selectedProduct)?.name}</p>
+                      <p className="font-medium">
+                        {selectionMode === 'product' 
+                          ? products.find(p => p.id === selectedProduct)?.name
+                          : packages.find(p => p.id === selectedPackage)?.name
+                        }
+                      </p>
+                      {selectionMode === 'package' && (
+                        <p className="text-xs text-muted-foreground">Paket ({packages.find(p => p.id === selectedPackage)?.items?.length || 0} ürün)</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Label>Adet:</Label>
                       <Input type="number" min="1" value={selectedQuantity} onChange={(e) => setSelectedQuantity(parseInt(e.target.value) || 1)} className="w-20" />
                     </div>
-                    <Button type="button" onClick={handleAddProduct}><Plus className="h-4 w-4 mr-1" />Ekle</Button>
+                    <Button type="button" onClick={selectionMode === 'product' ? handleAddProduct : handleAddPackage}>
+                      <Plus className="h-4 w-4 mr-1" />Ekle
+                    </Button>
                   </div>
                 )}
                 
