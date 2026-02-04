@@ -1960,15 +1960,16 @@ class PremiumQuotePDFGenerator:
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 14)
         c.drawString(MARGIN_LEFT + 10, y, "Banka Hesap Bilgileri")
-        y -= 18
+        y -= 20
         
-        # Account holder info (single line at top)
+        # Account holder info (two lines for clarity)
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_BOLD, 9)
         c.drawString(MARGIN_LEFT + 10, y, "Hesap Sahibi / Ünvan:")
+        y -= 14
         c.setFont(FONT_NORMAL, 9)
-        c.drawString(MARGIN_LEFT + 115, y, "Akturk Yenilenebilir Enerji Teknolojileri Sanayi Ticaret Limited Şirketi")
-        y -= 20
+        c.drawString(MARGIN_LEFT + 10, y, "Akturk Yenilenebilir Enerji Teknolojileri Sanayi Ticaret Limited Şirketi")
+        y -= 18
         
         # Bank accounts table header (without account holder column)
         header_height = 25
