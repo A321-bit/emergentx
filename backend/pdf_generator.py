@@ -457,7 +457,8 @@ class PremiumQuotePDFGenerator:
     
     def _get_category_id(self, category_name: str) -> str:
         """Map category name to template ID"""
-        name_lower = category_name.lower()
+        name_lower = category_name.lower().replace('i̇', 'i').replace('ı', 'i')
+        
         if 'on' in name_lower and 'grid' in name_lower:
             return 'on_grid'
         elif 'off' in name_lower and 'grid' in name_lower:
@@ -466,7 +467,20 @@ class PremiumQuotePDFGenerator:
             return 'hybrid'
         elif 'sulama' in name_lower or 'irrigation' in name_lower:
             return 'solar_irrigation'
+        elif 'perakende' in name_lower:
+            return 'retail'  # Perakende Satış
+        elif 'toptan' in name_lower:
+            return 'wholesale'  # Toptan Satış
+        elif 'e-ticaret' in name_lower or 'eticaret' in name_lower:
+            return 'ecommerce'
+        elif 'endustriyel' in name_lower or 'endüstriyel' in name_lower:
+            return 'industrial'
         return None
+    
+    def _is_simple_sale_category(self, category_name: str) -> bool:
+        """Check if category is Perakende or Toptan (simplified PDF format)"""
+        name_lower = category_name.lower().replace('i̇', 'i').replace('ı', 'i')
+        return 'perakende' in name_lower or 'toptan' in name_lower
     
     def _get_template_cover(self, category_id: str, quote_templates: list) -> str:
         """Get cover image path from template"""
