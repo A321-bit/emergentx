@@ -82,6 +82,24 @@ COL_BIRIM_FIYAT = 0.20 * CONTENT_WIDTH
 COL_TOPLAM_FIYAT = 0.20 * CONTENT_WIDTH
 
 
+def draw_template_background(canvas_obj):
+    """Draw the template background image on the page"""
+    if PDF_TEMPLATE_BG.exists():
+        try:
+            canvas_obj.drawImage(
+                str(PDF_TEMPLATE_BG), 
+                0, 0, 
+                width=PAGE_WIDTH, 
+                height=PAGE_HEIGHT, 
+                preserveAspectRatio=False,
+                mask='auto'
+            )
+            return True
+        except Exception as e:
+            logger.warning(f"Could not draw template background: {e}")
+    return False
+
+
 def format_currency(value, currency='TRY'):
     """Format number as Turkish currency"""
     if currency == 'TRY':
