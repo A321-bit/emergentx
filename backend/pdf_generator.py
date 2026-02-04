@@ -1834,102 +1834,63 @@ class PremiumQuotePDFGenerator:
         
         y -= box_height + 20
         
-        # ===== SECTION 3: TEKNİK VE PERFORMANS PARAMETRELERİ =====
+        # ===== SECTION 3: TEKNİK VE PERFORMANS PARAMETRELERİ (Text format) =====
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 11)
         c.drawString(MARGIN_LEFT + 10, y, "Teknik ve Performans Parametreleri")
-        y -= 20
+        y -= 18
         
-        # 3 columns for technical info
-        section_width = (CONTENT_WIDTH - 30) / 3
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 8)
         
-        # --- Solar Panels ---
-        sec_x = MARGIN_LEFT + 10
-        sec_y = y
-        
-        c.setFillColor(colors.HexColor('#fef3c7'))  # Yellow background
-        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
-        
+        # Güneş Panelleri
+        c.setFont(FONT_BOLD, 9)
         c.setFillColor(colors.HexColor('#d97706'))
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(sec_x + 8, sec_y - 15, "Güneş Panelleri")
-        
+        c.drawString(MARGIN_LEFT + 15, y, "Güneş Panelleri:")
+        c.setFont(FONT_NORMAL, 8)
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 7)
-        panel_texts = [
-            "• Monokristal hücreli, yeni nesil",
-            "  fotovoltaik paneller kullanılacaktır.",
-            "• Yıllık performans düşüşü: %0,83",
-            "• 15. yıl sonunda %92 performans",
-            "• 35. yıl sonunda %80 performans"
-        ]
-        txt_y = sec_y - 30
-        for txt in panel_texts:
-            c.drawString(sec_x + 8, txt_y, txt)
-            txt_y -= 10
+        y -= 12
+        c.drawString(MARGIN_LEFT + 15, y, "• Monokristal hücreli, yeni nesil fotovoltaik paneller kullanılacaktır.")
+        y -= 11
+        c.drawString(MARGIN_LEFT + 15, y, "• Yıllık performans düşüşü: %0,83  |  15. yıl sonunda %92  |  35. yıl sonunda %80 performans")
+        y -= 15
         
-        # --- Production Calculation ---
-        sec_x = MARGIN_LEFT + 10 + section_width + 10
-        
-        c.setFillColor(colors.HexColor('#dbeafe'))  # Blue background
-        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
-        
+        # Üretim Hesaplama
+        c.setFont(FONT_BOLD, 9)
         c.setFillColor(colors.HexColor('#2563eb'))
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(sec_x + 8, sec_y - 15, "Üretim Hesaplama")
-        
+        c.drawString(MARGIN_LEFT + 15, y, "Üretim Hesaplama:")
+        c.setFont(FONT_NORMAL, 8)
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 7)
-        calc_texts = [
-            "• Hesaplamalar AB PVGIS sistemi",
-            "  üzerinden yapılmıştır.",
-            "• İl bazlı ortalama güneşlenme",
-            "  verileri kullanılmıştır.",
-            "• Aylık ve yıllık üretim çıktıları",
-            "  teklif içerisinde sunulmaktadır."
-        ]
-        txt_y = sec_y - 30
-        for txt in calc_texts:
-            c.drawString(sec_x + 8, txt_y, txt)
-            txt_y -= 10
+        y -= 12
+        c.drawString(MARGIN_LEFT + 15, y, "• Hesaplamalar AB PVGIS sistemi üzerinden il bazlı ortalama güneşlenme verileri kullanılarak yapılmıştır.")
+        y -= 11
+        c.drawString(MARGIN_LEFT + 15, y, "• Aylık ve yıllık üretim çıktıları teklif içerisinde sunulmaktadır.")
+        y -= 15
         
-        # --- Storage & Inverter ---
-        sec_x = MARGIN_LEFT + 10 + (section_width + 10) * 2
-        
-        c.setFillColor(colors.HexColor('#d1fae5'))  # Green background
-        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
-        
+        # Depolama & İnverter
+        c.setFont(FONT_BOLD, 9)
         c.setFillColor(colors.HexColor('#059669'))
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(sec_x + 8, sec_y - 15, "Depolama & İnverter")
-        
+        c.drawString(MARGIN_LEFT + 15, y, "Depolama & İnverter:")
+        c.setFont(FONT_NORMAL, 8)
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 7)
-        storage_texts = [
-            f"• {inverter_kw:.0f} kW inverter kullanılacaktır.",
-            "• Prizmatik lityum batarya ile",
-            "  enerji depolama sağlanacaktır.",
-            "• Batarya çevrim ömrü: 6000 cycle",
-            f"• Depolama kapasitesi: {battery_kwh:.2f} kWh"
-        ] if battery_kwh > 0 else [
-            f"• {inverter_kw:.0f} kW inverter kullanılacaktır.",
-            "• On-Grid sistem için batarya",
-            "  bulunmamaktadır.",
-            "• Üretilen enerji doğrudan",
-            "  tüketime yönlendirilir."
-        ]
-        txt_y = sec_y - 30
-        for txt in storage_texts:
-            c.drawString(sec_x + 8, txt_y, txt)
-            txt_y -= 10
+        y -= 12
         
-        y -= 105
+        if battery_kwh > 0:
+            c.drawString(MARGIN_LEFT + 15, y, f"• {inverter_kw:.0f} kW inverter kullanılacaktır. Prizmatik lityum batarya ile enerji depolama sağlanacaktır.")
+            y -= 11
+            c.drawString(MARGIN_LEFT + 15, y, f"• Batarya çevrim ömrü: 6000 cycle  |  Depolama kapasitesi: {battery_kwh:.2f} kWh")
+        else:
+            c.drawString(MARGIN_LEFT + 15, y, f"• {inverter_kw:.0f} kW inverter kullanılacaktır. On-Grid sistem için batarya bulunmamaktadır.")
+            y -= 11
+            c.drawString(MARGIN_LEFT + 15, y, "• Üretilen enerji doğrudan tüketime yönlendirilir.")
+        
+        y -= 20
         
         # ===== SECTION 4: KURULUM & DEVREYE ALMA =====
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 11)
         c.drawString(MARGIN_LEFT + 10, y, "Kurulum ve Devreye Alma")
-        y -= 18
+        y -= 15
         
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_NORMAL, 8)
