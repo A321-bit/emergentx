@@ -1975,6 +1975,7 @@ class PremiumQuotePDFGenerator:
         
         bank_accounts = company_settings.get('bank_accounts', [])
         installment_options = company_settings.get('installment_options', [])
+        payment_notes = company_settings.get('payment_notes', [])  # From settings
         
         # If no bank accounts, skip this page
         if not bank_accounts or len(bank_accounts) == 0:
@@ -1992,17 +1993,25 @@ class PremiumQuotePDFGenerator:
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 20)
         c.drawCentredString(PAGE_WIDTH / 2, y, "ÖDEME SEÇENEKLERİ")
-        y -= 35
+        y -= 30
         
         # ===== SECTION 1: BANKA HESAP BİLGİLERİ =====
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 14)
         c.drawString(MARGIN_LEFT + 10, y, "Banka Hesap Bilgileri")
-        y -= 25
+        y -= 18
         
-        # Bank accounts table header
+        # Account holder info (single line at top)
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_BOLD, 9)
+        c.drawString(MARGIN_LEFT + 10, y, "Hesap Sahibi / Ünvan:")
+        c.setFont(FONT_NORMAL, 9)
+        c.drawString(MARGIN_LEFT + 115, y, "Akturk Yenilenebilir Enerji Teknolojileri Sanayi Ticaret Limited Şirketi")
+        y -= 20
+        
+        # Bank accounts table header (without account holder column)
         header_height = 25
-        col_widths = [0.22 * CONTENT_WIDTH, 0.15 * CONTENT_WIDTH, 0.23 * CONTENT_WIDTH, 0.40 * CONTENT_WIDTH]
+        col_widths = [0.30 * CONTENT_WIDTH, 0.25 * CONTENT_WIDTH, 0.45 * CONTENT_WIDTH]
         
         # Header row
         c.setFillColor(PRIMARY_COLOR)
@@ -2016,13 +2025,11 @@ class PremiumQuotePDFGenerator:
         x_pos += col_widths[0]
         c.drawString(x_pos, y - 17, "Şube")
         x_pos += col_widths[1]
-        c.drawString(x_pos, y - 17, "Hesap Sahibi")
-        x_pos += col_widths[2]
         c.drawString(x_pos, y - 17, "IBAN")
         
         y -= header_height + 5
         
-        # Bank account rows
+        # Bank account rows (without account holder)
         row_height = 28
         for i, account in enumerate(bank_accounts):
             # Alternating row background
@@ -2041,17 +2048,15 @@ class PremiumQuotePDFGenerator:
             c.setFont(FONT_NORMAL, 8)
             
             x_pos = MARGIN_LEFT + 10
-            c.drawString(x_pos, y - 18, account.get('bank_name', '-')[:20])
+            c.drawString(x_pos, y - 18, account.get('bank_name', '-')[:25])
             x_pos += col_widths[0]
-            c.drawString(x_pos, y - 18, account.get('bank_branch', '-')[:15])
+            c.drawString(x_pos, y - 18, account.get('bank_branch', '-')[:20])
             x_pos += col_widths[1]
-            c.drawString(x_pos, y - 18, account.get('account_holder', '-')[:20])
-            x_pos += col_widths[2]
             c.drawString(x_pos, y - 18, account.get('iban', '-'))
             
             y -= row_height + 3
         
-        y -= 25
+        y -= 20
         
         # ===== SECTION 2: KREDİ KARTI TAKSİT SEÇENEKLERİ =====
         c.setFillColor(PRIMARY_COLOR)
@@ -2071,7 +2076,7 @@ class PremiumQuotePDFGenerator:
         c.setFont(FONT_NORMAL, 9)
         c.drawString(MARGIN_LEFT + 15, y - 33, "Kredi kartı ile taksitli ödeme seçenekleri için lütfen satış temsilcinizle iletişime geçiniz.")
         
-        y -= 65
+        y -= 60
         
         # Installment grid (if available)
         if installment_options and len(installment_options) > 0:
@@ -2104,12 +2109,23 @@ class PremiumQuotePDFGenerator:
                 c.setFont(FONT_NORMAL, 8)
                 rate = option.get('rate', 0)
                 c.drawCentredString(box_x + (inst_col_width - 10) / 2, box_y - 24, f"%{rate} komisyon")
+            
+            y -= 90
         
-        y -= 100
+        # ===== SECTION 3: ÖNEMLİ NOTLAR (from settings) =====
+        # Default notes if none in settings
+        if not payment_notes or len(payment_notes) == 0:
+            payment_notes = [
+                "Havale/EFT ödemelerinde açıklama kısmına teklif numaranızı yazınız.",
+                "Taksitli ödemelerde toplam tutara komisyon oranı eklenir.",
+                "Peşin ödemelerde ek indirim için satış temsilcinize danışınız."
+            ]
         
-        # ===== SECTION 3: ÖDEME NOTLARI =====
+        # Calculate box height based on notes count
+        notes_box_height = 25 + (len(payment_notes) * 13)
+        
         c.setFillColor(colors.HexColor('#f1f5f9'))
-        c.roundRect(MARGIN_LEFT + 5, y - 60, CONTENT_WIDTH - 10, 60, 6, fill=True)
+        c.roundRect(MARGIN_LEFT + 5, y - notes_box_height, CONTENT_WIDTH - 10, notes_box_height, 6, fill=True)
         
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 10)
@@ -2117,9 +2133,14 @@ class PremiumQuotePDFGenerator:
         
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_NORMAL, 8)
-        c.drawString(MARGIN_LEFT + 15, y - 33, "• Havale/EFT ödemelerinde açıklama kısmına teklif numaranızı yazınız.")
-        c.drawString(MARGIN_LEFT + 15, y - 45, "• Taksitli ödemelerde toplam tutara komisyon oranı eklenir.")
-        c.drawString(MARGIN_LEFT + 15, y - 57, "• Peşin ödemelerde ek indirim için satış temsilcinize danışınız.")
+        
+        note_y = y - 33
+        for note in payment_notes[:10]:  # Max 10 notes
+            # Add bullet if not present
+            if not note.startswith('•'):
+                note = f"• {note}"
+            c.drawString(MARGIN_LEFT + 15, note_y, note[:100])  # Max 100 chars per line
+            note_y -= 13
         
         c.save()
         buffer.seek(0)
