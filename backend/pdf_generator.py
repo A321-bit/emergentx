@@ -1289,13 +1289,13 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 20
+        y = TEMPLATE_CONTENT_TOP  # Start from top
         
         # Page title - CENTERED
         c.setFillColor(PRIMARY_COLOR)
         c.setFont(FONT_BOLD, 18)
         c.drawCentredString(PAGE_WIDTH / 2, y, "Teklif Şartları")
-        y -= 35
+        y -= 30
         
         # Text width limit (to prevent overflow)
         max_text_width = CONTENT_WIDTH - 40
