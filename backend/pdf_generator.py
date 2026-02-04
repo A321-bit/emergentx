@@ -1119,21 +1119,16 @@ class PremiumQuotePDFGenerator:
         return buffer
     
     def _add_products_header(self, canvas, doc):
-        """Add header to products page"""
+        """Add template background to products page"""
         canvas.saveState()
         
-        # Header bar
-        canvas.setFillColor(SECONDARY_COLOR)
-        canvas.rect(0, PAGE_HEIGHT - 50, PAGE_WIDTH, 50, fill=True)
+        # Draw template background
+        draw_template_background(canvas)
         
-        # Golden accent
-        canvas.setFillColor(PRIMARY_COLOR)
-        canvas.rect(0, PAGE_HEIGHT - 55, PAGE_WIDTH, 5, fill=True)
-        
-        # Page number
+        # Page number (optional, template already has footer)
         canvas.setFillColor(TEXT_LIGHT)
         canvas.setFont(FONT_NORMAL, 8)
-        canvas.drawCentredString(PAGE_WIDTH / 2, MARGIN_BOTTOM / 2, f"Sayfa {doc.page}")
+        canvas.drawRightString(PAGE_WIDTH - MARGIN_RIGHT, TEMPLATE_CONTENT_BOTTOM - 10, f"Sayfa {doc.page}")
         
         canvas.restoreState()
     
