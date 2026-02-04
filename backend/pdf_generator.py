@@ -54,6 +54,13 @@ MARGIN_RIGHT = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
 CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
+# PDF Template Background Image
+PDF_TEMPLATE_BG = Path(__file__).parent / 'uploads' / 'pdf_template_background.jpeg'
+
+# Adjusted margins for template (to avoid logo/contact areas)
+TEMPLATE_CONTENT_TOP = PAGE_HEIGHT - 60 * mm  # Start below top sun icon
+TEMPLATE_CONTENT_BOTTOM = 55 * mm  # End above bottom logo area
+
 # AKTÜRK ENERJİ Kurumsal Renk Paleti
 PRIMARY_COLOR = colors.HexColor('#247dc0')      # Aktürk Mavi (ENERJİ)
 PRIMARY_DARK = colors.HexColor('#1a5a8a')       # Koyu Mavi
