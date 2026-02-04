@@ -1454,7 +1454,7 @@ class PremiumQuotePDFGenerator:
             # Title
             c.setFillColor(TEXT_COLOR)
             c.setFont(FONT_BOLD, 10)
-            c.drawString(MARGIN_LEFT + 55, y - 20, title)
+            c.drawString(MARGIN_LEFT + 55, y - 18, title)
             
             # Description
             c.setFont(FONT_NORMAL, 9)
@@ -1462,30 +1462,27 @@ class PremiumQuotePDFGenerator:
             # Truncate if too long
             if len(desc) > 70:
                 desc = desc[:67] + "..."
-            c.drawString(MARGIN_LEFT + 55, y - 38, desc)
+            c.drawString(MARGIN_LEFT + 55, y - 32, desc)
             
-            y -= 60
+            y -= 55
         
         # Additional terms text (if any)
-        if quote_terms:
-            y -= 20
+        if quote_terms and y > TEMPLATE_CONTENT_BOTTOM + 100:
+            y -= 15
             c.setFillColor(TEXT_COLOR)
-            c.setFont(FONT_BOLD, 11)
-            c.drawString(MARGIN_LEFT, y, "Ek Koşullar:")
+            c.setFont(FONT_BOLD, 10)
+            c.drawString(MARGIN_LEFT + 10, y, "Ek Koşullar:")
             
-            y -= 20
+            y -= 18
             c.setFont(FONT_NORMAL, 9)
             
-            for line in quote_terms.split('\n')[:10]:  # Max 10 lines
-                if line.strip():
+            for line in quote_terms.split('\n')[:8]:  # Max 8 lines
+                if line.strip() and y > TEMPLATE_CONTENT_BOTTOM + 20:
                     # Truncate long lines
-                    if len(line) > 90:
-                        line = line[:87] + "..."
-                    c.drawString(MARGIN_LEFT + 10, y, line)
-                    y -= 14
-        
-        # Footer
-        self._draw_page_footer(c, 6)
+                    if len(line) > 85:
+                        line = line[:82] + "..."
+                    c.drawString(MARGIN_LEFT + 15, y, line)
+                    y -= 13
         
         c.save()
         buffer.seek(0)
@@ -1503,10 +1500,10 @@ class PremiumQuotePDFGenerator:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            topMargin=MARGIN_TOP,
-            bottomMargin=MARGIN_BOTTOM,
-            leftMargin=MARGIN_LEFT,
-            rightMargin=MARGIN_RIGHT
+            topMargin=PAGE_HEIGHT - TEMPLATE_CONTENT_TOP + 5,
+            bottomMargin=TEMPLATE_CONTENT_BOTTOM + 5,
+            leftMargin=MARGIN_LEFT + 5,
+            rightMargin=MARGIN_RIGHT + 5
         )
         
         elements = []
