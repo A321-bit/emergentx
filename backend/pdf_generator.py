@@ -2009,19 +2009,19 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 5
+        y = TEMPLATE_CONTENT_TOP  # Start from top
         
         # ===== PAGE TITLE =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 20)
-        c.drawCentredString(PAGE_WIDTH / 2, y, "ÖDEME SEÇENEKLERİ")
-        y -= 30
+        c.setFont(FONT_BOLD, 18)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "Ödeme Seçenekleri")
+        y -= 28
         
         # ===== SECTION 1: BANKA HESAP BİLGİLERİ =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 14)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 10, y, "Banka Hesap Bilgileri")
-        y -= 20
+        y -= 18
         
         # Account holder info (two lines for clarity)
         c.setFillColor(TEXT_COLOR)
