@@ -876,7 +876,7 @@ MADDE 6 - GENEL HÜKÜMLER
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSaveSettings} className="space-y-4">
+              <form onSubmit={handleSave} className="space-y-4">
                 {(!settings.payment_notes || settings.payment_notes.length === 0) ? (
                   <div className="text-center py-6 text-muted-foreground">
                     <p className="mb-4">Henüz ödeme notu eklenmemiş</p>
