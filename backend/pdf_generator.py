@@ -2044,9 +2044,9 @@ class PremiumQuotePDFGenerator:
         
         # ===== SECTION 4: KURULUM & DEVREYE ALMA =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
+        c.setFont(FONT_BOLD, 13)
         c.drawString(MARGIN_LEFT + 10, y, "Kurulum ve Devreye Alma")
-        y -= 15
+        y -= 20
         
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_NORMAL, 10)
