@@ -442,13 +442,17 @@ class PremiumQuotePDFGenerator:
         
         # PAGE 8: Datasheet'ler (Product Datasheets)
         datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
-        pdf_parts.extend(datasheet_pdfs)
+        logger.info(f"Datasheets to add: {len(datasheet_pdfs)}")
+        for ds in datasheet_pdfs:
+            pdf_parts.append(ds)
+        logger.info(f"Total pdf_parts after datasheets: {len(pdf_parts)}")
         
         # PAGE 9: Kapanış Kapak (Closing Cover) - NEW
         closing_pdf = self._create_closing_page(quote_data, company_settings)
         if closing_pdf:
             pdf_parts.append(closing_pdf)
         
+        logger.info(f"Final pdf_parts count: {len(pdf_parts)}")
         return self._merge_pdfs(pdf_parts)
     
     def _get_category_id(self, category_name: str) -> str:
