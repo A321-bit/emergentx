@@ -36,7 +36,8 @@ const Settings = () => {
     quote_cover_image: null,
     quote_terms: '',
     contract_terms: '',
-    bank_accounts: []
+    bank_accounts: [],
+    payment_notes: []
   });
   const [exchangeRates, setExchangeRates] = useState({
     usd_to_try: 34.0,
