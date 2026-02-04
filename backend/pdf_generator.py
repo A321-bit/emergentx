@@ -722,7 +722,7 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 15  # Move content up
+        y = TEMPLATE_CONTENT_TOP  # Start from top
         
         # ===== PAGE TITLE =====
         c.setFillColor(PRIMARY_COLOR)
