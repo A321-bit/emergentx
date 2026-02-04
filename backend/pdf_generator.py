@@ -60,7 +60,7 @@ CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 PDF_TEMPLATE_BG = Path(__file__).parent / 'uploads' / 'pdf_background_template.png'
 
 # Adjusted margins for template (to avoid logo/contact areas)
-TEMPLATE_CONTENT_TOP = PAGE_HEIGHT - 60 * mm  # Start below top sun icon
+TEMPLATE_CONTENT_TOP = PAGE_HEIGHT - 45 * mm  # Start closer to top (was 60mm)
 TEMPLATE_CONTENT_BOTTOM = 55 * mm  # End above bottom logo area
 
 # AKTÜRK ENERJİ Kurumsal Renk Paleti
