@@ -640,15 +640,14 @@ class PremiumQuotePDFGenerator:
         buffer.seek(0)
         return buffer
     
-    # ==================== PAGE 3: PROJE VERİLERİ VE TANIMI ====================
+    # ==================== PAGE 4: SİSTEM ANALİZ ====================
     def _create_analysis_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
         """
-        Proje Verileri ve Tanımı Sayfası
-        - Proje Tanımı
-        - Sistem Özeti
-        - Teknik Parametreler
-        - Kurulum & Devreye Alma
-        - Teslim & Belgeler
+        Sistem Analiz Sayfası (Page 4)
+        - Yıllık üretim hesaplamaları
+        - Enerji tasarrufu analizi
+        - Yatırım geri dönüş süresi
+        - Çevresel katkı
         """
         
         items = quote_data.get('items', [])
@@ -658,7 +657,6 @@ class PremiumQuotePDFGenerator:
         total_inverter_watt = 0
         total_battery_watt = 0
         panel_count = 0
-        panel_single_watt = 0
         
         for item in items:
             power = item.get('power_watt', 0) or 0
@@ -673,28 +671,30 @@ class PremiumQuotePDFGenerator:
             elif any(x in category or x in product_name for x in ['panel', 'güneş', 'solar', 'mono', 'poli']):
                 total_panel_watt += power * quantity
                 panel_count += quantity
-                if power > 0:
-                    panel_single_watt = power
         
-        if total_panel_watt == 0 and total_inverter_watt == 0 and total_battery_watt == 0:
+        if total_panel_watt == 0:
             return None
         
         panel_kwp = total_panel_watt / 1000
-        inverter_kw = total_inverter_watt / 1000
         battery_kwh = total_battery_watt / 1000
         
-        # Customer info
-        customer_name = quote_data.get('customer_name', 'Değerli Müşterimiz')
-        customer_city = quote_data.get('customer_city', 'Ankara')
+        # Calculate estimated annual production (Turkey average ~1400-1600 kWh/kWp)
+        annual_production_kwh = panel_kwp * 1500  # Average for Turkey
         
-        # System type
-        category_name = quote_data.get('customer_category_name', '').lower()
-        if 'off' in category_name:
-            system_type = "Off-Grid (Şebekeden Bağımsız)"
-        elif 'hybrid' in category_name or 'hibrit' in category_name:
-            system_type = "Hibrit (Depolamalı)"
+        # Electricity price (approximate)
+        electricity_price_per_kwh = 3.5  # TL/kWh average
+        annual_savings_tl = annual_production_kwh * electricity_price_per_kwh
+        
+        # Investment return calculation
+        total_price = quote_data.get('total_tl', 0)
+        if total_price > 0 and annual_savings_tl > 0:
+            payback_years = total_price / annual_savings_tl
         else:
-            system_type = "On-Grid (Öz Tüketim)"
+            payback_years = 0
+        
+        # CO2 reduction (average 0.5 kg CO2 per kWh)
+        co2_reduction_kg = annual_production_kwh * 0.5
+        trees_equivalent = co2_reduction_kg / 22  # Average tree absorbs 22 kg CO2/year
         
         # CREATE PAGE
         buffer = BytesIO()
@@ -705,215 +705,154 @@ class PremiumQuotePDFGenerator:
         
         y = TEMPLATE_CONTENT_TOP - 5
         
-        # ===== BÖLÜM 1: PROJE TANIMI =====
+        # ===== PAGE TITLE =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 18)
-        c.drawString(MARGIN_LEFT + 10, y, "Proje Verileri")
+        c.setFont(FONT_BOLD, 20)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "SİSTEM ANALİZİ")
+        y -= 35
+        
+        # ===== SECTION 1: YILLIK ÜRETİM TAHMİNİ =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(MARGIN_LEFT + 10, y, "Yıllık Üretim Tahmini")
         y -= 25
         
-        # Proje tanım paragrafı
+        # Big number display for annual production
+        big_box_height = 80
+        c.setFillColor(colors.HexColor('#f0f9ff'))
+        c.roundRect(MARGIN_LEFT + 5, y - big_box_height, CONTENT_WIDTH / 2 - 15, big_box_height, 8, fill=True)
+        
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 32)
+        c.drawCentredString(MARGIN_LEFT + 5 + (CONTENT_WIDTH / 2 - 15) / 2, y - 40, f"{annual_production_kwh:,.0f}")
+        
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
+        c.drawCentredString(MARGIN_LEFT + 5 + (CONTENT_WIDTH / 2 - 15) / 2, y - 60, "kWh / Yıl")
         
-        desc_line1 = f"{customer_name}'a ait {customer_city} ilinde bulunan proje için, mevcut çatı koşulları ve enerji"
-        desc_line2 = "tüketimi dikkate alınarak hazırlanmış Güneş Enerjisi Sistemi (GES) ön maliyet ve ön fizibilite çalışmasıdır."
-        desc_line3 = "Bu raporda yer alan tüm hesaplamalar ve teknik öngörüler, sistemin uzun vadeli performansını ve"
-        desc_line4 = "yatırım geri dönüşünü esas alacak şekilde yapılmıştır."
+        # Right side - Monthly average
+        c.setFillColor(colors.HexColor('#d1fae5'))
+        c.roundRect(PAGE_WIDTH / 2 + 10, y - big_box_height, CONTENT_WIDTH / 2 - 15, big_box_height, 8, fill=True)
         
-        c.drawString(MARGIN_LEFT + 10, y, desc_line1)
-        y -= 13
-        c.drawString(MARGIN_LEFT + 10, y, desc_line2)
-        y -= 18
-        c.drawString(MARGIN_LEFT + 10, y, desc_line3)
-        y -= 13
-        c.drawString(MARGIN_LEFT + 10, y, desc_line4)
+        monthly_avg = annual_production_kwh / 12
+        c.setFillColor(colors.HexColor('#059669'))
+        c.setFont(FONT_BOLD, 32)
+        c.drawCentredString(PAGE_WIDTH / 2 + 10 + (CONTENT_WIDTH / 2 - 15) / 2, y - 40, f"{monthly_avg:,.0f}")
+        
+        c.setFillColor(TEXT_COLOR)
+        c.setFont(FONT_NORMAL, 11)
+        c.drawCentredString(PAGE_WIDTH / 2 + 10 + (CONTENT_WIDTH / 2 - 15) / 2, y - 60, "kWh / Ay Ortalama")
+        
+        y -= big_box_height + 25
+        
+        # ===== SECTION 2: TASARRUF ANALİZİ =====
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(MARGIN_LEFT + 10, y, "Tasarruf Analizi")
         y -= 25
         
-        # ===== BÖLÜM 2: SİSTEM GENEL ÖZETİ (KUTULU) =====
-        box_height = 95
-        c.setFillColor(colors.HexColor('#f0f9ff'))  # Açık mavi arka plan
-        c.roundRect(MARGIN_LEFT + 5, y - box_height, CONTENT_WIDTH - 10, box_height, 8, fill=True)
+        # 3 boxes for savings
+        box_width = (CONTENT_WIDTH - 30) / 3
+        box_height = 70
         
-        # Kutu başlığı
-        c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 15, y - 18, "Sistem Özeti")
-        
-        # Sistem bilgileri - 2 sütun
-        c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 9)
-        
-        col1_x = MARGIN_LEFT + 20
-        col2_x = PAGE_WIDTH / 2 + 10
-        
-        info_y = y - 38
-        
-        # Sol sütun
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(col1_x, info_y, "Kurulu Güç:")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(col1_x + 70, info_y, f"{panel_kwp:.1f} kWp")
-        
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(col1_x, info_y, "Kurulum Alanı:")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(col1_x + 70, info_y, "Mesken Çatısı")
-        
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(col1_x, info_y, "Sistem Tipi:")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(col1_x + 70, info_y, system_type)
-        
-        # Sağ sütun
-        info_y = y - 38
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(col2_x, info_y, "Panel Sayısı:")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(col2_x + 80, info_y, f"{panel_count} Adet – {panel_single_watt:.0f} Wp")
-        
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(col2_x, info_y, "İnverter Gücü:")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(col2_x + 80, info_y, f"{inverter_kw:.0f} kW")
-        
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
-        c.drawString(col2_x, info_y, "Batarya Kapasitesi:")
-        c.setFont(FONT_NORMAL, 9)
-        c.drawString(col2_x + 80, info_y, f"{battery_kwh:.2f} kWh" if battery_kwh > 0 else "Yok")
-        
-        y -= box_height + 20
-        
-        # ===== BÖLÜM 3: TEKNİK VE PERFORMANS PARAMETRELERİ =====
-        c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 10, y, "Teknik ve Performans Parametreleri")
-        y -= 20
-        
-        # 3 sütun için teknik bilgiler
-        section_width = (CONTENT_WIDTH - 30) / 3
-        
-        # --- Güneş Panelleri ---
-        sec_x = MARGIN_LEFT + 10
-        sec_y = y
-        
-        c.setFillColor(colors.HexColor('#fef3c7'))  # Sarı arka plan
-        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
+        # Annual savings
+        c.setFillColor(colors.HexColor('#fef3c7'))
+        c.roundRect(MARGIN_LEFT + 10, y - box_height, box_width, box_height, 6, fill=True)
         
         c.setFillColor(colors.HexColor('#d97706'))
         c.setFont(FONT_BOLD, 9)
-        c.drawString(sec_x + 8, sec_y - 15, "Güneş Panelleri")
+        c.drawCentredString(MARGIN_LEFT + 10 + box_width / 2, y - 15, "Yıllık Tasarruf")
         
-        c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 7)
-        panel_texts = [
-            "• Monokristal hücreli, yeni nesil",
-            "  fotovoltaik paneller kullanılacaktır.",
-            "• Yıllık performans düşüşü: %0,83",
-            "• 15. yıl sonunda %92 performans",
-            "• 35. yıl sonunda %80 performans"
-        ]
-        txt_y = sec_y - 30
-        for txt in panel_texts:
-            c.drawString(sec_x + 8, txt_y, txt)
-            txt_y -= 10
+        c.setFont(FONT_BOLD, 18)
+        c.drawCentredString(MARGIN_LEFT + 10 + box_width / 2, y - 40, f"₺{annual_savings_tl:,.0f}")
         
-        # --- Üretim ve Hesaplama ---
-        sec_x = MARGIN_LEFT + 10 + section_width + 10
+        c.setFont(FONT_NORMAL, 8)
+        c.setFillColor(TEXT_LIGHT)
+        c.drawCentredString(MARGIN_LEFT + 10 + box_width / 2, y - 55, "Tahmini")
         
-        c.setFillColor(colors.HexColor('#dbeafe'))  # Mavi arka plan
-        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
+        # 25 year savings
+        c.setFillColor(colors.HexColor('#dbeafe'))
+        c.roundRect(MARGIN_LEFT + 10 + box_width + 10, y - box_height, box_width, box_height, 6, fill=True)
         
         c.setFillColor(colors.HexColor('#2563eb'))
         c.setFont(FONT_BOLD, 9)
-        c.drawString(sec_x + 8, sec_y - 15, "Üretim Hesaplama")
+        c.drawCentredString(MARGIN_LEFT + 10 + box_width + 10 + box_width / 2, y - 15, "25 Yıllık Tasarruf")
         
-        c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 7)
-        calc_texts = [
-            "• Hesaplamalar AB PVGIS sistemi",
-            "  üzerinden yapılmıştır.",
-            "• İl bazlı ortalama güneşlenme",
-            "  verileri kullanılmıştır.",
-            "• Aylık ve yıllık üretim çıktıları",
-            "  teklif içerisinde sunulmaktadır."
-        ]
-        txt_y = sec_y - 30
-        for txt in calc_texts:
-            c.drawString(sec_x + 8, txt_y, txt)
-            txt_y -= 10
+        c.setFont(FONT_BOLD, 18)
+        total_25_year = annual_savings_tl * 25
+        if total_25_year >= 1000000:
+            display_text = f"₺{total_25_year/1000000:.1f}M"
+        else:
+            display_text = f"₺{total_25_year:,.0f}"
+        c.drawCentredString(MARGIN_LEFT + 10 + box_width + 10 + box_width / 2, y - 40, display_text)
         
-        # --- Depolama ve İnverter ---
-        sec_x = MARGIN_LEFT + 10 + (section_width + 10) * 2
+        c.setFont(FONT_NORMAL, 8)
+        c.setFillColor(TEXT_LIGHT)
+        c.drawCentredString(MARGIN_LEFT + 10 + box_width + 10 + box_width / 2, y - 55, "Kümülatif")
         
-        c.setFillColor(colors.HexColor('#d1fae5'))  # Yeşil arka plan
-        c.roundRect(sec_x, sec_y - 85, section_width, 85, 6, fill=True)
+        # Payback period
+        c.setFillColor(colors.HexColor('#d1fae5'))
+        c.roundRect(MARGIN_LEFT + 10 + (box_width + 10) * 2, y - box_height, box_width, box_height, 6, fill=True)
         
         c.setFillColor(colors.HexColor('#059669'))
         c.setFont(FONT_BOLD, 9)
-        c.drawString(sec_x + 8, sec_y - 15, "Depolama & İnverter")
+        c.drawCentredString(MARGIN_LEFT + 10 + (box_width + 10) * 2 + box_width / 2, y - 15, "Geri Dönüş Süresi")
         
-        c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 7)
-        storage_texts = [
-            f"• {inverter_kw:.0f} kW inverter kullanılacaktır.",
-            "• Prizmatik lityum batarya ile",
-            "  enerji depolama sağlanacaktır.",
-            "• Batarya çevrim ömrü: 6000 cycle",
-            f"• Depolama kapasitesi: {battery_kwh:.2f} kWh"
-        ] if battery_kwh > 0 else [
-            f"• {inverter_kw:.0f} kW inverter kullanılacaktır.",
-            "• On-Grid sistem için batarya",
-            "  bulunmamaktadır.",
-            "• Üretilen enerji doğrudan",
-            "  tüketime yönlendirilir."
-        ]
-        txt_y = sec_y - 30
-        for txt in storage_texts:
-            c.drawString(sec_x + 8, txt_y, txt)
-            txt_y -= 10
+        c.setFont(FONT_BOLD, 18)
+        if payback_years > 0:
+            c.drawCentredString(MARGIN_LEFT + 10 + (box_width + 10) * 2 + box_width / 2, y - 40, f"{payback_years:.1f} Yıl")
+        else:
+            c.drawCentredString(MARGIN_LEFT + 10 + (box_width + 10) * 2 + box_width / 2, y - 40, "—")
         
-        y -= 105
+        c.setFont(FONT_NORMAL, 8)
+        c.setFillColor(TEXT_LIGHT)
+        c.drawCentredString(MARGIN_LEFT + 10 + (box_width + 10) * 2 + box_width / 2, y - 55, "Tahmini")
         
-        # ===== BÖLÜM 4: KURULUM & DEVREYE ALMA =====
+        y -= box_height + 25
+        
+        # ===== SECTION 3: ÇEVRESEL KATKI =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 10, y, "Kurulum ve Devreye Alma")
-        y -= 18
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(MARGIN_LEFT + 10, y, "Çevresel Katkı")
+        y -= 20
+        
+        # Environmental impact box
+        env_box_height = 60
+        c.setFillColor(colors.HexColor('#ecfdf5'))
+        c.roundRect(MARGIN_LEFT + 5, y - env_box_height, CONTENT_WIDTH - 10, env_box_height, 8, fill=True)
+        
+        # Left side - CO2 reduction
+        c.setFillColor(colors.HexColor('#059669'))
+        c.setFont(FONT_BOLD, 10)
+        c.drawString(MARGIN_LEFT + 20, y - 20, "Yıllık CO₂ Azaltımı:")
+        c.setFont(FONT_BOLD, 16)
+        c.drawString(MARGIN_LEFT + 130, y - 20, f"{co2_reduction_kg:,.0f} kg")
+        
+        # Right side - Trees equivalent
+        c.setFont(FONT_BOLD, 10)
+        c.drawString(PAGE_WIDTH / 2 + 10, y - 20, "Ağaç Eşdeğeri:")
+        c.setFont(FONT_BOLD, 16)
+        c.drawString(PAGE_WIDTH / 2 + 110, y - 20, f"{trees_equivalent:.0f} ağaç/yıl")
         
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_NORMAL, 8)
+        c.drawString(MARGIN_LEFT + 20, y - 45, "Güneş enerjisi sisteminiz sayesinde karbon ayak izinizi azaltıyor ve doğaya katkı sağlıyorsunuz.")
         
-        kurulum_items = [
-            "• Malzeme tedariği, nakliye ve anahtar teslim kurulum Aktürk Enerji Teknolojileri tarafından gerçekleştirilecektir.",
-            "• Çatıya zarar vermeyecek uygun konstrüksiyon sistemi kullanılacaktır.",
-            "• Solar kablolama, inverter ve batarya montajları uzman ekip tarafından yapılacaktır.",
-            "• Sistem devreye alınacak, test ve kontroller tamamlanacaktır.",
-            "• Mobil uygulama ve izleme sistemleri kurulup çalışır şekilde teslim edilecektir."
-        ]
+        y -= env_box_height + 20
         
-        for item in kurulum_items:
-            c.drawString(MARGIN_LEFT + 15, y, item)
-            y -= 12
+        # ===== SECTION 4: NOTLAR =====
+        c.setFillColor(colors.HexColor('#f1f5f9'))
+        c.roundRect(MARGIN_LEFT + 5, y - 55, CONTENT_WIDTH - 10, 55, 6, fill=True)
         
-        y -= 10
-        
-        # ===== BÖLÜM 5: TESLİM & BELGELER (ALT KUTU) =====
-        footer_box_height = 45
-        c.setFillColor(colors.HexColor('#f1f5f9'))  # Gri arka plan
-        c.roundRect(MARGIN_LEFT + 5, y - footer_box_height, CONTENT_WIDTH - 10, footer_box_height, 6, fill=True)
-        
-        c.setFillColor(PRIMARY_COLOR)
+        c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_BOLD, 9)
-        c.drawString(MARGIN_LEFT + 15, y - 15, "Teslim ve Belgeler")
+        c.drawString(MARGIN_LEFT + 15, y - 15, "Hesaplama Notları")
         
-        c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 8)
-        c.drawString(MARGIN_LEFT + 15, y - 28, "Tüm işlemler tamamlandıktan sonra sistem müşteri tarafından kontrol edilerek teslim alınır.")
-        c.drawString(MARGIN_LEFT + 15, y - 40, "İş tesliminde; imzalı garanti belgeleri, ürün kullanım kılavuzları ve gerekli tüm dokümanlar teslim edilecektir.")
+        c.setFont(FONT_NORMAL, 7)
+        c.setFillColor(TEXT_LIGHT)
+        c.drawString(MARGIN_LEFT + 15, y - 28, "• Üretim hesaplamaları Türkiye ortalaması (1500 kWh/kWp/yıl) baz alınarak yapılmıştır.")
+        c.drawString(MARGIN_LEFT + 15, y - 39, "• Gerçek üretim değerleri lokasyon, yönelim ve iklim koşullarına göre değişiklik gösterebilir.")
+        c.drawString(MARGIN_LEFT + 15, y - 50, "• Elektrik fiyatları güncel tarifeler üzerinden hesaplanmıştır.")
         
         c.save()
         buffer.seek(0)
