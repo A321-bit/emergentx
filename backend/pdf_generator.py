@@ -1633,7 +1633,7 @@ class PremiumQuotePDFGenerator:
         return info_table
     
     def _create_products_table(self, items: list):
-        """Create products table - UNCHANGED LOGIC"""
+        """Create products table - with package details support"""
         
         header = [
             Paragraph("<b>Miktar</b>", self.styles['TableHeader']),
@@ -1651,6 +1651,11 @@ class PremiumQuotePDFGenerator:
             unit = item.get('unit', 'Adet')
             unit_price = item.get('unit_price_tl', 0)
             total_price = item.get('total_price_tl', 0)
+            item_type = item.get('item_type', 'product')
+            
+            # If it's a package, show package name with bold
+            if item_type == 'package':
+                product_name = f"<b>📦 {product_name}</b>"
             
             row = [
                 Paragraph(str(quantity), self.styles['TableCellCenter']),
@@ -1660,6 +1665,23 @@ class PremiumQuotePDFGenerator:
                 Paragraph(format_currency(total_price), self.styles['TableCellRight']),
             ]
             table_data.append(row)
+            
+            # If package, add sub-items as indented rows
+            package_items = item.get('package_items', [])
+            if item_type == 'package' and package_items:
+                for sub_item in package_items:
+                    sub_name = sub_item.get('product_name', '-')
+                    sub_qty = sub_item.get('quantity', 1)
+                    sub_unit = sub_item.get('unit', 'Adet')
+                    
+                    sub_row = [
+                        Paragraph(str(sub_qty), self.styles['TableCellCenter']),
+                        Paragraph(sub_unit, self.styles['TableCellCenter']),
+                        Paragraph(f"    ↳ {sub_name}", self.styles['TableCell']),  # Indented
+                        Paragraph("-", self.styles['TableCellRight']),  # No individual price
+                        Paragraph("-", self.styles['TableCellRight']),
+                    ]
+                    table_data.append(sub_row)
         
         table = Table(table_data, colWidths=[COL_MIKTAR, COL_BIRIM, COL_URUN, COL_BIRIM_FIYAT, COL_TOPLAM_FIYAT])
         
