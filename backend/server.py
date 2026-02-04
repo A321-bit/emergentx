@@ -3700,6 +3700,51 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
     if total_sale_revenue_tl > 0:
         profit_margin = (total_sale_profit_tl / total_sale_revenue_tl) * 100
     
+    # ========== REAL-TIME INCOME/EXPENSE CALCULATION ==========
+    # Get current month for filtering
+    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    current_month_str = f"{now.year}-{now.month:02d}"
+    
+    # Calculate total income for current month
+    # Income from sales (payments received)
+    monthly_income_sales = sum(s.get("sale_amount_tl", 0) for s in sales 
+        if s.get("sale_date") and s["sale_date"].startswith(current_month_str))
+    
+    # Income from other sources
+    incomes = await db.incomes.find({
+        "is_active": True,
+        "income_date": {"$regex": f"^{current_month_str}"}
+    }, {"_id": 0}).to_list(1000)
+    monthly_income_other = sum(i.get("amount_tl", i.get("amount", 0)) for i in incomes)
+    
+    total_monthly_income = monthly_income_sales + monthly_income_other
+    
+    # Calculate total expense for current month
+    # 1. Regular expenses
+    expenses = await db.expenses.find({
+        "is_active": True,
+        "expense_date": {"$regex": f"^{current_month_str}"}
+    }, {"_id": 0}).to_list(1000)
+    monthly_expenses_regular = sum(e.get("amount_tl", e.get("amount", 0)) for e in expenses)
+    
+    # 2. Personnel salaries (from personnel collection)
+    personnel = await db.personnel.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    monthly_personnel_salary = sum(p.get("salary", 0) for p in personnel)
+    
+    # 3. Fixed/recurring expenses
+    recurring = await db.recurring_expenses.find({
+        "is_active": True,
+        "is_active_recurring": True
+    }, {"_id": 0}).to_list(100)
+    monthly_recurring_total = sum(r.get("amount", 0) for r in recurring)
+    
+    # Total monthly expense = regular expenses + personnel salaries + recurring
+    # Note: Personnel salaries may already be in expenses if transferred, so we calculate both ways
+    total_monthly_expense = monthly_expenses_regular
+    
+    # Net profit/loss for current month
+    monthly_net = total_monthly_income - total_monthly_expense
+    
     return {
         # Counts
         "total_products": total_products,
