@@ -1145,8 +1145,8 @@ class PremiumQuotePDFGenerator:
         canvas.restoreState()
     
     # ==================== PAGE 5: PRICE QUOTE ====================
-    def _create_price_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
-        """Create price quote page - UNCHANGED PRICING LOGIC"""
+    def _create_price_page(self, quote_data: dict, company_settings: dict, include_bank_info: bool = False) -> BytesIO:
+        """Create price quote page - Bank info moved to separate page"""
         
         buffer = BytesIO()
         doc = SimpleDocTemplate(
@@ -1237,14 +1237,16 @@ class PremiumQuotePDFGenerator:
             totals_table = self._create_totals_table(quote_data)
             elements.append(totals_table)
         
-        # Bank accounts
-        bank_accounts = company_settings.get('bank_accounts', [])
-        if bank_accounts and len(bank_accounts) > 0:
-            elements.append(Spacer(1, 20))
-            elements.append(Paragraph("<b>BANKA HESAP BİLGİLERİ</b>", self.styles['SectionTitle']))
-            elements.append(Spacer(1, 5))
-            bank_table = self._create_bank_accounts_table(bank_accounts)
-            elements.append(bank_table)
+        # Bank accounts - NOW CONTROLLED BY include_bank_info PARAMETER
+        # By default False - bank info is on separate page (Page 7)
+        if include_bank_info:
+            bank_accounts = company_settings.get('bank_accounts', [])
+            if bank_accounts and len(bank_accounts) > 0:
+                elements.append(Spacer(1, 20))
+                elements.append(Paragraph("<b>BANKA HESAP BİLGİLERİ</b>", self.styles['SectionTitle']))
+                elements.append(Spacer(1, 5))
+                bank_table = self._create_bank_accounts_table(bank_accounts)
+                elements.append(bank_table)
         
         doc.build(elements, onFirstPage=self._add_price_page_background, onLaterPages=self._add_price_page_background)
         buffer.seek(0)
