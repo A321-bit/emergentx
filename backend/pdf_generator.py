@@ -1537,7 +1537,7 @@ class PremiumQuotePDFGenerator:
         ref_text = f"<b>Teklif No:</b> {quote_number} &nbsp;&nbsp;&nbsp; <b>Tarih:</b> {quote_date}"
         elements.append(Paragraph(ref_text, self.styles['Notes']))
         
-        doc.build(elements)
+        doc.build(elements, onFirstPage=self._add_price_page_background, onLaterPages=self._add_price_page_background)
         buffer.seek(0)
         return buffer
     
