@@ -1417,19 +1417,15 @@ class PremiumQuotePDFGenerator:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
-        # White background
-        c.setFillColor(colors.white)
-        c.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, fill=True)
+        # Draw template background
+        draw_template_background(c)
         
-        # Header bar
-        c.setFillColor(SECONDARY_COLOR)
-        c.rect(0, PAGE_HEIGHT - 60, PAGE_WIDTH, 60, fill=True)
+        # Page title
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 20)
+        c.drawCentredString(PAGE_WIDTH / 2, TEMPLATE_CONTENT_TOP - 10, "TEKLİF ŞARTLARI")
         
-        c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 18)
-        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 38, "TEKLİF ŞARTLARI")
-        
-        y = PAGE_HEIGHT - 100
+        y = TEMPLATE_CONTENT_TOP - 55
         
         # Quote validity
         validity_days = quote_data.get('validity_days', 15)
@@ -1444,20 +1440,20 @@ class PremiumQuotePDFGenerator:
         ]
         
         for icon, title, desc in terms_items:
-            # Box
-            c.setFillColor(HEADER_BG)
-            c.roundRect(MARGIN_LEFT, y - 50, CONTENT_WIDTH, 50, 8, fill=True)
+            # Box with semi-transparent background
+            c.setFillColor(colors.HexColor('#f8fafc'))
+            c.roundRect(MARGIN_LEFT + 10, y - 45, CONTENT_WIDTH - 20, 45, 6, fill=True)
             
             # Icon circle
             c.setFillColor(PRIMARY_COLOR)
-            c.circle(MARGIN_LEFT + 30, y - 25, 15, fill=True)
+            c.circle(MARGIN_LEFT + 35, y - 22, 12, fill=True)
             c.setFillColor(colors.white)
-            c.setFont(FONT_BOLD, 12)
-            c.drawCentredString(MARGIN_LEFT + 30, y - 29, icon)
+            c.setFont(FONT_BOLD, 10)
+            c.drawCentredString(MARGIN_LEFT + 35, y - 26, icon)
             
             # Title
             c.setFillColor(TEXT_COLOR)
-            c.setFont(FONT_BOLD, 11)
+            c.setFont(FONT_BOLD, 10)
             c.drawString(MARGIN_LEFT + 55, y - 20, title)
             
             # Description
