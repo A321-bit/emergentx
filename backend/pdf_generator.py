@@ -1270,105 +1270,105 @@ class PremiumQuotePDFGenerator:
         # Draw template background
         draw_template_background(c)
         
-        y = TEMPLATE_CONTENT_TOP - 15
+        y = TEMPLATE_CONTENT_TOP - 20
         
-        # Page title
+        # Page title - CENTERED
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 16)
-        c.drawString(MARGIN_LEFT + 10, y, "Teklif Şartları")
-        y -= 25
+        c.setFont(FONT_BOLD, 18)
+        c.drawCentredString(PAGE_WIDTH / 2, y, "Teklif Şartları")
+        y -= 35
+        
+        # Text width limit (to prevent overflow)
+        max_text_width = CONTENT_WIDTH - 40
         
         # ===== ÖDEME KOŞULLARI =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 10, y, "Ödeme Koşulları")
-        y -= 14
+        c.setFont(FONT_BOLD, 12)
+        c.drawString(MARGIN_LEFT + 15, y, "Ödeme Koşulları")
+        y -= 18
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 9)
         
         odeme_items = [
-            "• Toplam bedelin %70'i, sözleşme imzasını takiben havale / peşin / kredi kartı ile tahsil edilir.",
-            "• Kalan %30, sistemin kurulumu tamamlanıp çalışır hale getirildikten sonra, belirtilen ödeme yöntemleriyle tamamlanır.",
-            "• Döviz bazlı tekliflerde ödemeler TL ile olacaksa Ziraat Bankası Efektif Satış kuru baz alınarak döviz tutarı hesaplanır.",
-            "• Döviz bazlı tekliflerde ödemeler döviz türünden yapılacaksa USD kuru üzerinden banka hesap bilgilerindeki İban üzerinden gönderim sağlanabilir."
+            "Toplam bedelin %70'i, sözleşme imzasını takiben havale / peşin / kredi kartı ile tahsil edilir.",
+            "Kalan %30, sistemin kurulumu tamamlanıp çalışır hale getirildikten sonra tamamlanır.",
+            "Döviz bazlı tekliflerde TL ile ödeme yapılacaksa Ziraat Bankası Efektif Satış kuru baz alınır.",
+            "Döviz bazlı tekliflerde döviz ile ödeme yapılacaksa USD kuru üzerinden gönderim sağlanabilir."
         ]
         
         for item in odeme_items:
-            c.drawString(MARGIN_LEFT + 15, y, item)
-            y -= 11
+            c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
+            y -= 14
         
-        y -= 8
+        y -= 12
         
         # ===== ÖNEMLİ NOTLAR =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 10, y, "Önemli Notlar")
-        y -= 14
+        c.setFont(FONT_BOLD, 12)
+        c.drawString(MARGIN_LEFT + 15, y, "Önemli Notlar")
+        y -= 18
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 8)
-        
-        # Get total page count (approximate)
-        total_pages = 8  # Default
+        c.setFont(FONT_NORMAL, 9)
         
         notlar_items = [
-            "• Sistemin kurulacağı alanın projeye uygunluğu, kurulum öncesinde Aktürk Enerji Teknolojileri tarafından onaylanacaktır.",
-            "• Sunulan teklif ve tüm dokümanlar, müşteri ile Aktürk Enerji Teknolojileri arasında gizlilik kapsamındadır.",
-            "• Dış müdahale veya hatalı kullanım sonucu oluşabilecek arızalarda, servis hizmetleri ücretli olarak sağlanabilir.",
-            f"• Bu teklif, toplam {total_pages} sayfadan oluşmakta olup, yazım hatalarında Aktürk Enerji Teknolojileri'nin düzeltme hakkı saklıdır.",
-            "• İşbu sözleşme taraflar arasında imzalanmış olup, doğabilecek uyuşmazlıklarda Ankara Mahkemeleri ve İcra Daireleri yetkilidir."
+            "Sistemin kurulacağı alanın projeye uygunluğu, Aktürk Enerji tarafından onaylanacaktır.",
+            "Sunulan teklif ve dokümanlar gizlilik kapsamındadır, üçüncü kişilerle paylaşılmaması rica olunur.",
+            "Dış müdahale veya hatalı kullanım sonucu arızalarda servis hizmetleri ücretli sağlanabilir.",
+            "Bu teklif yazım hatalarında Aktürk Enerji Teknolojileri'nin düzeltme hakkı saklıdır.",
+            "Doğabilecek uyuşmazlıklarda Ankara Mahkemeleri ve İcra Daireleri yetkilidir."
         ]
         
         for item in notlar_items:
-            c.drawString(MARGIN_LEFT + 15, y, item)
-            y -= 11
+            c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
+            y -= 14
         
-        y -= 8
+        y -= 12
         
         # ===== GARANTİ SÜRELERİ =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 10, y, "Garanti Süreleri")
-        y -= 14
+        c.setFont(FONT_BOLD, 12)
+        c.drawString(MARGIN_LEFT + 15, y, "Garanti Süreleri")
+        y -= 18
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 9)
         
         garanti_items = [
-            "• Güneş Panelleri: Güneş panelleri 35 yıl elektrik üretim garantilidir.",
-            "• İnverter: Sistemde kullanılan inverter 2 yıl üretici garantisi geçerlidir.",
-            "• Batarya: Sistemde kullanılan batarya 2 yıl üretici garantisi geçerlidir.",
-            "• İşçilik ve Kurulum: Şalt malzemeler, kurulum ve işçilik 2 yıl Aktürk Enerji Teknolojileri garanti kapsamındadır."
+            "Güneş Panelleri: 35 yıl elektrik üretim garantilidir.",
+            "İnverter: 2 yıl üretici garantisi geçerlidir.",
+            "Batarya: 2 yıl üretici garantisi geçerlidir.",
+            "İşçilik ve Kurulum: 2 yıl Aktürk Enerji Teknolojileri garanti kapsamındadır."
         ]
         
         for item in garanti_items:
-            c.drawString(MARGIN_LEFT + 15, y, item)
-            y -= 11
+            c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
+            y -= 14
         
-        y -= 8
+        y -= 12
         
         # ===== GARANTİ DIŞI UNSURLAR =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
-        c.drawString(MARGIN_LEFT + 10, y, "Garanti Dışı Unsurlar")
-        y -= 14
+        c.setFont(FONT_BOLD, 12)
+        c.drawString(MARGIN_LEFT + 15, y, "Garanti Dışı Unsurlar")
+        y -= 18
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 9)
         
         garanti_disi_items = [
-            "• Bakım ve kullanım talimatlarına aykırı kullanım,",
-            "• Yanlış kullanım ve ihmaller,",
-            "• Mücbir sebepler, doğal felaketler,",
-            "• Aktürk Enerji Teknolojileri kapsam alanı dışındaki kazalar,",
-            "• Yetkisiz kişilerce açılmış, tamir edilmeye çalışılmış ekipmanlar garanti dışına çıkar.",
-            "• Servis ve onarım şartları için yukarıda yer almayan koşullarda uluslararası standartlar geçerlidir."
+            "Bakım ve kullanım talimatlarına aykırı kullanım",
+            "Yanlış kullanım ve ihmaller",
+            "Mücbir sebepler, doğal felaketler",
+            "Aktürk Enerji Teknolojileri kapsam alanı dışındaki kazalar",
+            "Yetkisiz kişilerce açılmış veya tamir edilmeye çalışılmış ekipmanlar",
+            "Yukarıda yer almayan koşullarda uluslararası standartlar geçerlidir."
         ]
         
         for item in garanti_disi_items:
-            c.drawString(MARGIN_LEFT + 15, y, item)
-            y -= 11
+            c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
+            y -= 14
         
         c.save()
         buffer.seek(0)
