@@ -1908,13 +1908,13 @@ class PremiumQuotePDFGenerator:
         
         # ===== SECTION 1: PROJE VERİLERİ TITLE =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 18)
+        c.setFont(FONT_BOLD, 16)
         c.drawString(MARGIN_LEFT + 10, y, "Proje Verileri")
-        y -= 22
+        y -= 20
         
         # Project description paragraph
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         
         desc_line1 = f"{customer_name}'a ait {customer_city} ilinde bulunan proje için, mevcut çatı koşulları ve enerji"
         desc_line2 = "tüketimi dikkate alınarak hazırlanmış Güneş Enerjisi Sistemi (GES) ön maliyet ve ön fizibilite çalışmasıdır."
@@ -1922,73 +1922,73 @@ class PremiumQuotePDFGenerator:
         desc_line4 = "yatırım geri dönüşünü esas alacak şekilde yapılmıştır."
         
         c.drawString(MARGIN_LEFT + 10, y, desc_line1)
-        y -= 15
+        y -= 13
         c.drawString(MARGIN_LEFT + 10, y, desc_line2)
-        y -= 18
+        y -= 16
         c.drawString(MARGIN_LEFT + 10, y, desc_line3)
-        y -= 15
+        y -= 13
         c.drawString(MARGIN_LEFT + 10, y, desc_line4)
-        y -= 25
+        y -= 20
         
         # ===== SECTION 2: SİSTEM GENEL ÖZETİ (BOXED) =====
-        box_height = 105
+        box_height = 90
         c.setFillColor(colors.HexColor('#f0f9ff'))  # Light blue background
         c.roundRect(MARGIN_LEFT + 5, y - box_height, CONTENT_WIDTH - 10, box_height, 8, fill=True)
         
         # Box title
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 13)
-        c.drawString(MARGIN_LEFT + 15, y - 20, "Sistem Özeti")
+        c.setFont(FONT_BOLD, 12)
+        c.drawString(MARGIN_LEFT + 15, y - 16, "Sistem Özeti")
         
         # System info - 2 columns with proper spacing
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         
         col1_x = MARGIN_LEFT + 20
-        col1_value_x = col1_x + 95  # Increased offset for values
+        col1_value_x = col1_x + 90
         col2_x = PAGE_WIDTH / 2 + 10
-        col2_value_x = col2_x + 110  # Increased offset for values
+        col2_value_x = col2_x + 105
         
-        info_y = y - 42
+        info_y = y - 35
         
         # Left column
-        c.setFont(FONT_BOLD, 11)
+        c.setFont(FONT_BOLD, 10)
         c.drawString(col1_x, info_y, "Kurulu Güç:")
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         c.drawString(col1_value_x, info_y, f"{panel_kwp:.1f} kWp")
         
-        info_y -= 16
-        c.setFont(FONT_BOLD, 11)
+        info_y -= 15
+        c.setFont(FONT_BOLD, 10)
         c.drawString(col1_x, info_y, "Kurulum Alanı:")
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         c.drawString(col1_value_x, info_y, "Mesken Çatısı")
         
-        info_y -= 16
-        c.setFont(FONT_BOLD, 11)
+        info_y -= 15
+        c.setFont(FONT_BOLD, 10)
         c.drawString(col1_x, info_y, "Sistem Tipi:")
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         c.drawString(col1_value_x, info_y, system_type)
         
         # Right column
-        info_y = y - 42
-        c.setFont(FONT_BOLD, 11)
+        info_y = y - 35
+        c.setFont(FONT_BOLD, 10)
         c.drawString(col2_x, info_y, "Panel Sayısı:")
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         c.drawString(col2_value_x, info_y, f"{panel_count} Adet – {panel_single_watt:.0f} Wp")
         
-        info_y -= 16
-        c.setFont(FONT_BOLD, 11)
+        info_y -= 15
+        c.setFont(FONT_BOLD, 10)
         c.drawString(col2_x, info_y, "İnverter Gücü:")
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         c.drawString(col2_value_x, info_y, f"{inverter_kw:.0f} kW")
         
-        info_y -= 16
-        c.setFont(FONT_BOLD, 11)
+        info_y -= 15
+        c.setFont(FONT_BOLD, 10)
         c.drawString(col2_x, info_y, "Batarya Kapasitesi:")
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         c.drawString(col2_value_x, info_y, f"{battery_kwh:.2f} kWh" if battery_kwh > 0 else "Yok")
         
-        y -= box_height + 25
+        y -= box_height + 18
         
         # ===== SECTION 3: TEKNİK VE PERFORMANS PARAMETRELERİ (Text format) =====
         c.setFillColor(PRIMARY_COLOR)
