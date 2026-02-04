@@ -83,10 +83,6 @@ const Finance = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [selectedYear]);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -100,6 +96,11 @@ const Finance = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   if (loading) {
     return (
