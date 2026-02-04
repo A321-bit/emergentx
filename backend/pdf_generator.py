@@ -1292,6 +1292,12 @@ class PremiumQuotePDFGenerator:
         
         return card
     
+    def _add_price_page_background(self, canvas, doc):
+        """Add template background to price page"""
+        canvas.saveState()
+        draw_template_background(canvas)
+        canvas.restoreState()
+    
     # ==================== PAGE 5: PRICE QUOTE ====================
     def _create_price_page(self, quote_data: dict, company_settings: dict) -> BytesIO:
         """Create price quote page - UNCHANGED PRICING LOGIC"""
@@ -1300,10 +1306,10 @@ class PremiumQuotePDFGenerator:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            topMargin=MARGIN_TOP,
-            bottomMargin=MARGIN_BOTTOM,
-            leftMargin=MARGIN_LEFT,
-            rightMargin=MARGIN_RIGHT
+            topMargin=PAGE_HEIGHT - TEMPLATE_CONTENT_TOP + 5,
+            bottomMargin=TEMPLATE_CONTENT_BOTTOM + 5,
+            leftMargin=MARGIN_LEFT + 5,
+            rightMargin=MARGIN_RIGHT + 5
         )
         
         elements = []
