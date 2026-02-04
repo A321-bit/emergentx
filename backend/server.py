@@ -57,34 +57,63 @@ security = HTTPBearer()
 
 # Permission definitions
 PERMISSIONS = {
+    # Dashboard
     "dashboard_view": "Dashboard Görüntüleme",
+    # Kullanıcı Yönetimi
     "users_view": "Kullanıcıları Görüntüleme",
     "users_manage": "Kullanıcı Ekleme/Düzenleme/Silme",
     "roles_manage": "Rol Yönetimi",
+    # Ürün & Kategori
     "categories_view": "Kategorileri Görüntüleme",
     "categories_manage": "Kategori Ekleme/Düzenleme/Silme",
     "products_view": "Ürünleri Görüntüleme",
     "products_manage": "Ürün Ekleme/Düzenleme/Silme",
     "products_prices_view": "Ürün Alış Fiyatlarını Görme",
+    # Paketler
+    "packages_view": "Paketleri Görüntüleme",
+    "packages_manage": "Paket Oluşturma/Düzenleme/Silme",
+    # Stok
     "stock_view": "Stok Görüntüleme",
     "stock_manage": "Stok Giriş/Çıkış",
+    # Müşteri
     "customers_view": "Müşterileri Görüntüleme",
     "customers_manage": "Müşteri Ekleme/Düzenleme/Silme",
+    "customer_categories_manage": "Müşteri Kategorisi Yönetimi",
+    "customer_sources_manage": "Müşteri Edinme Yeri Yönetimi",
+    # Teklif
     "quotes_view": "Teklifleri Görüntüleme",
     "quotes_manage": "Teklif Oluşturma/Düzenleme",
     "quotes_approve": "Teklif Onaylama/Satışa Dönüştürme",
+    "quotes_pdf": "Teklif PDF İndirme",
+    # Satış
+    "sales_view": "Satışları Görüntüleme",
+    "sales_manage": "Satış Ekleme/Düzenleme/Silme",
+    # Bayi Yönetimi
     "dealers_view": "Bayileri Görüntüleme",
     "dealers_manage": "Bayi Ekleme/Düzenleme/Silme",
     "dealer_groups_manage": "Bayi Grubu Yönetimi",
+    # Finans & Muhasebe
     "finance_view": "Finans Raporları Görüntüleme",
     "finance_manage": "Satış/Gider/Muhasebe Yönetimi",
-    "settings_manage": "Sistem Ayarları",
-    "customer_categories_manage": "Müşteri Kategorisi Yönetimi",
-    "customer_sources_manage": "Müşteri Edinme Yeri Yönetimi",
+    "accounting_view": "Muhasebe Görüntüleme",
+    "accounting_manage": "Gelir/Gider Yönetimi",
+    "expenses_view": "Giderleri Görüntüleme",
+    "expenses_manage": "Gider Ekleme/Düzenleme/Silme",
+    "incomes_view": "Gelirleri Görüntüleme",
+    "incomes_manage": "Gelir Ekleme/Düzenleme/Silme",
+    # İK & Bordro
     "hr_view": "Personel Görüntüleme",
     "hr_manage": "Personel Ekleme/Düzenleme/Silme",
     "payroll_view": "Bordro Görüntüleme",
     "payroll_manage": "Bordro/Avans/Prim Yönetimi",
+    "attendance_view": "Puantaj Görüntüleme",
+    "attendance_manage": "Puantaj Düzenleme",
+    # Raporlar
+    "reports_view": "Raporları Görüntüleme",
+    "reports_export": "Rapor Dışa Aktarma",
+    # Ayarlar
+    "settings_manage": "Sistem Ayarları",
+    "xml_import_manage": "XML Ürün Aktarımı",
 }
 
 # Role Model
