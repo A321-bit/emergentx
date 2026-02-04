@@ -387,17 +387,38 @@ class PremiumQuotePDFGenerator:
     
     def generate(self, quote_data: dict, company_settings: dict, quote_templates: list = None) -> BytesIO:
         """
-        Generate complete premium PDF with new 9-page structure:
-        1. Kapak (Cover)
+        Generate PDF based on category type:
+        
+        FULL FORMAT (On-Grid, Off-Grid, Hibrit, Sulama):
+        1. Kapak (Cover) - Kategoriye göre şablon
         2. Neden Biz (Why Us)
-        3. Proje Verileri (Project Data) - NEW
+        3. Proje Verileri (Project Data)
         4. Sistem Analiz (System Analysis)
-        5. Ürün Listesi + Fiyatlar (Products + Pricing - NO bank info)
-        6. Teklif Şartları (Terms)
-        7. Banka + Taksit (Bank Info) - NEW SEPARATE PAGE
-        8. Datasheet'ler (Datasheets)
-        9. Kapanış Kapak (Closing Cover) - NEW
+        5. Ürün Listesi + Fiyatlar
+        6. Teklif Şartları
+        7. Banka + Taksit
+        8. Datasheet'ler
+        9. Kapanış Kapak
+        
+        SIMPLE FORMAT (Perakende, Toptan):
+        1. Kapak (Varsayılan kapak)
+        2. Neden Biz
+        3. Ürün Listesi + Fiyatlar
+        4. Teklif Şartları
+        5. Ödeme Seçenekleri
+        6. Datasheet'ler
+        7. Kapanış Kapak
         """
+        category_name = quote_data.get('customer_category_name', '')
+        
+        # Check if simple sale category (Perakende/Toptan)
+        if self._is_simple_sale_category(category_name):
+            return self._generate_simple_pdf(quote_data, company_settings, quote_templates)
+        else:
+            return self._generate_full_pdf(quote_data, company_settings, quote_templates)
+    
+    def _generate_full_pdf(self, quote_data: dict, company_settings: dict, quote_templates: list = None) -> BytesIO:
+        """Generate full PDF for On-Grid, Off-Grid, Hibrit, Sulama categories"""
         pdf_parts = []
         
         # Get category for template selection
@@ -413,7 +434,7 @@ class PremiumQuotePDFGenerator:
         value_pdf = self._create_value_page(quote_data, company_settings)
         pdf_parts.append(value_pdf)
         
-        # PAGE 3: Proje Verileri (Project Data) - NEW
+        # PAGE 3: Proje Verileri (Project Data)
         project_pdf = self._create_project_data_page(quote_data, company_settings)
         if project_pdf:
             pdf_parts.append(project_pdf)
@@ -426,33 +447,71 @@ class PremiumQuotePDFGenerator:
             if analysis_pdf:
                 pdf_parts.append(analysis_pdf)
         
-        # PAGE 5: Ürün Listesi + Fiyatlar (Products + Pricing - NO bank info)
+        # PAGE 5: Ürün Listesi + Fiyatlar
         price_pdf = self._create_price_page(quote_data, company_settings, include_bank_info=False)
         pdf_parts.append(price_pdf)
         
-        # PAGE 6: Teklif Şartları (Terms)
+        # PAGE 6: Teklif Şartları
         terms_pdf = self._create_terms_page(quote_data, company_settings)
         if terms_pdf:
             pdf_parts.append(terms_pdf)
         
-        # PAGE 7: Banka + Taksit (Bank Info + Installments) - NEW SEPARATE PAGE
+        # PAGE 7: Banka + Taksit
         bank_pdf = self._create_bank_info_page(quote_data, company_settings)
         if bank_pdf:
             pdf_parts.append(bank_pdf)
         
-        # PAGE 8: Datasheet'ler (Product Datasheets)
+        # PAGE 8: Datasheet'ler
         datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
-        logger.info(f"Datasheets to add: {len(datasheet_pdfs)}")
         for ds in datasheet_pdfs:
             pdf_parts.append(ds)
-        logger.info(f"Total pdf_parts after datasheets: {len(pdf_parts)}")
         
-        # PAGE 9: Kapanış Kapak (Closing Cover) - NEW
+        # PAGE 9: Kapanış Kapak
         closing_pdf = self._create_closing_page(quote_data, company_settings)
         if closing_pdf:
             pdf_parts.append(closing_pdf)
         
-        logger.info(f"Final pdf_parts count: {len(pdf_parts)}")
+        logger.info(f"Full PDF parts: {len(pdf_parts)}")
+        return self._merge_pdfs(pdf_parts)
+    
+    def _generate_simple_pdf(self, quote_data: dict, company_settings: dict, quote_templates: list = None) -> BytesIO:
+        """Generate simplified PDF for Perakende/Toptan categories"""
+        pdf_parts = []
+        
+        # PAGE 1: Kapak (Varsayılan kapak - Genel Ayarlar'dan)
+        cover_pdf = self._create_cover_page(quote_data, company_settings, None)  # None = varsayılan kapak
+        if cover_pdf:
+            pdf_parts.append(cover_pdf)
+        
+        # PAGE 2: Neden Biz
+        value_pdf = self._create_value_page(quote_data, company_settings)
+        pdf_parts.append(value_pdf)
+        
+        # PAGE 3: Ürün Listesi + Fiyatlar
+        price_pdf = self._create_price_page(quote_data, company_settings, include_bank_info=False)
+        pdf_parts.append(price_pdf)
+        
+        # PAGE 4: Teklif Şartları
+        terms_pdf = self._create_terms_page(quote_data, company_settings)
+        if terms_pdf:
+            pdf_parts.append(terms_pdf)
+        
+        # PAGE 5: Ödeme Seçenekleri
+        bank_pdf = self._create_bank_info_page(quote_data, company_settings)
+        if bank_pdf:
+            pdf_parts.append(bank_pdf)
+        
+        # PAGE 6+: Datasheet'ler
+        datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
+        for ds in datasheet_pdfs:
+            pdf_parts.append(ds)
+        
+        # Son Sayfa: Kapanış Kapak
+        closing_pdf = self._create_closing_page(quote_data, company_settings)
+        if closing_pdf:
+            pdf_parts.append(closing_pdf)
+        
+        logger.info(f"Simple PDF parts: {len(pdf_parts)}")
         return self._merge_pdfs(pdf_parts)
     
     def _get_category_id(self, category_name: str) -> str:
