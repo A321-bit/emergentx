@@ -1949,46 +1949,46 @@ class PremiumQuotePDFGenerator:
         col2_x = PAGE_WIDTH / 2 + 10
         col2_value_x = col2_x + 110  # Increased offset for values
         
-        info_y = y - 38
+        info_y = y - 42
         
         # Left column
-        c.setFont(FONT_BOLD, 9)
+        c.setFont(FONT_BOLD, 11)
         c.drawString(col1_x, info_y, "Kurulu Güç:")
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         c.drawString(col1_value_x, info_y, f"{panel_kwp:.1f} kWp")
         
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
+        info_y -= 16
+        c.setFont(FONT_BOLD, 11)
         c.drawString(col1_x, info_y, "Kurulum Alanı:")
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         c.drawString(col1_value_x, info_y, "Mesken Çatısı")
         
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
+        info_y -= 16
+        c.setFont(FONT_BOLD, 11)
         c.drawString(col1_x, info_y, "Sistem Tipi:")
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         c.drawString(col1_value_x, info_y, system_type)
         
         # Right column
-        info_y = y - 38
-        c.setFont(FONT_BOLD, 9)
+        info_y = y - 42
+        c.setFont(FONT_BOLD, 11)
         c.drawString(col2_x, info_y, "Panel Sayısı:")
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         c.drawString(col2_value_x, info_y, f"{panel_count} Adet – {panel_single_watt:.0f} Wp")
         
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
+        info_y -= 16
+        c.setFont(FONT_BOLD, 11)
         c.drawString(col2_x, info_y, "İnverter Gücü:")
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         c.drawString(col2_value_x, info_y, f"{inverter_kw:.0f} kW")
         
-        info_y -= 14
-        c.setFont(FONT_BOLD, 9)
+        info_y -= 16
+        c.setFont(FONT_BOLD, 11)
         c.drawString(col2_x, info_y, "Batarya Kapasitesi:")
-        c.setFont(FONT_NORMAL, 9)
+        c.setFont(FONT_NORMAL, 11)
         c.drawString(col2_value_x, info_y, f"{battery_kwh:.2f} kWh" if battery_kwh > 0 else "Yok")
         
-        y -= box_height + 20
+        y -= box_height + 25
         
         # ===== SECTION 3: TEKNİK VE PERFORMANS PARAMETRELERİ (Text format) =====
         c.setFillColor(PRIMARY_COLOR)
