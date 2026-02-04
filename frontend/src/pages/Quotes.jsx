@@ -599,6 +599,7 @@ const Quotes = () => {
       resetForm();
       fetchData();
     } catch (error) {
+      console.error('Quote save error:', error.response?.data || error.message);
       toast.error(error.response?.data?.detail || 'İşlem başarısız');
     }
   };
