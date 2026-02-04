@@ -502,41 +502,21 @@ class PremiumQuotePDFGenerator:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
-        # Clean white background
-        c.setFillColor(colors.white)
-        c.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, fill=True)
+        # Draw template background
+        draw_template_background(c)
         
-        # Top accent bar
-        c.setFillColor(SECONDARY_COLOR)
-        c.rect(0, PAGE_HEIGHT - 60, PAGE_WIDTH, 60, fill=True)
+        # Page title - positioned in the content area
+        c.setFillColor(PRIMARY_COLOR)
+        c.setFont(FONT_BOLD, 22)
+        c.drawCentredString(PAGE_WIDTH / 2, TEMPLATE_CONTENT_TOP - 10, "NEDEN BİZ?")
         
-        # Page title in header
-        c.setFillColor(colors.white)
-        c.setFont(FONT_BOLD, 18)
-        c.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 38, "NEDEN BİZ?")
-        
-        # Company logo (small, in corner)
-        logo_path = company_settings.get('logo')
-        if logo_path:
-            full_logo_path = self.upload_dir / logo_path.replace('/uploads/', '').replace('uploads/', '')
-            if full_logo_path.exists():
-                try:
-                    c.drawImage(str(full_logo_path), MARGIN_LEFT, PAGE_HEIGHT - 50, 
-                               width=40, height=30, preserveAspectRatio=True, mask='auto')
-                except:
-                    pass
-        
-        y = PAGE_HEIGHT - 100
+        y = TEMPLATE_CONTENT_TOP - 50
         
         # Introduction paragraph
         company_name = company_settings.get('company_name', 'Firmamız')
         category_name = quote_data.get('customer_category_name', 'güneş enerjisi')
         
-        intro_text = f"""
-        {company_name} olarak, {category_name} sistemleri konusunda uzmanlaşmış deneyimli 
-        ekibimizle size en uygun çözümü sunmak için bu teklifi hazırladık. Aşağıda, neden bizimle 
-        çalışmanız gerektiğini ve projelerimizde fark yaratan özelliklerimizi bulabilirsiniz.
-        """
+        intro_text = f"""{company_name} olarak, {category_name} sistemleri konusunda uzmanlaşmış deneyimli ekibimizle size en uygun çözümü sunmak için bu teklifi hazırladık."""
         
         # Draw intro text
         c.setFillColor(TEXT_COLOR)
