@@ -1992,55 +1992,55 @@ class PremiumQuotePDFGenerator:
         
         # ===== SECTION 3: TEKNİK VE PERFORMANS PARAMETRELERİ (Text format) =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 11)
+        c.setFont(FONT_BOLD, 13)
         c.drawString(MARGIN_LEFT + 10, y, "Teknik ve Performans Parametreleri")
-        y -= 18
+        y -= 22
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 10)
         
         # Güneş Panelleri
-        c.setFont(FONT_BOLD, 9)
+        c.setFont(FONT_BOLD, 11)
         c.setFillColor(colors.HexColor('#d97706'))
         c.drawString(MARGIN_LEFT + 15, y, "Güneş Panelleri:")
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 10)
         c.setFillColor(TEXT_COLOR)
-        y -= 12
-        c.drawString(MARGIN_LEFT + 15, y, "• Monokristal hücreli, yeni nesil fotovoltaik paneller kullanılacaktır.")
-        y -= 11
-        c.drawString(MARGIN_LEFT + 15, y, "• Yıllık performans düşüşü: %0,83  |  15. yıl sonunda %92  |  35. yıl sonunda %80 performans")
         y -= 15
+        c.drawString(MARGIN_LEFT + 15, y, "• Monokristal hücreli, yeni nesil fotovoltaik paneller kullanılacaktır.")
+        y -= 14
+        c.drawString(MARGIN_LEFT + 15, y, "• Yıllık performans düşüşü: %0,83  |  15. yıl sonunda %92  |  35. yıl sonunda %80 performans")
+        y -= 18
         
         # Üretim Hesaplama
-        c.setFont(FONT_BOLD, 9)
+        c.setFont(FONT_BOLD, 11)
         c.setFillColor(colors.HexColor('#2563eb'))
         c.drawString(MARGIN_LEFT + 15, y, "Üretim Hesaplama:")
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 10)
         c.setFillColor(TEXT_COLOR)
-        y -= 12
-        c.drawString(MARGIN_LEFT + 15, y, "• Hesaplamalar AB PVGIS sistemi üzerinden il bazlı ortalama güneşlenme verileri kullanılarak yapılmıştır.")
-        y -= 11
-        c.drawString(MARGIN_LEFT + 15, y, "• Aylık ve yıllık üretim çıktıları teklif içerisinde sunulmaktadır.")
         y -= 15
+        c.drawString(MARGIN_LEFT + 15, y, "• Hesaplamalar AB PVGIS sistemi üzerinden il bazlı ortalama güneşlenme verileri kullanılarak yapılmıştır.")
+        y -= 14
+        c.drawString(MARGIN_LEFT + 15, y, "• Aylık ve yıllık üretim çıktıları teklif içerisinde sunulmaktadır.")
+        y -= 18
         
         # Depolama & İnverter
-        c.setFont(FONT_BOLD, 9)
+        c.setFont(FONT_BOLD, 11)
         c.setFillColor(colors.HexColor('#059669'))
         c.drawString(MARGIN_LEFT + 15, y, "Depolama & İnverter:")
-        c.setFont(FONT_NORMAL, 8)
+        c.setFont(FONT_NORMAL, 10)
         c.setFillColor(TEXT_COLOR)
-        y -= 12
+        y -= 15
         
         if battery_kwh > 0:
             c.drawString(MARGIN_LEFT + 15, y, f"• {inverter_kw:.0f} kW inverter kullanılacaktır. Prizmatik lityum batarya ile enerji depolama sağlanacaktır.")
-            y -= 11
+            y -= 14
             c.drawString(MARGIN_LEFT + 15, y, f"• Batarya çevrim ömrü: 6000 cycle  |  Depolama kapasitesi: {battery_kwh:.2f} kWh")
         else:
             c.drawString(MARGIN_LEFT + 15, y, f"• {inverter_kw:.0f} kW inverter kullanılacaktır. On-Grid sistem için batarya bulunmamaktadır.")
-            y -= 11
+            y -= 14
             c.drawString(MARGIN_LEFT + 15, y, "• Üretilen enerji doğrudan tüketime yönlendirilir.")
         
-        y -= 20
+        y -= 25
         
         # ===== SECTION 4: KURULUM & DEVREYE ALMA =====
         c.setFillColor(PRIMARY_COLOR)
