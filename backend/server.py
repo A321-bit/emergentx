@@ -3817,6 +3817,157 @@ async def get_sales_by_user(current_user: dict = Depends(require_permission("fin
     results = await db.quotes.aggregate(pipeline).to_list(100)
     return [{"name": r["_id"], "total_sales": r["total_sales"], "count": r["count"]} for r in results]
 
+@api_router.get("/stats/annual-finance")
+async def get_annual_finance_stats(
+    year: Optional[int] = None,
+    current_user: dict = Depends(require_permission("finance_view"))
+):
+    """Yıllık finans özeti - Finans paneli için"""
+    now = datetime.now(timezone.utc)
+    target_year = year or now.year
+    year_prefix = f"{target_year}"
+    
+    # Exchange rates
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    
+    # ========== STOK DEĞERİ ==========
+    products = await db.products.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    stock_value_usd = 0
+    stock_value_tl = 0
+    stock_sale_value_usd = 0
+    stock_sale_value_tl = 0
+    total_stock_count = 0
+    
+    for p in products:
+        stock_location = p.get("stock_location", "akturk")
+        if stock_location == "supplier":
+            continue
+        
+        quantity = p.get("stock_quantity", 0)
+        total_stock_count += quantity
+        currency = p.get("currency", "USD").upper()
+        purchase_price = p.get("purchase_price", 0)
+        sale_price = p.get("sale_price", 0)
+        
+        if currency == "USD":
+            stock_value_usd += purchase_price * quantity
+            stock_sale_value_usd += sale_price * quantity
+        else:
+            stock_value_tl += purchase_price * quantity
+            stock_sale_value_tl += sale_price * quantity
+    
+    stock_value_tl += stock_value_usd * usd_rate
+    stock_sale_value_tl += stock_sale_value_usd * usd_rate
+    
+    # ========== YILLIK SATIŞ ==========
+    sales = await db.sales.find({
+        "is_active": True,
+        "sale_date": {"$regex": f"^{year_prefix}"}
+    }, {"_id": 0}).to_list(10000)
+    
+    annual_sales_revenue = sum(s.get("sale_amount_tl", 0) for s in sales)
+    annual_sales_cost = sum(s.get("purchase_amount_tl", 0) for s in sales)
+    annual_sales_profit = annual_sales_revenue - annual_sales_cost
+    
+    # Quotes satışları
+    quotes = await db.quotes.find({
+        "is_active": True,
+        "status": "satisa_dondu",
+        "created_at": {"$regex": f"^{year_prefix}"}
+    }, {"_id": 0}).to_list(10000)
+    annual_quote_revenue = sum(q.get("total", 0) for q in quotes)
+    
+    total_annual_sales = annual_sales_revenue + annual_quote_revenue
+    
+    # ========== YILLIK GİDER ==========
+    expenses = await db.expenses.find({
+        "is_active": True,
+        "expense_date": {"$regex": f"^{year_prefix}"}
+    }, {"_id": 0}).to_list(10000)
+    
+    annual_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in expenses)
+    
+    # Kategorilere göre gider dağılımı
+    expense_by_category = {}
+    for e in expenses:
+        cat = e.get("category_name", "Diğer")
+        expense_by_category[cat] = expense_by_category.get(cat, 0) + e.get("amount_tl", e.get("amount", 0))
+    
+    # ========== YILLIK KAR MARJI ==========
+    annual_profit = total_annual_sales - annual_expenses
+    profit_margin = (annual_profit / total_annual_sales * 100) if total_annual_sales > 0 else 0
+    
+    # ========== POTANSİYEL KAR ==========
+    potential_profit_usd = stock_sale_value_usd - stock_value_usd
+    potential_profit_tl = stock_sale_value_tl - stock_value_tl
+    
+    # ========== AYLIK TREND ==========
+    monthly_data = []
+    for m in range(1, 13):
+        month_prefix = f"{target_year}-{m:02d}"
+        
+        # Ay satışları
+        month_sales = sum(s.get("sale_amount_tl", 0) for s in sales 
+            if s.get("sale_date", "").startswith(month_prefix))
+        month_quote_sales = sum(q.get("total", 0) for q in quotes 
+            if q.get("created_at", "").startswith(month_prefix))
+        
+        # Ay giderleri
+        month_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in expenses 
+            if e.get("expense_date", "").startswith(month_prefix))
+        
+        monthly_data.append({
+            "month": f"{m:02d}/{target_year}",
+            "month_name": ["", "Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"][m],
+            "sales": month_sales + month_quote_sales,
+            "expenses": month_expenses,
+            "profit": (month_sales + month_quote_sales) - month_expenses
+        })
+    
+    # ========== EN ÇOK SATAN ÜRÜNLER ==========
+    # TODO: Implement top selling products
+    
+    return {
+        "year": target_year,
+        "exchange_rate_usd": usd_rate,
+        
+        # Stok Değerleri
+        "stock_value_usd": round(stock_value_usd, 2),
+        "stock_value_tl": round(stock_value_tl, 2),
+        "stock_sale_value_usd": round(stock_sale_value_usd, 2),
+        "stock_sale_value_tl": round(stock_sale_value_tl, 2),
+        "total_stock_count": total_stock_count,
+        
+        # Yıllık Satış
+        "annual_sales_total": round(total_annual_sales, 2),
+        "annual_sales_revenue": round(annual_sales_revenue, 2),
+        "annual_quote_revenue": round(annual_quote_revenue, 2),
+        "annual_sales_cost": round(annual_sales_cost, 2),
+        "annual_sales_profit": round(annual_sales_profit, 2),
+        
+        # Yıllık Gider
+        "annual_expenses": round(annual_expenses, 2),
+        "expense_by_category": expense_by_category,
+        
+        # Yıllık Kar
+        "annual_profit": round(annual_profit, 2),
+        "profit_margin": round(profit_margin, 1),
+        "is_loss": annual_profit < 0,
+        
+        # Potansiyel Kar
+        "potential_profit_usd": round(potential_profit_usd, 2),
+        "potential_profit_tl": round(potential_profit_tl, 2),
+        
+        # Aylık Trend
+        "monthly_data": monthly_data,
+        
+        # Satış sayıları
+        "total_sales_count": len(sales),
+        "total_quotes_sold": len(quotes)
+    }
+
 @api_router.get("/stats/sales-by-dealer")
 async def get_sales_by_dealer(current_user: dict = Depends(require_permission("finance_view"))):
     pipeline = [
