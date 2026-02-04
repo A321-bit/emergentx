@@ -1173,8 +1173,8 @@ class PremiumQuotePDFGenerator:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            topMargin=PAGE_HEIGHT - TEMPLATE_CONTENT_TOP + 5,
-            bottomMargin=TEMPLATE_CONTENT_BOTTOM + 5,
+            topMargin=PAGE_HEIGHT - TEMPLATE_CONTENT_TOP,
+            bottomMargin=TEMPLATE_CONTENT_BOTTOM,
             leftMargin=MARGIN_LEFT + 5,
             rightMargin=MARGIN_RIGHT + 5
         )
