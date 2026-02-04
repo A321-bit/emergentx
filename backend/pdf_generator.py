@@ -488,7 +488,7 @@ class PremiumQuotePDFGenerator:
         
         # Use uploaded cover image
         if cover_image_path:
-            img_path = self.upload_dir / cover_image_path.replace('/uploads/', '').replace('uploads/', '')
+            img_path = self.upload_dir / cover_image_path.replace('/api/uploads/', '').replace('/uploads/', '').replace('uploads/', '')
             if img_path.exists():
                 try:
                     c.drawImage(str(img_path), 0, 0, width=PAGE_WIDTH, height=PAGE_HEIGHT, preserveAspectRatio=False)
