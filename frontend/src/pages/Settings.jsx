@@ -34,6 +34,7 @@ const Settings = () => {
     warranty_text: '',
     logo_url: null,
     quote_cover_image: null,
+    why_us_image: null,
     quote_terms: '',
     contract_terms: '',
     bank_accounts: [],
