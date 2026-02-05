@@ -6050,23 +6050,6 @@ async def get_personnel_salary_expenses(
         "month": target_month,
         "year": target_year
     }
-        else:
-            by_personnel[pid]["bonus"] += amount
-        
-        by_personnel[pid]["total"] += amount
-        by_personnel[pid]["items"].append(exp)
-    
-    # Toplam hesapla
-    total_salary = sum(p["salary"] for p in by_personnel.values())
-    total_bonus = sum(p["bonus"] for p in by_personnel.values())
-    
-    return {
-        "by_personnel": list(by_personnel.values()),
-        "total_salary": total_salary,
-        "total_bonus": total_bonus,
-        "total": total_salary + total_bonus,
-        "personnel_count": len(by_personnel)
-    }
 
 # ==================== EMPLOYEE EXPENSES API ====================
 
