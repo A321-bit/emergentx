@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { ChevronLeft, ChevronRight, Calculator, Check, Lock, Plus, Trash2, Banknote, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calculator, Check, Lock, Plus, Trash2, Banknote, TrendingUp, TrendingDown, DollarSign, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { cn } from '../lib/utils';
