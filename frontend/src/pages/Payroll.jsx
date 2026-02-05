@@ -696,6 +696,226 @@ const Payroll = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Bonus Modal */}
+      <Dialog open={isEditBonusModalOpen} onOpenChange={setIsEditBonusModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Prim Düzenle</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateBonus} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Personel</Label>
+              <Select value={bonusForm.employee_id} onValueChange={(v) => setBonusForm({...bonusForm, employee_id: v})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Personel seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Prim Türü</Label>
+              <Select value={bonusForm.bonus_type} onValueChange={(v) => setBonusForm({...bonusForm, bonus_type: v})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sales">Satış Primi</SelectItem>
+                  <SelectItem value="project">Proje Primi</SelectItem>
+                  <SelectItem value="performance">Performans Primi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tutar (TL)</Label>
+              <Input
+                type="number"
+                value={bonusForm.amount}
+                onChange={(e) => setBonusForm({...bonusForm, amount: e.target.value})}
+                placeholder="0"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Açıklama</Label>
+              <Input
+                value={bonusForm.description}
+                onChange={(e) => setBonusForm({...bonusForm, description: e.target.value})}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setIsEditBonusModalOpen(false); setEditingBonus(null); }}>İptal</Button>
+              <Button type="submit">Güncelle</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Advance Modal */}
+      <Dialog open={isEditAdvanceModalOpen} onOpenChange={setIsEditAdvanceModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avans Düzenle</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateAdvance} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Personel</Label>
+              <Select value={advanceForm.employee_id} onValueChange={(v) => setAdvanceForm({...advanceForm, employee_id: v})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Personel seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tutar (TL)</Label>
+              <Input
+                type="number"
+                value={advanceForm.amount}
+                onChange={(e) => setAdvanceForm({...advanceForm, amount: e.target.value})}
+                placeholder="0"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Açıklama</Label>
+              <Input
+                value={advanceForm.description}
+                onChange={(e) => setAdvanceForm({...advanceForm, description: e.target.value})}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setIsEditAdvanceModalOpen(false); setEditingAdvance(null); }}>İptal</Button>
+              <Button type="submit">Güncelle</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* İşlemler (Avanslar ve Primler) Kartı */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Bekleyen Avanslar */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingDown className="h-4 w-4 text-amber-500" />
+              Bekleyen Avanslar
+            </CardTitle>
+            <CardDescription>Maaştan kesilmemiş avanslar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {advances.filter(a => !a.is_deducted).length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Personel</TableHead>
+                    <TableHead className="text-right">Tutar</TableHead>
+                    <TableHead className="text-right">İşlem</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {advances.filter(a => !a.is_deducted).map((advance) => (
+                    <TableRow key={advance.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{advance.employee_name}</p>
+                          {advance.description && <p className="text-xs text-muted-foreground">{advance.description}</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-amber-600">{formatTRY(advance.amount)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {canManage && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditAdvance(advance)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAdvance(advance.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Bekleyen avans yok</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Bu Ay Primleri */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-purple-500" />
+              Bu Ay Primleri
+            </CardTitle>
+            <CardDescription>{getMonthName()} dönemi primleri</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {bonuses.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Personel</TableHead>
+                    <TableHead>Tür</TableHead>
+                    <TableHead className="text-right">Tutar</TableHead>
+                    <TableHead className="text-right">İşlem</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bonuses.map((bonus) => (
+                    <TableRow key={bonus.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{bonus.employee_name}</p>
+                          {bonus.description && <p className="text-xs text-muted-foreground">{bonus.description}</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {bonus.bonus_type === 'sales' ? 'Satış' : bonus.bonus_type === 'project' ? 'Proje' : 'Performans'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-purple-600">{formatTRY(bonus.amount)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {canManage && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditBonus(bonus)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteBonus(bonus.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Bu ay prim kaydı yok</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
