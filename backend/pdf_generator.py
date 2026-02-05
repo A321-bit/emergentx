@@ -1460,7 +1460,7 @@ class PremiumQuotePDFGenerator:
         
         for item in garanti_disi_items:
             c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
-            y -= 17
+            y -= 14
         
         c.save()
         buffer.seek(0)
