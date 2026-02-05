@@ -281,13 +281,14 @@ const Quotes = () => {
 
   const fetchData = async () => {
     try {
-      const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes, categoriesRes, epdkRes, energyPricesRes] = await Promise.all([
+      const [quotesRes, customersRes, productsRes, packagesRes, exchangeRes, categoriesRes, productCategoriesRes, epdkRes, energyPricesRes] = await Promise.all([
         axios.get(`${API_URL}/api/quotes`),
         axios.get(`${API_URL}/api/customers`),
         axios.get(`${API_URL}/api/products`),
         axios.get(`${API_URL}/api/packages`).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/settings/exchange-rates`).catch(() => ({ data: { usd_to_try: 34.0 } })),
         axios.get(`${API_URL}/api/customer-categories`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/categories`).catch(() => ({ data: [] })), // Ürün kategorileri
         axios.get(`${API_URL}/api/settings/epdk-subscription-types`).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/settings/energy-prices`).catch(() => ({ data: { electricity_rates: [] } }))
       ]);
@@ -297,6 +298,7 @@ const Quotes = () => {
       setPackages(packagesRes.data);
       setExchangeRate(exchangeRes.data?.usd_to_try || 34.0);
       setCustomerCategories(categoriesRes.data || []);
+      setProductCategories(productCategoriesRes.data || []); // Ürün kategorileri
       setEpdkSubscriptionTypes(epdkRes.data || []);
       setSavedEnergyPrices(energyPricesRes.data || { electricity_rates: [] });
     } catch (error) {
