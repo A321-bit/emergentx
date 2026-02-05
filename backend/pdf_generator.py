@@ -2052,7 +2052,7 @@ class PremiumQuotePDFGenerator:
         c.setFont(FONT_NORMAL, 10)
         
         kurulum_items = [
-            "• Malzeme tedariği, nakliye ve anahtar teslim kurulum Aktürk Enerji Teknolojileri tarafından gerçekleştirilecektir.",
+            "• Malzeme tedariği, nakliye ve anahtar teslim kurulum Aktürk Enerji tarafından yapılacaktır.",
             "• Çatıya zarar vermeyecek uygun konstrüksiyon sistemi kullanılacaktır.",
             "• Solar kablolama, inverter ve batarya montajları uzman ekip tarafından yapılacaktır.",
             "• Sistem devreye alınacak, test ve kontroller tamamlanacaktır.",
