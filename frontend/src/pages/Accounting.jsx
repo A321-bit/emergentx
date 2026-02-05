@@ -1616,55 +1616,6 @@ const Accounting = () => {
           </div>
         </TabsContent>
 
-        {/* Personnel Tab */}
-        <TabsContent value="personnel" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold">Personel Listesi</h3>
-              <p className="text-sm text-muted-foreground">Toplam Maaş: {formatCurrency(totalPersonnelSalary)}</p>
-            </div>
-            {canManage && (
-              <Button size="sm" onClick={() => setIsPersonnelModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Personel Ekle
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {personnel.map((person) => (
-              <Card key={person.id}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{person.name}</p>
-                        <p className="text-sm text-muted-foreground">{person.position || 'Pozisyon belirtilmedi'}</p>
-                      </div>
-                    </div>
-                    {canManage && (
-                      <Button variant="ghost" size="icon" onClick={() => handleDeletePersonnel(person.id)} className="text-destructive h-8 w-8">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="mt-3 pt-3 border-t flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Maaş</span>
-                    <span className="font-mono font-bold">{formatCurrency(person.salary)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {personnel.length === 0 && (
-              <Card className="col-span-full p-8 text-center text-muted-foreground">
-                Personel kaydı bulunamadı
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
         {/* Categories Tab */}
         <TabsContent value="categories" className="space-y-4">
           <div className="flex items-center justify-between">
