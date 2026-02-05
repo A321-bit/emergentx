@@ -1366,21 +1366,21 @@ class PremiumQuotePDFGenerator:
         
         # Page title - CENTERED
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 20)
+        c.setFont(FONT_BOLD, 18)
         c.drawCentredString(PAGE_WIDTH / 2, y, "Teklif Şartları")
-        y -= 35
+        y -= 28
         
         # Text width limit (to prevent overflow)
         max_text_width = CONTENT_WIDTH - 40
         
         # ===== ÖDEME KOŞULLARI =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 14)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 15, y, "Ödeme Koşulları")
-        y -= 22
+        y -= 16
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         
         odeme_items = [
             "Toplam bedelin %70'i, sözleşme imzasını takiben havale / peşin / kredi kartı ile tahsil edilir.",
@@ -1391,18 +1391,18 @@ class PremiumQuotePDFGenerator:
         
         for item in odeme_items:
             c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
-            y -= 17
+            y -= 14
         
-        y -= 15
+        y -= 10
         
         # ===== ÖNEMLİ NOTLAR =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 14)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 15, y, "Önemli Notlar")
-        y -= 22
+        y -= 16
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         
         notlar_items = [
             "Sistemin kurulacağı alanın projeye uygunluğu, Aktürk Enerji tarafından onaylanacaktır.",
@@ -1414,18 +1414,18 @@ class PremiumQuotePDFGenerator:
         
         for item in notlar_items:
             c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
-            y -= 17
+            y -= 14
         
-        y -= 15
+        y -= 10
         
         # ===== GARANTİ SÜRELERİ =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 14)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 15, y, "Garanti Süreleri")
-        y -= 22
+        y -= 16
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         
         garanti_items = [
             "Güneş Panelleri: 35 yıl elektrik üretim garantilidir.",
@@ -1436,18 +1436,18 @@ class PremiumQuotePDFGenerator:
         
         for item in garanti_items:
             c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
-            y -= 17
+            y -= 14
         
-        y -= 15
+        y -= 10
         
         # ===== GARANTİ DIŞI UNSURLAR =====
         c.setFillColor(PRIMARY_COLOR)
-        c.setFont(FONT_BOLD, 14)
+        c.setFont(FONT_BOLD, 12)
         c.drawString(MARGIN_LEFT + 15, y, "Garanti Dışı Unsurlar")
-        y -= 22
+        y -= 16
         
         c.setFillColor(TEXT_COLOR)
-        c.setFont(FONT_NORMAL, 11)
+        c.setFont(FONT_NORMAL, 10)
         
         garanti_disi_items = [
             "Bakım ve kullanım talimatlarına aykırı kullanım",
