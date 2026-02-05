@@ -233,6 +233,69 @@ const Payroll = () => {
     }
   };
 
+  // Edit Bonus
+  const handleEditBonus = (bonus) => {
+    setEditingBonus(bonus);
+    setBonusForm({
+      employee_id: bonus.employee_id,
+      bonus_type: bonus.bonus_type || 'sales',
+      amount: bonus.amount.toString(),
+      description: bonus.description || ''
+    });
+    setIsEditBonusModalOpen(true);
+  };
+
+  const handleUpdateBonus = async (e) => {
+    e.preventDefault();
+    if (!editingBonus) return;
+    try {
+      await axios.put(`${API_URL}/api/bonuses/${editingBonus.id}`, {
+        employee_id: bonusForm.employee_id,
+        bonus_type: bonusForm.bonus_type,
+        amount: parseFloat(bonusForm.amount),
+        description: bonusForm.description,
+        month: monthStr
+      });
+      toast.success('Prim güncellendi');
+      setIsEditBonusModalOpen(false);
+      setEditingBonus(null);
+      setBonusForm({ employee_id: '', bonus_type: 'sales', amount: '', description: '' });
+      fetchData();
+    } catch (error) {
+      toast.error('Güncelleme hatası');
+    }
+  };
+
+  // Edit Advance
+  const handleEditAdvance = (advance) => {
+    setEditingAdvance(advance);
+    setAdvanceForm({
+      employee_id: advance.employee_id,
+      amount: advance.amount.toString(),
+      description: advance.description || ''
+    });
+    setIsEditAdvanceModalOpen(true);
+  };
+
+  const handleUpdateAdvance = async (e) => {
+    e.preventDefault();
+    if (!editingAdvance) return;
+    try {
+      await axios.put(`${API_URL}/api/advances/${editingAdvance.id}`, {
+        employee_id: advanceForm.employee_id,
+        amount: parseFloat(advanceForm.amount),
+        description: advanceForm.description
+      });
+      toast.success('Avans güncellendi');
+      setIsEditAdvanceModalOpen(false);
+      setEditingAdvance(null);
+      setAdvanceForm({ employee_id: '', amount: '', description: '' });
+      fetchData();
+    } catch (error) {
+      toast.error('Güncelleme hatası');
+    }
+  };
+
   const getSalaryForEmployee = (employeeId) => {
     return salaries.find(s => s.employee_id === employeeId);
   };
