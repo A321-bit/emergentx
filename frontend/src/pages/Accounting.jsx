@@ -1070,7 +1070,6 @@ const Accounting = () => {
             <TabsTrigger value="personnel-expenses">Personel Giderleri</TabsTrigger>
             <TabsTrigger value="incomes">Gelirler</TabsTrigger>
             <TabsTrigger value="recurring">Tekrarlayan</TabsTrigger>
-            <TabsTrigger value="personnel">Personel</TabsTrigger>
             <TabsTrigger value="categories">Kategoriler</TabsTrigger>
           </TabsList>
           
