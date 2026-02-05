@@ -1427,7 +1427,7 @@ const Quotes = () => {
                         
                         {showCategoryBrowser && (
                           <div className="border rounded-lg max-h-80 overflow-y-auto bg-background">
-                            {categories.filter(c => c.is_active).map(category => {
+                            {productCategories.filter(c => c.is_active).map(category => {
                               const categoryProducts = products.filter(p => p.category_id === category.id);
                               if (categoryProducts.length === 0) return null;
                               
