@@ -4877,6 +4877,30 @@ async def get_accounting_summary(
     top_expenses.sort(key=lambda x: x["amount"], reverse=True)
     top_3_expenses = top_expenses[:3]
     
+    # ========== PERSONEL GİDERLERİ (employees tablosundan) ==========
+    employees_list = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(100)
+    total_personnel_salary = sum(e.get("monthly_salary", e.get("salary", 0)) or 0 for e in employees_list)
+    
+    # Bu ay için bordro kayıtları (ödeme durumu için)
+    month_str = f"{year}-{month:02d}"
+    salaries = await db.salaries.find({"is_active": True, "month": month_str}, {"_id": 0}).to_list(100)
+    paid_salary = sum(
+        next((e.get("monthly_salary", e.get("salary", 0)) or 0 for e in employees_list if e.get("id") == s.get("employee_id")), 0)
+        for s in salaries if s.get("is_paid", False)
+    )
+    unpaid_salary = total_personnel_salary - paid_salary
+    
+    # ========== SABİT/TEKRARLAYAN GİDERLER ==========
+    recurring = await db.recurring_expenses.find({"is_active": True, "is_active_recurring": True}, {"_id": 0}).to_list(100)
+    total_recurring = sum(r.get("amount", 0) for r in recurring)
+    
+    # ========== TOPLAM HESAPLAMALAR ==========
+    # Toplam gider = Değişken giderler + Personel maaşları + Sabit giderler
+    grand_total_expenses = total_expenses_tl + total_personnel_salary + total_recurring
+    
+    # Ödenmiş toplam = Ödenmiş giderler + Ödenmiş maaşlar
+    grand_paid_expenses = paid_expenses_tl + paid_salary
+    
     # Calculate profits
     total_income = sales_income_tl + other_income_tl
     gross_profit = sales_income_tl - sales_cost_tl  # Brüt kar (satış - maliyet)
