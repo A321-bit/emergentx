@@ -2212,7 +2212,7 @@ const Quotes = () => {
                 <div>
                   <p className="font-semibold">Evet, 3 Farklı Seçenek Sun</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    PDF'te Ekonomik, Standart ve Premium fiyat tabloları gösterilir
+                    PDF&apos;te Ekonomik, Standart ve Premium fiyat tabloları gösterilir
                   </p>
                 </div>
               </button>
