@@ -6089,7 +6089,7 @@ def extract_datasheet_from_description(description):
     return matches[0] if matches else None
 
 async def fetch_and_parse_xml(xml_url: str):
-    """Fetch XML from URL and parse products"""
+    """Fetch XML from URL and parse products - supports multiple XML formats"""
     async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.get(xml_url)
         response.raise_for_status()
@@ -6097,23 +6097,69 @@ async def fetch_and_parse_xml(xml_url: str):
     root = ET.fromstring(response.content)
     products = []
     
-    for product_elem in root.findall('.//PRODUCT'):
+    # Try different XML formats
+    # Format 1: Mexxsun style (<PRODUCT>)
+    product_elements = root.findall('.//PRODUCT')
+    
+    # Format 2: Solinved/ACS style (<item>)
+    if not product_elements:
+        product_elements = root.findall('.//item')
+    
+    for product_elem in product_elements:
         try:
-            # Extract fields
-            product_code = product_elem.findtext('PRODUCT_CODE', '').strip()
-            product_title = product_elem.findtext('PRODUCT_TITLE', '').strip()
-            price_str = product_elem.findtext('PRICE_2', '')
-            category_title = product_elem.findtext('CATEGORY_TITLE', '')
-            trademark = product_elem.findtext('TRADEMARK', '')
-            stock_status = product_elem.findtext('STOCK', '')
-            description = product_elem.findtext('DESCRIPTION', '')
-            currency = product_elem.findtext('CURRENCY', 'USD')
+            # Detect format and extract fields accordingly
+            # Mexxsun format fields
+            product_code = (
+                product_elem.findtext('PRODUCT_CODE', '').strip() or
+                product_elem.findtext('stockCode', '').strip()
+            )
+            product_title = (
+                product_elem.findtext('PRODUCT_TITLE', '').strip() or
+                product_elem.findtext('label', '').strip()
+            )
+            
+            # Try multiple price fields
+            price_str = (
+                product_elem.findtext('PRICE_2', '') or
+                product_elem.findtext('price1', '') or  # Solinved/ACS price1 = bayi fiyatı
+                product_elem.findtext('price4', '')     # ACS price4 = bayi fiyatı
+            )
+            
+            category_title = (
+                product_elem.findtext('CATEGORY_TITLE', '') or
+                product_elem.findtext('mainCategory', '') or
+                product_elem.findtext('category', '')
+            )
+            
+            trademark = (
+                product_elem.findtext('TRADEMARK', '') or
+                product_elem.findtext('brand', '')
+            )
+            
+            stock_status = (
+                product_elem.findtext('STOCK', '') or
+                product_elem.findtext('stock', '') or
+                product_elem.findtext('stockAmount', '')
+            )
+            
+            description = (
+                product_elem.findtext('DESCRIPTION', '') or
+                product_elem.findtext('details', '')
+            )
+            
+            currency = (
+                product_elem.findtext('CURRENCY', '') or
+                product_elem.findtext('currencyAbbr', '') or
+                'USD'
+            )
             
             # Parse price
             price = parse_xml_price(price_str)
             
-            # Extract images
+            # Extract images - multiple formats
             images = []
+            
+            # Format 1: Mexxsun IMAGES container
             images_elem = product_elem.find('IMAGES')
             if images_elem is not None:
                 for img in images_elem.findall('IMAGE'):
@@ -6121,11 +6167,28 @@ async def fetch_and_parse_xml(xml_url: str):
                     if img_url:
                         images.append(img_url.strip())
             
+            # Format 2: Solinved/ACS direct picture paths
+            for img_field in ['picture1Path', 'picture2Path', 'picture3Path', 'picture4Path', 'picture']:
+                img_url = product_elem.findtext(img_field, '').strip()
+                if img_url and img_url not in images:
+                    images.append(img_url)
+            
             # Extract datasheet from description
             datasheet_url = extract_datasheet_from_description(description)
             
             # Check stock status
-            in_stock = stock_status and "Stokta Var" in stock_status
+            in_stock = True
+            if stock_status:
+                if "Stokta Var" in stock_status or "var" in stock_status.lower():
+                    in_stock = True
+                elif stock_status.isdigit():
+                    in_stock = int(stock_status) > 0
+                else:
+                    in_stock = stock_status not in ["0", "yok", "Yok", ""]
+            
+            # Skip if no product code or name
+            if not product_code or not product_title:
+                continue
             
             products.append({
                 "product_code": product_code,
@@ -6138,7 +6201,7 @@ async def fetch_and_parse_xml(xml_url: str):
                 "images": images,
                 "datasheet_url": datasheet_url,
                 "description": description,
-                "currency": currency
+                "currency": currency.upper() if currency else "USD"
             })
         except Exception as e:
             logging.error(f"Error parsing product: {e}")
