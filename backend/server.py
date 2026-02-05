@@ -6013,7 +6013,8 @@ async def get_personnel_salary_expenses(
     
     for emp in employees:
         emp_id = emp.get("id")
-        emp_salary = emp.get("salary", 0)
+        # monthly_salary veya salary alanını kontrol et
+        emp_salary = emp.get("monthly_salary", emp.get("salary", 0)) or 0
         
         # Bu personelin primleri
         emp_bonuses = [b for b in bonuses if b.get("employee_id") == emp_id]
@@ -6031,6 +6032,7 @@ async def get_personnel_salary_expenses(
             "personnel_id": emp_id,
             "personnel_name": emp.get("name", ""),
             "position": emp.get("position", ""),
+            "employment_type": emp.get("employment_type", "monthly"),
             "salary": emp_salary,
             "bonus": emp_bonus_total,
             "advance": emp_advance_total,
