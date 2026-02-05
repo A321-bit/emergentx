@@ -6004,11 +6004,19 @@ async def get_personnel_salary_expenses(
         "is_deducted": {"$ne": True}
     }, {"_id": 0}).to_list(500)
     
+    # Bu ay için bordro kayıtlarını al (ödeme durumu için)
+    salaries = await db.salaries.find({
+        "is_active": True,
+        "month": month_str
+    }, {"_id": 0}).to_list(500)
+    
     # Personel bazlı özetle
     by_personnel = []
     total_salary = 0
     total_bonus = 0
     total_advance = 0
+    paid_count = 0
+    unpaid_count = 0
     
     for emp in employees:
         emp_id = emp.get("id")
@@ -6023,6 +6031,15 @@ async def get_personnel_salary_expenses(
         emp_advances = [a for a in advances if a.get("employee_id") == emp_id]
         emp_advance_total = sum(a.get("amount", 0) for a in emp_advances)
         
+        # Bu personelin bordro ödeme durumu
+        emp_salary_record = next((s for s in salaries if s.get("employee_id") == emp_id), None)
+        is_paid = emp_salary_record.get("is_paid", False) if emp_salary_record else False
+        
+        if is_paid:
+            paid_count += 1
+        else:
+            unpaid_count += 1
+        
         total_salary += emp_salary
         total_bonus += emp_bonus_total
         total_advance += emp_advance_total
@@ -6036,8 +6053,11 @@ async def get_personnel_salary_expenses(
             "bonus": emp_bonus_total,
             "advance": emp_advance_total,
             "net": emp_salary + emp_bonus_total - emp_advance_total,
+            "is_paid": is_paid,
+            "salary_record_id": emp_salary_record.get("id") if emp_salary_record else None,
             "bonus_details": emp_bonuses,
             "advance_details": emp_advances
+        })
         })
     
     return {
