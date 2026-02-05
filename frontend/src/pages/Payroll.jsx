@@ -56,6 +56,10 @@ const Payroll = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
   const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
+  const [isEditBonusModalOpen, setIsEditBonusModalOpen] = useState(false);
+  const [isEditAdvanceModalOpen, setIsEditAdvanceModalOpen] = useState(false);
+  const [editingBonus, setEditingBonus] = useState(null);
+  const [editingAdvance, setEditingAdvance] = useState(null);
   
   const [advanceForm, setAdvanceForm] = useState({ employee_id: '', amount: '', description: '' });
   const [bonusForm, setBonusForm] = useState({ employee_id: '', bonus_type: 'sales', amount: '', description: '' });
