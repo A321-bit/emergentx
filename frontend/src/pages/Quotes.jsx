@@ -170,6 +170,7 @@ const Quotes = () => {
   const [quotes, setQuotes] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [customerCategories, setCustomerCategories] = useState([]);
+  const [productCategories, setProductCategories] = useState([]); // Ürün kategorileri
   const [products, setProducts] = useState([]);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
