@@ -1314,12 +1314,8 @@ const Accounting = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {personnelExpenses?.by_personnel?.map((person) => {
-                    const unpaidItems = person.items?.filter(i => !i.is_paid) || [];
-                    const allPaid = unpaidItems.length === 0 && person.items?.length > 0;
-                    
-                    return (
-                      <TableRow key={person.personnel_id} className={!allPaid && person.items?.length > 0 ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''}>
+                  {personnelExpenses?.by_personnel?.map((person) => (
+                      <TableRow key={person.personnel_id} className={!person.is_paid ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''}>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1349,8 +1345,7 @@ const Accounting = () => {
                           )}
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ))}
                   {(!personnelExpenses?.by_personnel || personnelExpenses.by_personnel.length === 0) && (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
