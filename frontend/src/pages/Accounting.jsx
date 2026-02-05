@@ -1338,18 +1338,14 @@ const Accounting = () => {
                           {formatCurrency(person.salary + person.bonus)}
                         </TableCell>
                         <TableCell className="text-center">
-                          {person.items?.length > 0 ? (
-                            allPaid ? (
-                              <Badge className="bg-green-500 text-white">
-                                <Check className="h-3 w-3 mr-1" /> Ödendi
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-orange-400 text-orange-600">
-                                <Clock className="h-3 w-3 mr-1" /> {unpaidItems.length} Bekliyor
-                              </Badge>
-                            )
+                          {person.is_paid ? (
+                            <Badge className="bg-green-500 text-white">
+                              <Check className="h-3 w-3 mr-1" /> Ödendi
+                            </Badge>
                           ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
+                            <Badge variant="outline" className="border-orange-400 text-orange-600">
+                              <Clock className="h-3 w-3 mr-1" /> Bekliyor
+                            </Badge>
                           )}
                         </TableCell>
                       </TableRow>
