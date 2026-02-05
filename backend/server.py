@@ -6068,6 +6068,8 @@ async def get_personnel_salary_expenses(
         "total": total_salary + total_bonus,
         "net_total": total_salary + total_bonus - total_advance,
         "personnel_count": len(employees),
+        "paid_count": paid_count,
+        "unpaid_count": unpaid_count,
         "month": target_month,
         "year": target_year
     }
