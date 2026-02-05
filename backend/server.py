@@ -3727,9 +3727,9 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
     }, {"_id": 0}).to_list(1000)
     monthly_expenses_regular = sum(e.get("amount_tl", e.get("amount", 0)) for e in expenses)
     
-    # 2. Personnel salaries (from personnel collection)
-    personnel = await db.personnel.find({"is_active": True}, {"_id": 0}).to_list(1000)
-    monthly_personnel_salary = sum(p.get("salary", 0) for p in personnel)
+    # 2. Personnel salaries (from employees collection - monthly_salary field)
+    employees_list = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    monthly_personnel_salary = sum(e.get("monthly_salary", e.get("salary", 0)) or 0 for e in employees_list)
     
     # 3. Fixed/recurring expenses
     recurring = await db.recurring_expenses.find({
@@ -3739,8 +3739,7 @@ async def get_dashboard_stats(current_user: dict = Depends(require_permission("d
     monthly_recurring_total = sum(r.get("amount", 0) for r in recurring)
     
     # Total monthly expense = regular expenses + personnel salaries + recurring
-    # Note: Personnel salaries may already be in expenses if transferred, so we calculate both ways
-    total_monthly_expense = monthly_expenses_regular
+    total_monthly_expense = monthly_expenses_regular + monthly_personnel_salary + monthly_recurring_total
     
     # Net profit/loss for current month
     monthly_net = total_monthly_income - total_monthly_expense
