@@ -1375,45 +1375,109 @@ const Quotes = () => {
                   
                   {selectionMode === 'product' ? (
                     <>
-                      <div className="space-y-2">
-                        <Label>Ürün Seç</Label>
-                        <Select value={selectedProduct} onValueChange={(v) => { setSelectedProduct(v); setProductSearch(''); }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Ürün seçin..." />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-60">
-                            {products.map(product => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name} - {formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2 relative">
-                        <Label>Yazarak Ara</Label>
+                      {/* Yazarak Arama */}
+                      <div className="col-span-full space-y-2 relative">
+                        <Label>Ürün Ara</Label>
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="Ürün adı..."
+                            placeholder="Ürün adı veya kodu yazın..."
                             value={productSearch}
                             onChange={(e) => { setProductSearch(e.target.value); if (!e.target.value) setSelectedProduct(''); }}
                             className="pl-9"
                           />
                         </div>
                         {productSearch && !selectedProduct && filteredProducts.length > 0 && (
-                          <div className="border rounded-lg max-h-40 overflow-y-auto bg-background shadow-lg absolute z-50 left-0 right-0 top-full mt-1">
-                            {filteredProducts.slice(0, 8).map(product => (
+                          <div className="border rounded-lg max-h-48 overflow-y-auto bg-background shadow-lg absolute z-50 left-0 right-0 top-full mt-1">
+                            {filteredProducts.slice(0, 10).map(product => (
                               <button
                                 key={product.id}
                                 type="button"
                                 onClick={() => { setSelectedProduct(product.id); setProductSearch(product.name); }}
                                 className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center border-b last:border-b-0"
                               >
-                                <span className="text-sm">{product.name}</span>
-                                <span className="text-xs text-muted-foreground">{formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}</span>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium">{product.name}</span>
+                                  <span className="text-xs text-muted-foreground">{product.category_name}</span>
+                                </div>
+                                <span className="text-sm font-semibold text-primary">{formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}</span>
                               </button>
                             ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Kategori Bazlı Ürün Seçimi */}
+                      <div className="col-span-full space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Kategoriden Seç</Label>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setShowCategoryBrowser(!showCategoryBrowser)}
+                          >
+                            {showCategoryBrowser ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
+                            {showCategoryBrowser ? 'Gizle' : 'Göster'}
+                          </Button>
+                        </div>
+                        
+                        {showCategoryBrowser && (
+                          <div className="border rounded-lg max-h-80 overflow-y-auto bg-background">
+                            {categories.filter(c => c.is_active).map(category => {
+                              const categoryProducts = products.filter(p => p.category_id === category.id);
+                              if (categoryProducts.length === 0) return null;
+                              
+                              return (
+                                <div key={category.id} className="border-b last:border-b-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedCategories(prev => ({
+                                      ...prev,
+                                      [category.id]: !prev[category.id]
+                                    }))}
+                                    className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {expandedCategories[category.id] ? (
+                                        <ChevronDown className="h-4 w-4 text-primary" />
+                                      ) : (
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                      )}
+                                      <span className="font-medium">{category.name}</span>
+                                    </div>
+                                    <Badge variant="secondary" className="text-xs">{categoryProducts.length}</Badge>
+                                  </button>
+                                  
+                                  {expandedCategories[category.id] && (
+                                    <div className="bg-accent/30 border-t">
+                                      {categoryProducts.map(product => (
+                                        <button
+                                          key={product.id}
+                                          type="button"
+                                          onClick={() => { 
+                                            setSelectedProduct(product.id); 
+                                            setProductSearch(product.name);
+                                            setShowCategoryBrowser(false);
+                                          }}
+                                          className={`w-full px-4 py-2 text-left hover:bg-accent flex justify-between items-center border-b last:border-b-0 transition-colors ${
+                                            selectedProduct === product.id ? 'bg-primary/10 border-l-2 border-l-primary' : ''
+                                          }`}
+                                        >
+                                          <div className="flex flex-col pl-4">
+                                            <span className="text-sm">{product.name}</span>
+                                            <span className="text-xs text-muted-foreground">{product.sku}</span>
+                                          </div>
+                                          <span className="text-sm font-semibold text-primary">
+                                            {formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
