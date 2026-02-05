@@ -224,6 +224,8 @@ const Quotes = () => {
   const [productSearch, setProductSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [expandedCategories, setExpandedCategories] = useState({}); // Accordion için
+  const [showCategoryBrowser, setShowCategoryBrowser] = useState(false); // Kategori tarayıcısı görünürlüğü
   
   // EPDK subscription modal
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
