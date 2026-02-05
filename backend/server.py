@@ -6058,7 +6058,6 @@ async def get_personnel_salary_expenses(
             "bonus_details": emp_bonuses,
             "advance_details": emp_advances
         })
-        })
     
     return {
         "by_personnel": by_personnel,
