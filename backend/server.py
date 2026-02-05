@@ -5797,6 +5797,29 @@ async def create_bonus(bonus: BonusCreate, current_user: dict = Depends(require_
         del bonus_dict["_id"]
     return bonus_dict
 
+@api_router.put("/bonuses/{bonus_id}")
+async def update_bonus(bonus_id: str, bonus_data: dict, current_user: dict = Depends(require_permission("payroll_manage"))):
+    """Prim güncelle"""
+    update_fields = {
+        "employee_id": bonus_data.get("employee_id"),
+        "bonus_type": bonus_data.get("bonus_type", "sales"),
+        "amount": bonus_data.get("amount", 0),
+        "description": bonus_data.get("description", ""),
+        "month": bonus_data.get("month"),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Employee name'i güncelle
+    if update_fields["employee_id"]:
+        employee = await db.employees.find_one({"id": update_fields["employee_id"]}, {"_id": 0})
+        if employee:
+            update_fields["employee_name"] = employee.get("name", "")
+    
+    result = await db.bonuses.update_one({"id": bonus_id}, {"$set": update_fields})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Prim bulunamadı")
+    return {"message": "Prim güncellendi"}
+
 @api_router.delete("/bonuses/{bonus_id}")
 async def delete_bonus(bonus_id: str, current_user: dict = Depends(require_permission("payroll_manage"))):
     result = await db.bonuses.update_one({"id": bonus_id}, {"$set": {"is_active": False}})
