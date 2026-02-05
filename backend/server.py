@@ -4945,7 +4945,7 @@ async def get_accounting_summary(
         "sales_income": sales_income_tl,
         "other_income": other_income_tl,
         "total_income": total_income,
-        # Giderler
+        # Giderler (Değişken)
         "total_expenses": total_expenses_tl,
         "fixed_expenses": fixed_expenses_tl,
         "variable_expenses": variable_expenses_tl,
@@ -4954,6 +4954,17 @@ async def get_accounting_summary(
         "unpaid_expenses_count": unpaid_expenses_count,
         "expenses_by_category": expenses_by_category,
         "top_3_expenses": top_3_expenses,
+        # Personel Giderleri
+        "personnel_salary": total_personnel_salary,
+        "personnel_paid": paid_salary,
+        "personnel_unpaid": unpaid_salary,
+        "personnel_count": len(employees_list),
+        # Sabit/Tekrarlayan Giderler
+        "recurring_expenses": total_recurring,
+        # TOPLAM GİDERLER (Her şey dahil)
+        "grand_total_expenses": grand_total_expenses,
+        "grand_paid_expenses": grand_paid_expenses,
+        "grand_unpaid_expenses": grand_total_expenses - grand_paid_expenses,
         # Kar/Zarar
         "gross_profit": gross_profit,
         "net_profit": net_profit,
