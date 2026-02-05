@@ -1974,7 +1974,7 @@ class PremiumQuotePDFGenerator:
         c.setFont(FONT_BOLD, 10)
         c.drawString(col2_x, info_y, "Panel Sayısı:")
         c.setFont(FONT_NORMAL, 10)
-        c.drawString(col2_value_x, info_y, f"{panel_count} Adet – {panel_single_watt:.0f} Wp")
+        c.drawString(col2_value_x, info_y, f"{panel_count} Adet")
         
         info_y -= 15
         c.setFont(FONT_BOLD, 10)
@@ -1984,9 +1984,9 @@ class PremiumQuotePDFGenerator:
         
         info_y -= 15
         c.setFont(FONT_BOLD, 10)
-        c.drawString(col2_x, info_y, "Batarya Kapasitesi:")
+        c.drawString(col2_x, info_y, "Batarya:")
         c.setFont(FONT_NORMAL, 10)
-        c.drawString(col2_value_x, info_y, f"{battery_kwh:.2f} kWh" if battery_kwh > 0 else "Yok")
+        c.drawString(col2_value_x, info_y, f"{battery_kwh:.1f} kWh" if battery_kwh > 0 else "Yok")
         
         y -= box_height + 18
         
