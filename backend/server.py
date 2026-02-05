@@ -5984,40 +5984,72 @@ async def get_personnel_salary_expenses(
     year: Optional[int] = None,
     current_user: dict = Depends(require_permission("finance_view"))
 ):
-    """Personel bazlı maaş ve prim giderlerini getir"""
-    query = {
+    """Personel bazlı maaş ve prim giderlerini getir - employees tablosundan"""
+    # Önce tüm aktif employees'ları al
+    employees = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(100)
+    
+    # Bu ay için primleri al
+    now = datetime.now(timezone.utc)
+    target_month = month or now.month
+    target_year = year or now.year
+    month_str = f"{target_year}-{target_month:02d}"
+    
+    bonuses = await db.bonuses.find({
         "is_active": True,
-        "$or": [
-            {"category_name": "Personel Maaşları"},
-            {"category_name": "Personel Primleri"}
-        ]
+        "month": month_str
+    }, {"_id": 0}).to_list(500)
+    
+    # Avansları al (kesilmemiş)
+    advances = await db.advances.find({
+        "is_active": True,
+        "is_deducted": {"$ne": True}
+    }, {"_id": 0}).to_list(500)
+    
+    # Personel bazlı özetle
+    by_personnel = []
+    total_salary = 0
+    total_bonus = 0
+    total_advance = 0
+    
+    for emp in employees:
+        emp_id = emp.get("id")
+        emp_salary = emp.get("salary", 0)
+        
+        # Bu personelin primleri
+        emp_bonuses = [b for b in bonuses if b.get("employee_id") == emp_id]
+        emp_bonus_total = sum(b.get("amount", 0) for b in emp_bonuses)
+        
+        # Bu personelin avansları
+        emp_advances = [a for a in advances if a.get("employee_id") == emp_id]
+        emp_advance_total = sum(a.get("amount", 0) for a in emp_advances)
+        
+        total_salary += emp_salary
+        total_bonus += emp_bonus_total
+        total_advance += emp_advance_total
+        
+        by_personnel.append({
+            "personnel_id": emp_id,
+            "personnel_name": emp.get("name", ""),
+            "position": emp.get("position", ""),
+            "salary": emp_salary,
+            "bonus": emp_bonus_total,
+            "advance": emp_advance_total,
+            "net": emp_salary + emp_bonus_total - emp_advance_total,
+            "bonus_details": emp_bonuses,
+            "advance_details": emp_advances
+        })
+    
+    return {
+        "by_personnel": by_personnel,
+        "total_salary": total_salary,
+        "total_bonus": total_bonus,
+        "total_advance": total_advance,
+        "total": total_salary + total_bonus,
+        "net_total": total_salary + total_bonus - total_advance,
+        "personnel_count": len(employees),
+        "month": target_month,
+        "year": target_year
     }
-    
-    if month and year:
-        month_prefix = f"{year}-{month:02d}"
-        query["expense_date"] = {"$regex": f"^{month_prefix}"}
-    
-    expenses = await db.expenses.find(query, {"_id": 0}).sort("expense_date", -1).to_list(1000)
-    
-    # Personel bazlı grupla
-    by_personnel = {}
-    for exp in expenses:
-        pid = exp.get("personnel_id", "unknown")
-        pname = exp.get("personnel_name", exp.get("description", "Bilinmiyor"))
-        
-        if pid not in by_personnel:
-            by_personnel[pid] = {
-                "personnel_id": pid,
-                "personnel_name": pname,
-                "salary": 0,
-                "bonus": 0,
-                "total": 0,
-                "items": []
-            }
-        
-        amount = exp.get("amount_tl", exp.get("amount", 0))
-        if exp.get("category_name") == "Personel Maaşları":
-            by_personnel[pid]["salary"] += amount
         else:
             by_personnel[pid]["bonus"] += amount
         
