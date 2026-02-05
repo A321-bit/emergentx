@@ -1335,7 +1335,7 @@ const Accounting = () => {
                           {formatCurrency(person.bonus)}
                         </TableCell>
                         <TableCell className="text-right font-mono font-bold">
-                          {formatCurrency(person.total)}
+                          {formatCurrency(person.salary + person.bonus)}
                         </TableCell>
                         <TableCell className="text-center">
                           {person.items?.length > 0 ? (
