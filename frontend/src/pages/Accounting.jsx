@@ -602,7 +602,7 @@ const Accounting = () => {
       </div>
 
       {/* Main KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {/* Toplam Gelir */}
         <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg shadow-emerald-500/20">
           <CardContent className="p-4">
@@ -621,20 +621,39 @@ const Accounting = () => {
           </CardContent>
         </Card>
 
-        {/* Toplam Gider */}
+        {/* Toplam Gider (Tüm giderler dahil) */}
         <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg shadow-red-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-red-100 text-xs font-medium">Toplam Gider</p>
-                <p className="text-xl font-bold mt-1">{formatCurrency(summary?.total_expenses)}</p>
-                <div className="flex items-center gap-2 mt-1 text-xs text-red-200">
-                  <span>S: {formatCurrency(summary?.fixed_expenses)}</span>
-                  <span>D: {formatCurrency(summary?.variable_expenses)}</span>
+                <p className="text-xl font-bold mt-1">{formatCurrency(summary?.grand_total_expenses)}</p>
+                <div className="flex flex-col gap-0.5 mt-1 text-[10px] text-red-200">
+                  <span>Personel: {formatCurrency(summary?.personnel_salary)}</span>
+                  <span>Sabit: {formatCurrency(summary?.recurring_expenses)} | Diğer: {formatCurrency(summary?.total_expenses)}</span>
                 </div>
               </div>
               <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
                 <TrendingDown className="h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ödenmiş Giderler - YENİ */}
+        <Card className="bg-gradient-to-br from-green-500 to-teal-600 text-white border-0 shadow-lg shadow-green-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-xs font-medium">Ödenmiş Giderler</p>
+                <p className="text-xl font-bold mt-1">{formatCurrency(summary?.grand_paid_expenses)}</p>
+                <div className="flex flex-col gap-0.5 mt-1 text-[10px] text-green-200">
+                  <span>Maaş: {formatCurrency(summary?.personnel_paid)}</span>
+                  <span>Diğer: {formatCurrency(summary?.paid_expenses)}</span>
+                </div>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                <Check className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
