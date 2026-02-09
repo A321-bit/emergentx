@@ -422,6 +422,190 @@ const Reports = () => {
           </div>
         </TabsContent>
 
+        {/* QUOTE ANALYSIS TAB - YENİ */}
+        <TabsContent value="quote-analysis" className="space-y-6">
+          {quoteAnalysisLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="spinner h-10 w-10" />
+            </div>
+          ) : (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-blue-100 text-xs">Toplam Teklif</p>
+                        <p className="text-2xl font-bold">{quoteAnalysis?.summary?.total_count || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <TrendingUp className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-emerald-100 text-xs">Toplam Tutar</p>
+                        <p className="text-2xl font-bold">{formatTRY(quoteAnalysis?.summary?.total_value)}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <CheckCircle className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-green-100 text-xs">Yüksek Potansiyel</p>
+                        <p className="text-2xl font-bold">{quoteAnalysis?.by_potential?.yuksek_potansiyel?.count || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white border-0">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <AlertTriangle className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-yellow-100 text-xs">Düşük Potansiyel</p>
+                        <p className="text-2xl font-bold">{quoteAnalysis?.by_potential?.dusuk_potansiyel?.count || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Kullanıcı Bazlı Teklif */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Kullanıcı Bazlı Teklif Analizi
+                  </CardTitle>
+                  <CardDescription>Kim kaç adet teklif vermiş?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Kullanıcı</TableHead>
+                        <TableHead className="text-center">Adet</TableHead>
+                        <TableHead className="text-right">Tutar</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(quoteAnalysis?.by_user || []).map((item, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{item.user_name}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="secondary">{item.count}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-mono">{formatTRY(item.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {(!quoteAnalysis?.by_user || quoteAnalysis.by_user.length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                            Bu dönemde teklif bulunamadı
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Potansiyel ve İl Dağılımı */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Potansiyel Dağılımı */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Potansiyel Dağılımı
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {quoteAnalysis?.by_potential && Object.entries(quoteAnalysis.by_potential).map(([key, val]) => {
+                      const labels = {
+                        'yuksek_potansiyel': { label: 'Yüksek Potansiyel', color: 'bg-green-500' },
+                        'dusuk_potansiyel': { label: 'Düşük Potansiyel', color: 'bg-yellow-500' },
+                        'olumlu': { label: 'Olumlu', color: 'bg-blue-500' },
+                        'bilgi_amacli': { label: 'Bilgi Amaçlı', color: 'bg-gray-500' }
+                      };
+                      return (
+                        <div key={key} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-3 w-3 rounded-full ${labels[key]?.color || 'bg-gray-500'}`} />
+                            <span className="font-medium text-sm">{labels[key]?.label || key}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold">{val.count} adet</span>
+                            <span className="text-xs text-muted-foreground ml-2">({formatTRY(val.value)})</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+
+                {/* İl Bazlı Dağılım */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-5 w-5" />
+                      İl Bazlı Dağılım (İlk 10)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>İl</TableHead>
+                          <TableHead className="text-center">Adet</TableHead>
+                          <TableHead className="text-right">Tutar</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(quoteAnalysis?.by_city || []).slice(0, 10).map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">{item.city}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline">{item.count}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">{formatTRY(item.value)}</TableCell>
+                          </TableRow>
+                        ))}
+                        {(!quoteAnalysis?.by_city || quoteAnalysis.by_city.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                              Veri bulunamadı
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </TabsContent>
+
         {/* REVENUE TAB */}
         <TabsContent value="revenue" className="space-y-6">
           {/* Period Revenue Cards */}
