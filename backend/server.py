@@ -3816,6 +3816,123 @@ async def get_sales_by_user(current_user: dict = Depends(require_permission("fin
     results = await db.quotes.aggregate(pipeline).to_list(100)
     return [{"name": r["_id"], "total_sales": r["total_sales"], "count": r["count"]} for r in results]
 
+# ==================== REPORTS - SATIŞ ANALİZİ ====================
+
+@api_router.get("/reports/quote-analysis")
+async def get_quote_analysis_report(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    current_user: dict = Depends(require_permission("reports_view"))
+):
+    """
+    Teklif Analiz Raporu:
+    - Toplam teklif sayısı ve tutarı
+    - Kullanıcı bazlı teklif sayıları
+    - Potansiyel durumuna göre dağılım
+    - İl bazlı dağılım
+    """
+    now = datetime.now(timezone.utc)
+    
+    # Varsayılan: Bu ay
+    if not date_from:
+        date_from = now.replace(day=1, hour=0, minute=0, second=0).isoformat()
+    if not date_to:
+        date_to = now.isoformat()
+    
+    # Tüm teklifleri çek
+    quotes = await db.quotes.find({"is_active": True}, {"_id": 0}).to_list(10000)
+    
+    # Tarih filtresi uygula
+    filtered_quotes = []
+    start_date = datetime.fromisoformat(date_from.replace("Z", "+00:00"))
+    end_date = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
+    
+    for q in quotes:
+        try:
+            quote_date_raw = q.get("created_at") or q.get("quote_date")
+            if isinstance(quote_date_raw, str):
+                quote_date = datetime.fromisoformat(quote_date_raw.replace("Z", "+00:00"))
+            elif isinstance(quote_date_raw, datetime):
+                quote_date = quote_date_raw if quote_date_raw.tzinfo else quote_date_raw.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            if quote_date.tzinfo is None:
+                quote_date = quote_date.replace(tzinfo=timezone.utc)
+            if start_date <= quote_date <= end_date:
+                filtered_quotes.append(q)
+        except Exception:
+            continue
+    
+    # Toplam istatistikler
+    total_count = len(filtered_quotes)
+    total_value = sum(q.get("total", 0) for q in filtered_quotes)
+    
+    # Kullanıcı bazlı dağılım
+    by_user = {}
+    for q in filtered_quotes:
+        user_name = q.get("created_by_name", "Bilinmeyen")
+        if user_name not in by_user:
+            by_user[user_name] = {"count": 0, "value": 0}
+        by_user[user_name]["count"] += 1
+        by_user[user_name]["value"] += q.get("total", 0)
+    
+    # Potansiyel durumuna göre dağılım
+    by_potential = {
+        "yuksek_potansiyel": {"count": 0, "value": 0},
+        "dusuk_potansiyel": {"count": 0, "value": 0},
+        "olumlu": {"count": 0, "value": 0},
+        "bilgi_amacli": {"count": 0, "value": 0}
+    }
+    for q in filtered_quotes:
+        status = q.get("customer_status", "bilgi_amacli")
+        if status in by_potential:
+            by_potential[status]["count"] += 1
+            by_potential[status]["value"] += q.get("total", 0)
+    
+    # İl bazlı dağılım (müşteri adresi üzerinden)
+    by_city = {}
+    customer_ids = list(set(q.get("customer_id") for q in filtered_quotes if q.get("customer_id")))
+    customers = await db.customers.find({"id": {"$in": customer_ids}}, {"_id": 0}).to_list(10000)
+    customer_map = {c["id"]: c for c in customers}
+    
+    for q in filtered_quotes:
+        customer = customer_map.get(q.get("customer_id"), {})
+        city = customer.get("city", "Bilinmeyen") or "Bilinmeyen"
+        if city not in by_city:
+            by_city[city] = {"count": 0, "value": 0}
+        by_city[city]["count"] += 1
+        by_city[city]["value"] += q.get("total", 0)
+    
+    # Durum bazlı dağılım
+    by_status = {}
+    for q in filtered_quotes:
+        status = q.get("status", "taslak")
+        if status not in by_status:
+            by_status[status] = {"count": 0, "value": 0}
+        by_status[status]["count"] += 1
+        by_status[status]["value"] += q.get("total", 0)
+    
+    # Kullanıcı listesini sırala (en çok teklif veren)
+    user_list = [{"user_name": k, **v} for k, v in by_user.items()]
+    user_list.sort(key=lambda x: x["count"], reverse=True)
+    
+    # İl listesini sırala (en çok teklif verilen)
+    city_list = [{"city": k, **v} for k, v in by_city.items()]
+    city_list.sort(key=lambda x: x["count"], reverse=True)
+    
+    return {
+        "date_from": date_from,
+        "date_to": date_to,
+        "summary": {
+            "total_count": total_count,
+            "total_value": round(total_value, 2)
+        },
+        "by_user": user_list,
+        "by_potential": by_potential,
+        "by_city": city_list,
+        "by_status": by_status
+    }
+
 @api_router.get("/stats/annual-finance")
 async def get_annual_finance_stats(
     year: Optional[int] = None,
