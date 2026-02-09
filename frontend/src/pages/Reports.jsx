@@ -140,6 +140,7 @@ const Reports = () => {
 
   const handleFilter = () => {
     fetchReports(startDate, endDate);
+    fetchQuoteAnalysis();
   };
 
   const handleClearFilter = () => {
