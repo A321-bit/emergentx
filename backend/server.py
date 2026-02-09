@@ -1260,6 +1260,33 @@ async def delete_user(user_id: str, current_user: dict = Depends(require_permiss
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     return {"message": "Kullanıcı silindi"}
 
+class PasswordResetRequest(BaseModel):
+    new_password: str
+
+@api_router.put("/users/{user_id}/reset-password")
+async def reset_user_password(user_id: str, data: PasswordResetRequest, current_user: dict = Depends(require_permission("users_manage"))):
+    """Admin tarafından kullanıcı şifresi sıfırlama"""
+    # Kullanıcıyı kontrol et
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    # Şifre uzunluğu kontrolü
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Şifre en az 6 karakter olmalıdır")
+    
+    # Yeni şifreyi hashle
+    hashed_password = hashlib.sha256(data.new_password.encode()).hexdigest()
+    
+    # user_passwords koleksiyonunu güncelle
+    result = await db.user_passwords.update_one(
+        {"user_id": user_id},
+        {"$set": {"password_hash": hashed_password}},
+        upsert=True
+    )
+    
+    return {"message": f"{user.get('name', 'Kullanıcı')} için şifre başarıyla sıfırlandı"}
+
 # ==================== CUSTOMER CATEGORY ROUTES ====================
 
 @api_router.post("/customer-categories", response_model=dict)
