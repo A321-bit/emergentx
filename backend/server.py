@@ -3863,9 +3863,14 @@ async def get_quote_analysis_report(
         except Exception:
             continue
     
+    # Helper function to get quote total
+    def get_quote_total(q):
+        """Teklif toplam tutarını al - total_tl, grand_total veya total alanlarından"""
+        return q.get("total_tl") or q.get("grand_total") or q.get("total") or 0
+    
     # Toplam istatistikler
     total_count = len(filtered_quotes)
-    total_value = sum(q.get("total", 0) for q in filtered_quotes)
+    total_value = sum(get_quote_total(q) for q in filtered_quotes)
     
     # Kullanıcı bazlı dağılım
     by_user = {}
@@ -3874,7 +3879,7 @@ async def get_quote_analysis_report(
         if user_name not in by_user:
             by_user[user_name] = {"count": 0, "value": 0}
         by_user[user_name]["count"] += 1
-        by_user[user_name]["value"] += q.get("total", 0)
+        by_user[user_name]["value"] += get_quote_total(q)
     
     # Potansiyel durumuna göre dağılım
     by_potential = {
@@ -3887,7 +3892,7 @@ async def get_quote_analysis_report(
         status = q.get("customer_status", "bilgi_amacli")
         if status in by_potential:
             by_potential[status]["count"] += 1
-            by_potential[status]["value"] += q.get("total", 0)
+            by_potential[status]["value"] += get_quote_total(q)
     
     # İl bazlı dağılım (müşteri adresi üzerinden)
     by_city = {}
@@ -3901,7 +3906,7 @@ async def get_quote_analysis_report(
         if city not in by_city:
             by_city[city] = {"count": 0, "value": 0}
         by_city[city]["count"] += 1
-        by_city[city]["value"] += q.get("total", 0)
+        by_city[city]["value"] += get_quote_total(q)
     
     # Durum bazlı dağılım
     by_status = {}
@@ -3910,7 +3915,7 @@ async def get_quote_analysis_report(
         if status not in by_status:
             by_status[status] = {"count": 0, "value": 0}
         by_status[status]["count"] += 1
-        by_status[status]["value"] += q.get("total", 0)
+        by_status[status]["value"] += get_quote_total(q)
     
     # Kullanıcı listesini sırala (en çok teklif veren)
     user_list = [{"user_name": k, **v} for k, v in by_user.items()]
