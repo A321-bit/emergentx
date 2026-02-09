@@ -5284,6 +5284,7 @@ async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCre
     exp_dict = expense.model_dump()
     
     # Kategori adını al
+    cat = None
     if expense.category_id:
         cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
         if cat:
@@ -5292,6 +5293,44 @@ async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCre
     result = await db.recurring_expenses.update_one({"id": expense_id, "is_active": True}, {"$set": exp_dict})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Tekrarlayan gider bulunamadı")
+    
+    # OTOMATİK SENKRONİZASYON: Bu tekrarlayan giderden oluşturulmuş mevcut ay giderini güncelle
+    now = datetime.now(timezone.utc)
+    current_month = now.month
+    current_year = now.year
+    
+    # Bu tekrarlayan giderden oluşturulan ve bu ayın giderini bul
+    existing_expense = await db.expenses.find_one({
+        "recurring_expense_id": expense_id,
+        "is_active": True
+    })
+    
+    if existing_expense:
+        # Giderin tarihini kontrol et - bu ayki mi?
+        try:
+            exp_date_str = existing_expense.get("expense_date", "")
+            if isinstance(exp_date_str, str):
+                exp_date = datetime.fromisoformat(exp_date_str.replace("Z", "+00:00"))
+            else:
+                exp_date = exp_date_str
+            
+            if exp_date.month == current_month and exp_date.year == current_year:
+                # Bu ayki gideri güncelle
+                expense_type = cat.get("expense_type", "fixed") if cat else "fixed"
+                update_data = {
+                    "category_id": exp_dict["category_id"],
+                    "category_name": exp_dict.get("category_name", ""),
+                    "expense_type": expense_type,
+                    "amount": exp_dict["amount"],
+                    "amount_tl": exp_dict["amount"],
+                    "description": exp_dict.get("description", f"Tekrarlayan: {exp_dict.get('category_name', '')}")
+                }
+                await db.expenses.update_one(
+                    {"id": existing_expense["id"]},
+                    {"$set": update_data}
+                )
+        except Exception:
+            pass
     
     updated = await db.recurring_expenses.find_one({"id": expense_id}, {"_id": 0})
     return updated
