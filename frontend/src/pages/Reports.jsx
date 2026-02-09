@@ -91,9 +91,14 @@ const Reports = () => {
   const [endDate, setEndDate] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [exporting, setExporting] = useState(false);
+  
+  // Quote analysis state
+  const [quoteAnalysis, setQuoteAnalysis] = useState(null);
+  const [quoteAnalysisLoading, setQuoteAnalysisLoading] = useState(false);
 
   useEffect(() => {
     fetchReports();
+    fetchQuoteAnalysis();
   }, []);
 
   const fetchReports = async (filterStart = null, filterEnd = null) => {
