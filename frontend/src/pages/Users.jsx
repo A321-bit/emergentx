@@ -49,6 +49,11 @@ const Users = () => {
     phone: '',
     role_id: ''
   });
+  
+  // Password reset state
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordResetUser, setPasswordResetUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     fetchData();
