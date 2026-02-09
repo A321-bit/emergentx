@@ -1233,9 +1233,14 @@ const Accounting = () => {
                         </TableCell>
                         {canManage && (
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(exp.id)} className="text-destructive h-8 w-8">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => handleEditExpense(exp)} className="h-8 w-8 text-blue-600 hover:text-blue-700">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(exp.id)} className="text-destructive h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         )}
                       </TableRow>
