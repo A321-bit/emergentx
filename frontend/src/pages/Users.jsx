@@ -112,6 +112,33 @@ const Users = () => {
     }
   };
 
+  // Şifre sıfırlama modal'ını aç
+  const handleOpenPasswordReset = (user) => {
+    setPasswordResetUser(user);
+    setNewPassword('');
+    setIsPasswordModalOpen(true);
+  };
+
+  // Şifre sıfırlama
+  const handlePasswordReset = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('Şifre en az 6 karakter olmalıdır');
+      return;
+    }
+
+    try {
+      await axios.put(`${API_URL}/api/users/${passwordResetUser.id}/reset-password`, {
+        new_password: newPassword
+      });
+      toast.success(`${passwordResetUser.name} için şifre başarıyla sıfırlandı`);
+      setIsPasswordModalOpen(false);
+      setPasswordResetUser(null);
+      setNewPassword('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Şifre sıfırlama başarısız');
+    }
+  };
+
   const handleEdit = (user) => {
     setEditingUser(user);
     setFormData({
