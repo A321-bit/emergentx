@@ -122,6 +122,22 @@ const Reports = () => {
     }
   };
 
+  const fetchQuoteAnalysis = async () => {
+    try {
+      setQuoteAnalysisLoading(true);
+      const params = {};
+      if (startDate) params.date_from = startDate;
+      if (endDate) params.date_to = endDate;
+      
+      const response = await axios.get(`${API_URL}/api/reports/quote-analysis`, { params });
+      setQuoteAnalysis(response.data);
+    } catch (error) {
+      console.error('Quote analysis error:', error);
+    } finally {
+      setQuoteAnalysisLoading(false);
+    }
+  };
+
   const handleFilter = () => {
     fetchReports(startDate, endDate);
   };
