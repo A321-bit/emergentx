@@ -4933,12 +4933,13 @@ async def get_accounting_summary(
     # Calculate profits
     total_income = sales_income_tl + other_income_tl
     gross_profit = sales_income_tl - sales_cost_tl  # Brüt kar (satış - maliyet)
-    net_profit = gross_profit + other_income_tl - total_expenses_tl  # Net kar
+    # Net Kar = Brüt Kar - Toplam Giderler (personel + sabit + değişken)
+    net_profit = gross_profit - grand_total_expenses
     
     # Net kar marjı
     profit_margin = (net_profit / total_income * 100) if total_income > 0 else 0
     
-    # Budget check
+    # Budget check - Bütçe Kalan = Bütçe Tutarı - Ödenmiş Giderler
     budget = await db.budgets.find_one({
         "year": year, 
         "month": month, 
@@ -4948,12 +4949,14 @@ async def get_accounting_summary(
     budget_status = None
     if budget:
         budget_total = budget.get("total_budget", 0)
-        budget_exceeded = total_expenses_tl > budget_total
-        budget_percentage = (total_expenses_tl / budget_total * 100) if budget_total > 0 else 0
+        # Bütçe hesaplama: Bütçe - Ödenmiş Giderler
+        budget_remaining = budget_total - grand_paid_expenses
+        budget_exceeded = grand_paid_expenses > budget_total
+        budget_percentage = (grand_paid_expenses / budget_total * 100) if budget_total > 0 else 0
         budget_status = {
             "total_budget": budget_total,
-            "spent": total_expenses_tl,
-            "remaining": budget_total - total_expenses_tl,
+            "spent": grand_paid_expenses,  # Ödenmiş giderler
+            "remaining": budget_remaining,  # Kalan = Bütçe - Ödenmiş
             "percentage": budget_percentage,
             "exceeded": budget_exceeded,
             "category_budgets": budget.get("category_budgets", {})
