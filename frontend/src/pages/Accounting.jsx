@@ -253,9 +253,15 @@ const Accounting = () => {
         due_date: expenseForm.due_date ? new Date(expenseForm.due_date).toISOString() : null
       };
       
-      await axios.post(`${API_URL}/api/expenses`, data);
-      toast.success('Gider eklendi');
+      if (editingExpense) {
+        await axios.put(`${API_URL}/api/expenses/${editingExpense.id}`, data);
+        toast.success('Gider güncellendi');
+      } else {
+        await axios.post(`${API_URL}/api/expenses`, data);
+        toast.success('Gider eklendi');
+      }
       setIsExpenseModalOpen(false);
+      setEditingExpense(null);
       setExpenseForm({
         category_id: '',
         amount: '',
@@ -269,6 +275,21 @@ const Accounting = () => {
     } catch (error) {
       toast.error(error.response?.data?.detail || 'İşlem başarısız');
     }
+  };
+
+  // Gider düzenleme modal açma
+  const handleEditExpense = (exp) => {
+    setEditingExpense(exp);
+    setExpenseForm({
+      category_id: exp.category_id || '',
+      amount: exp.amount?.toString() || '',
+      currency: exp.currency || 'TRY',
+      exchange_rate: exp.exchange_rate?.toString() || '34.50',
+      expense_date: exp.expense_date ? new Date(exp.expense_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      due_date: exp.due_date ? new Date(exp.due_date).toISOString().split('T')[0] : '',
+      description: exp.description || ''
+    });
+    setIsExpenseModalOpen(true);
   };
 
   const handleIncomeSubmit = async (e) => {
