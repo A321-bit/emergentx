@@ -112,6 +112,7 @@ const Accounting = () => {
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState(null);
+  const [editingExpense, setEditingExpense] = useState(null);
   
   // Form states
   const [expenseForm, setExpenseForm] = useState({
