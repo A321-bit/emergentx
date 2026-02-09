@@ -1,0 +1,101 @@
+{
+  "summary": "Tested 11 new features for Solar Energy Sales Management System (Muhasebe, Finans, Raporlar modules). All backend API tests passed (19/19 = 100%). All frontend UI components verified via Playwright.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "GET /api/accounting/summary - Returns 200 with net_profit, gross_profit, grand_total_expenses",
+    "Net Kar calculation verified: Net Kar = Brüt Kar - Toplam Giderler",
+    "Budget calculation verified: Bütçe Kalan = Bütçe Tutarı - Ödenmiş Giderler",
+    "GET /api/stats/annual-finance - Returns annual_gross_profit, annual_gross_profit_margin",
+    "GET /api/stats/annual-finance - Returns annual_profit, profit_margin, is_loss",
+    "GET /api/stats/annual-finance - Returns annual_expenses_variable, annual_personnel_expenses, annual_recurring_expenses",
+    "Annual Net Kar calculation verified: Yıllık Net Kar = Brüt Kar - Toplam Giderler",
+    "GET /api/reports/quote-analysis - Returns 200 with summary (total_count, total_value)",
+    "GET /api/reports/quote-analysis - Returns by_user (kullanıcı bazlı teklif sayıları)",
+    "GET /api/reports/quote-analysis - Returns by_potential (yuksek_potansiyel, dusuk_potansiyel)",
+    "GET /api/reports/quote-analysis - Returns by_city (il bazlı dağılım)",
+    "PUT /api/expenses/{expense_id} - Returns 200 and updates expense correctly",
+    "PUT /api/expenses/invalid-id - Returns 404 for non-existent expense"
+  ],
+
+  "frontend_verification": {
+    "accounting_page": {
+      "status": "PASS",
+      "details": "Muhasebe Kontrol Paneli shows: Net Kâr (₺-203.845,65 ZARAR), Brüt Kâr (₺59.000,00), Toplam Gider (₺262.845,65), Ödenmiş Giderler (₺89.000,00), Bütçe (₺211.000,00 - %30 kullanıldı)"
+    },
+    "expense_edit_modal": {
+      "status": "PASS",
+      "details": "Gider Düzenle modal opens with fields: Kategori, Tutar, Para Birimi, Tarih, Vade Tarihi, Açıklama. Edit buttons (pencil icons) visible in expenses table."
+    },
+    "finance_page": {
+      "status": "PASS",
+      "details": "Finans Paneli shows: Brüt Kar Marjı (₺59.000 - Marj: %22.8), Yıllık Net Kar (₺2.630.148 ZARAR), Yıllık Gider Dağılımı (Değişken: ₺75.000, Personel: ₺2.092.148, Sabit: ₺522.000)"
+    },
+    "reports_quote_analysis": {
+      "status": "PASS",
+      "details": "Teklif Analizi tab shows: Toplam Teklif (3), Toplam Tutar (₺0), Yüksek/Düşük Potansiyel cards, Kullanıcı Bazlı Teklif Analizi table, Potansiyel Dağılımı section, İl Bazlı Dağılım (İlk 10) table"
+    }
+  },
+
+  "features_tested": [
+    "1. Muhasebe Kontrol Panelinde Net Kar hesaplama: Net Kar = Brüt Kar - Toplam Giderler ✓",
+    "2. Bütçe hesaplama: Bütçe Tutarı - Ödenmiş Giderler ✓",
+    "3. Finans panelinde Brüt Kar Marjı kartı ✓",
+    "4. Finans panelinde Yıllık Net Kar hesaplama ✓",
+    "5. Finans panelinde Yıllık Gider Dağılımı (Değişken/Personel/Sabit) ✓",
+    "6. Raporlar sayfasında Teklif Analizi sekmesi ✓",
+    "7. Teklif Analizi - Kullanıcı bazlı teklif sayıları ✓",
+    "8. Teklif Analizi - Potansiyel dağılımı (Yüksek/Düşük) ✓",
+    "9. Teklif Analizi - İl bazlı teklif dağılımı ✓",
+    "10. Giderler tablosunda düzenleme butonu ✓",
+    "11. Gider düzenleme modal açılıyor ✓"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_accounting_finance_reports.py",
+    "/app/test_reports/pytest/pytest_accounting_finance.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [],
+
+  "updated_files": [
+    "/app/backend/tests/test_accounting_finance_reports.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100% (4/4 UI verifications passed)"
+  },
+
+  "test_credentials": {
+    "email": "admin@solar.com",
+    "password": "admin123"
+  },
+
+  "seed_data_creation": "No new seed data created",
+
+  "retest_needed": false,
+
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "All 11 features verified: Accounting page Net Kar/Brüt Kar/Bütçe calculations, Finance page Brüt Kar Marjı and Yıllık Gider Dağılımı, Reports page Teklif Analizi tab with user/potential/city distributions, Expense edit functionality. Backend APIs all working correctly. No issues found.",
+
+  "screenshots": [
+    ".screenshots/accounting_gider_gelir.png",
+    ".screenshots/expense_edit_modal.png",
+    ".screenshots/finance_page.png",
+    ".screenshots/reports_quote_analysis.png"
+  ]
+}
