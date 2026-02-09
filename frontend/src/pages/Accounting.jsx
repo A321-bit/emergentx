@@ -1695,11 +1695,25 @@ const Accounting = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Add Expense Modal */}
-      <Dialog open={isExpenseModalOpen} onOpenChange={setIsExpenseModalOpen}>
+      {/* Add/Edit Expense Modal */}
+      <Dialog open={isExpenseModalOpen} onOpenChange={(open) => {
+        setIsExpenseModalOpen(open);
+        if (!open) {
+          setEditingExpense(null);
+          setExpenseForm({
+            category_id: '',
+            amount: '',
+            currency: 'TRY',
+            exchange_rate: '34.50',
+            expense_date: new Date().toISOString().split('T')[0],
+            due_date: '',
+            description: ''
+          });
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Gider Ekle</DialogTitle>
+            <DialogTitle>{editingExpense ? 'Gider Düzenle' : 'Gider Ekle'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleExpenseSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -1784,7 +1798,7 @@ const Accounting = () => {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsExpenseModalOpen(false)}>İptal</Button>
-              <Button type="submit">Ekle</Button>
+              <Button type="submit">{editingExpense ? 'Güncelle' : 'Ekle'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
