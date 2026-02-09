@@ -386,6 +386,57 @@ const Users = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Password Reset Modal */}
+      <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+        <DialogContent className="max-w-md" data-testid="password-reset-modal">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-amber-500" />
+              Şifre Sıfırla
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>{passwordResetUser?.name}</strong> kullanıcısının şifresini sıfırlamak üzeresiniz.
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                Email: {passwordResetUser?.email}
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Yeni Şifre</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="En az 6 karakter"
+                data-testid="new-password-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Yeni şifre kullanıcıya iletilmelidir.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+              İptal
+            </Button>
+            <Button 
+              onClick={handlePasswordReset}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+              data-testid="confirm-password-reset"
+            >
+              <Key className="h-4 w-4 mr-2" />
+              Şifreyi Sıfırla
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
