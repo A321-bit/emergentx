@@ -461,6 +461,11 @@ class PremiumQuotePDFGenerator:
         if bank_pdf:
             pdf_parts.append(bank_pdf)
         
+        # REFERANSLAR - Ödeme seçeneklerinden sonra, datasheetlerden önce
+        reference_pdfs = self._get_reference_pdf()
+        for ref in reference_pdfs:
+            pdf_parts.append(ref)
+        
         # PAGE 8: Datasheet'ler
         datasheet_pdfs = self._collect_datasheets(quote_data.get('items', []))
         for ds in datasheet_pdfs:
