@@ -147,6 +147,7 @@ const Reports = () => {
     setStartDate('');
     setEndDate('');
     fetchReports('', '');
+    fetchQuoteAnalysis();
   };
 
   const handleExportExcel = async () => {
