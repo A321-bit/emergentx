@@ -1812,6 +1812,23 @@ class PremiumQuotePDFGenerator:
         
         return table
     
+    def _get_reference_pdf(self) -> list:
+        """Get reference PDF pages from static folder"""
+        reference_path = Path(__file__).parent / "static" / "referans.pdf"
+        reference_pages = []
+        
+        if reference_path.exists():
+            try:
+                with open(reference_path, 'rb') as f:
+                    reference_pages.append(BytesIO(f.read()))
+                logger.info("Reference PDF added successfully")
+            except Exception as e:
+                logger.warning(f"Could not load reference PDF: {e}")
+        else:
+            logger.warning(f"Reference PDF not found at: {reference_path}")
+        
+        return reference_pages
+    
     def _collect_datasheets(self, items: list) -> list:
         """Collect datasheet PDFs"""
         
