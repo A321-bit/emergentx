@@ -3972,9 +3972,16 @@ async def get_annual_finance_stats(
         
         # Yıllık Gider
         "annual_expenses": round(annual_expenses, 2),
+        "annual_expenses_variable": round(annual_expenses_variable, 2),
+        "annual_personnel_expenses": round(annual_personnel_expenses, 2),
+        "annual_recurring_expenses": round(annual_recurring_expenses, 2),
         "expense_by_category": expense_by_category,
         
-        # Yıllık Kar
+        # Brüt Kar Marjı (YENİ)
+        "annual_gross_profit": round(annual_gross_profit, 2),
+        "annual_gross_profit_margin": round(annual_gross_profit_margin, 1),
+        
+        # Yıllık Net Kar
         "annual_profit": round(annual_profit, 2),
         "profit_margin": round(profit_margin, 1),
         "is_loss": annual_profit < 0,
