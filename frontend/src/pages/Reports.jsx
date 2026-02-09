@@ -213,8 +213,9 @@ const Reports = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 lg:grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-2 lg:grid-cols-6 w-full">
           <TabsTrigger value="overview" data-testid="tab-overview">Genel Bakış</TabsTrigger>
+          <TabsTrigger value="quote-analysis" data-testid="tab-quote-analysis">Teklif Analizi</TabsTrigger>
           <TabsTrigger value="revenue" data-testid="tab-revenue">Cirolar</TabsTrigger>
           <TabsTrigger value="collections" data-testid="tab-collections">Tahsilatlar</TabsTrigger>
           <TabsTrigger value="expenses" data-testid="tab-expenses">Giderler</TabsTrigger>
