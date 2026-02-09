@@ -3880,22 +3880,46 @@ async def get_annual_finance_stats(
     
     total_annual_sales = annual_sales_revenue + annual_quote_revenue
     
-    # ========== YILLIK GİDER ==========
+    # ========== YILLIK GİDER (Personel ve Sabit dahil) ==========
     expenses = await db.expenses.find({
         "is_active": True,
         "expense_date": {"$regex": f"^{year_prefix}"}
     }, {"_id": 0}).to_list(10000)
     
-    annual_expenses = sum(e.get("amount_tl", e.get("amount", 0)) for e in expenses)
+    annual_expenses_variable = sum(e.get("amount_tl", e.get("amount", 0)) for e in expenses)
+    
+    # Personel giderleri (yıllık)
+    employees_list = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(100)
+    total_monthly_personnel = sum(e.get("monthly_salary", e.get("salary", 0)) or 0 for e in employees_list)
+    annual_personnel_expenses = total_monthly_personnel * 12  # Yıllık personel gideri
+    
+    # Sabit/Tekrarlayan giderler (yıllık)
+    recurring = await db.recurring_expenses.find({"is_active": True, "is_active_recurring": True}, {"_id": 0}).to_list(100)
+    total_monthly_recurring = sum(r.get("amount", 0) for r in recurring)
+    annual_recurring_expenses = total_monthly_recurring * 12  # Yıllık sabit gider
+    
+    # Toplam Yıllık Gider = Değişken + Personel + Sabit
+    annual_expenses = annual_expenses_variable + annual_personnel_expenses + annual_recurring_expenses
     
     # Kategorilere göre gider dağılımı
     expense_by_category = {}
     for e in expenses:
         cat = e.get("category_name", "Diğer")
         expense_by_category[cat] = expense_by_category.get(cat, 0) + e.get("amount_tl", e.get("amount", 0))
+    # Personel ve sabit giderleri kategoriye ekle
+    if annual_personnel_expenses > 0:
+        expense_by_category["Personel Maaşları"] = annual_personnel_expenses
+    if annual_recurring_expenses > 0:
+        expense_by_category["Sabit Giderler"] = annual_recurring_expenses
     
-    # ========== YILLIK KAR MARJI ==========
-    annual_profit = total_annual_sales - annual_expenses
+    # ========== BRÜT KAR MARJI ==========
+    # Brüt Kar Marjı = Yıllık Toplam Satış - Yıllık Toplam Satış Maliyeti
+    annual_gross_profit = annual_sales_revenue - annual_sales_cost
+    annual_gross_profit_margin = (annual_gross_profit / annual_sales_revenue * 100) if annual_sales_revenue > 0 else 0
+    
+    # ========== YILLIK NET KAR MARJI ==========
+    # Yıllık Kar Marjı = Brüt Kar - Toplam Giderler
+    annual_profit = annual_gross_profit - annual_expenses
     profit_margin = (annual_profit / total_annual_sales * 100) if total_annual_sales > 0 else 0
     
     # ========== POTANSİYEL KAR ==========
