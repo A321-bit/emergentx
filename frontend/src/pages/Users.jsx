@@ -256,14 +256,25 @@ const Users = () => {
                   </TableCell>
                   <TableCell>{formatDate(user.created_at)}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(user)}
+                        title="Düzenle"
                         data-testid={`edit-user-${user.id}`}
                       >
                         <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenPasswordReset(user)}
+                        className="text-amber-600 hover:text-amber-700"
+                        title="Şifre Sıfırla"
+                        data-testid={`reset-password-${user.id}`}
+                      >
+                        <Key className="h-4 w-4" />
                       </Button>
                       {user.id !== currentUser.id && (
                         <Button
@@ -271,6 +282,7 @@ const Users = () => {
                           size="icon"
                           onClick={() => handleDelete(user.id)}
                           className="text-destructive hover:text-destructive"
+                          title="Sil"
                           data-testid={`delete-user-${user.id}`}
                         >
                           <Trash2 className="h-4 w-4" />
