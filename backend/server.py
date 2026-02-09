@@ -4552,6 +4552,35 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(re
         del exp_dict["_id"]
     return exp_dict
 
+@api_router.put("/expenses/{expense_id}")
+async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+    """Gideri güncelle"""
+    exp_dict = expense.model_dump()
+    exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
+    
+    if exp_dict.get("due_date") and isinstance(exp_dict["due_date"], datetime):
+        exp_dict["due_date"] = exp_dict["due_date"].isoformat()
+    
+    # Get category name and expense_type
+    if expense.category_id:
+        cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
+        if cat:
+            exp_dict["category_name"] = cat.get("name", "Bilinmiyor")
+            exp_dict["expense_type"] = cat.get("expense_type", "variable")
+    
+    # Calculate TL amount
+    if exp_dict["currency"] == "USD":
+        exp_dict["amount_tl"] = exp_dict["amount"] * exp_dict["exchange_rate"]
+    else:
+        exp_dict["amount_tl"] = exp_dict["amount"]
+    
+    result = await db.expenses.update_one({"id": expense_id, "is_active": True}, {"$set": exp_dict})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Gider bulunamadı")
+    
+    updated = await db.expenses.find_one({"id": expense_id}, {"_id": 0})
+    return updated
+
 @api_router.delete("/expenses/{expense_id}")
 async def delete_expense(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
     result = await db.expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
