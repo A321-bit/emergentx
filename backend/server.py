@@ -5223,6 +5223,7 @@ async def create_recurring_expense(expense: RecurringExpenseCreate, current_user
     exp_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     
     # Kategori adını al
+    cat = None
     if expense.category_id:
         cat = await db.expense_categories.find_one({"id": expense.category_id}, {"_id": 0})
         if cat:
@@ -5231,6 +5232,51 @@ async def create_recurring_expense(expense: RecurringExpenseCreate, current_user
     await db.recurring_expenses.insert_one(exp_dict.copy())
     if "_id" in exp_dict:
         del exp_dict["_id"]
+    
+    # OTOMATİK SENKRONİZASYON: Mevcut ay için otomatik gider oluştur
+    now = datetime.now(timezone.utc)
+    current_month = now.month
+    current_year = now.year
+    month_key = f"{current_year}-{current_month:02d}"
+    
+    # Bu ay için zaten gider oluşturulmuş mu kontrol et
+    existing = await db.expenses.find_one({
+        "recurring_expense_id": exp_dict["id"],
+        "is_active": True
+    })
+    
+    if not existing:
+        day = min(exp_dict.get("day_of_month", 1), 28)
+        expense_date = datetime(current_year, current_month, day, tzinfo=timezone.utc)
+        expense_type = cat.get("expense_type", "fixed") if cat else "fixed"
+        
+        new_expense = {
+            "id": str(uuid.uuid4()),
+            "category_id": exp_dict["category_id"],
+            "category_name": exp_dict.get("category_name", ""),
+            "expense_type": expense_type,
+            "amount": exp_dict["amount"],
+            "currency": exp_dict.get("currency", "TRY"),
+            "exchange_rate": 1,
+            "amount_tl": exp_dict["amount"],
+            "expense_date": expense_date.isoformat(),
+            "description": exp_dict.get("description", f"Tekrarlayan: {exp_dict.get('category_name', '')}"),
+            "is_recurring_generated": True,
+            "recurring_expense_id": exp_dict["id"],
+            "is_paid": False,
+            "created_by": current_user.get("name", ""),
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.expenses.insert_one(new_expense.copy())
+        
+        # Son oluşturma tarihini güncelle
+        await db.recurring_expenses.update_one(
+            {"id": exp_dict["id"]},
+            {"$set": {"last_generated_month": month_key}}
+        )
+    
     return exp_dict
 
 @api_router.put("/recurring-expenses/{expense_id}")
