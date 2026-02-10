@@ -683,15 +683,65 @@ const Products = () => {
                   </TableHead>
                 )}
                 <TableHead>Medya</TableHead>
-                <TableHead>Ürün Kodu</TableHead>
-                <TableHead>Ürün Adı</TableHead>
-                <TableHead className="hidden md:table-cell">Kategori</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('product_code')}
+                >
+                  <div className="flex items-center">
+                    Ürün Kodu
+                    <SortIcon field="product_code" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">
+                    Ürün Adı
+                    <SortIcon field="name" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="hidden md:table-cell cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('category_name')}
+                >
+                  <div className="flex items-center">
+                    Kategori
+                    <SortIcon field="category_name" />
+                  </div>
+                </TableHead>
                 <TableHead className="text-center hidden lg:table-cell">Para Birimi</TableHead>
-                <TableHead className="text-right">Stok</TableHead>
+                <TableHead 
+                  className="text-right cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('stock_quantity')}
+                >
+                  <div className="flex items-center justify-end">
+                    Stok
+                    <SortIcon field="stock_quantity" />
+                  </div>
+                </TableHead>
                 <TableHead className="hidden lg:table-cell">Stok Yeri</TableHead>
-                {canViewPrices && <TableHead className="text-right hidden xl:table-cell">Alış (KDV Hariç)</TableHead>}
+                {canViewPrices && (
+                  <TableHead 
+                    className="text-right hidden xl:table-cell cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort('purchase_price_without_vat')}
+                  >
+                    <div className="flex items-center justify-end">
+                      Alış (KDV Hariç)
+                      <SortIcon field="purchase_price_without_vat" />
+                    </div>
+                  </TableHead>
+                )}
                 {canViewPrices && <TableHead className="text-right hidden lg:table-cell">Maliyet</TableHead>}
-                <TableHead className="text-right">Satış Fiyatı</TableHead>
+                <TableHead 
+                  className="text-right cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('sale_price')}
+                >
+                  <div className="flex items-center justify-end">
+                    Satış Fiyatı
+                    <SortIcon field="sale_price" />
+                  </div>
+                </TableHead>
                 {isDealer && <TableHead className="text-right">Bayi Fiyatı</TableHead>}
                 {canManage && <TableHead className="text-right">İşlemler</TableHead>}
               </TableRow>
