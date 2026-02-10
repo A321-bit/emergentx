@@ -1497,9 +1497,8 @@ class PremiumQuotePDFGenerator:
         for item in garanti_items:
             c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
             y -= 14
-            y -= 14
         
-        y -= 10
+        y -= 6
         
         # ===== GARANTİ DIŞI UNSURLAR =====
         c.setFillColor(PRIMARY_COLOR)
