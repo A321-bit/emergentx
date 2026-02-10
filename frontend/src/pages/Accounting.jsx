@@ -1022,7 +1022,7 @@ const Accounting = () => {
                       <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                       <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
                       <Tooltip formatter={(value) => formatCurrency(value)} />
-                      <Area type="monotone" dataKey="net_profit" stroke="#8B5CF6" fill="url(#colorProfit)" name="Net Kâr" />
+                      {canViewProfit && <Area type="monotone" dataKey="net_profit" stroke="#8B5CF6" fill="url(#colorProfit)" name="Net Kâr" />}
                       <Area type="monotone" dataKey="expenses" stroke="#EF4444" fill="url(#colorExpense)" name="Gider" />
                     </AreaChart>
                   </ResponsiveContainer>
