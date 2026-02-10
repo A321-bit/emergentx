@@ -248,49 +248,53 @@ const Finance = () => {
           </CardContent>
         </Card>
 
-        {/* Brüt Kar Marjı - YENİ */}
-        <Card className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white border-0 shadow-lg shadow-blue-500/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Brüt Kar Marjı</p>
-                <p className="text-3xl font-bold mt-2">{formatTRY(financeData?.annual_gross_profit || 0)}</p>
-                <p className="text-xs text-blue-200 mt-3">
-                  Marj: %{financeData?.annual_gross_profit_margin || 0}
-                </p>
+        {/* Brüt Kar Marjı - SADECE YÖNETİCİ */}
+        {canViewProfit && (
+          <Card className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white border-0 shadow-lg shadow-blue-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Brüt Kar Marjı</p>
+                  <p className="text-3xl font-bold mt-2">{formatTRY(financeData?.annual_gross_profit || 0)}</p>
+                  <p className="text-xs text-blue-200 mt-3">
+                    Marj: %{financeData?.annual_gross_profit_margin || 0}
+                  </p>
+                </div>
+                <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                  <PiggyBank className="h-7 w-7" />
+                </div>
               </div>
-              <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
-                <PiggyBank className="h-7 w-7" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Yıllık Net Kar Marjı - Ayrı satır */}
+      {/* Yıllık Net Kar Marjı ve Gider Detayı - Ayrı satır */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Yıllık Net Kar Marjı */}
-        <Card className={`border-0 shadow-lg ${financeData?.is_loss 
-          ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
-          : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium ${financeData?.is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
-                  Yıllık Net Kar
-                  {financeData?.is_loss && <Badge className="ml-2 bg-red-600 text-white text-xs">ZARAR</Badge>}
-                </p>
-                <p className="text-3xl font-bold mt-2">{formatTRY(Math.abs(financeData?.annual_profit || 0))}</p>
-                <p className={`text-xs mt-3 ${financeData?.is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
-                  Brüt Kar - Toplam Gider | Marj: %{financeData?.profit_margin || 0}
-                </p>
+        {/* Yıllık Net Kar Marjı - SADECE YÖNETİCİ */}
+        {canViewProfit && (
+          <Card className={`border-0 shadow-lg ${financeData?.is_loss 
+            ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
+            : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm font-medium ${financeData?.is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
+                    Yıllık Net Kar
+                    {financeData?.is_loss && <Badge className="ml-2 bg-red-600 text-white text-xs">ZARAR</Badge>}
+                  </p>
+                  <p className="text-3xl font-bold mt-2">{formatTRY(Math.abs(financeData?.annual_profit || 0))}</p>
+                  <p className={`text-xs mt-3 ${financeData?.is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
+                    Brüt Kar - Toplam Gider | Marj: %{financeData?.profit_margin || 0}
+                  </p>
+                </div>
+                <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                  {financeData?.is_loss ? <AlertTriangle className="h-7 w-7" /> : <Target className="h-7 w-7" />}
+                </div>
               </div>
-              <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
-                {financeData?.is_loss ? <AlertTriangle className="h-7 w-7" /> : <Target className="h-7 w-7" />}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Gider Detayı */}
         <Card className="bg-gradient-to-br from-slate-700 to-slate-800 text-white border-0 shadow-lg">
