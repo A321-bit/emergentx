@@ -281,6 +281,7 @@ class ProductUpdate(BaseModel):
     description: Optional[str] = None
     short_description: Optional[str] = None  # PDF için kısa açıklama
     benefits: Optional[List[str]] = None  # PDF için 3 fayda maddesi
+    warranty_years: Optional[int] = None  # Garanti süresi (yıl)
     currency: Optional[str] = None
     purchase_price_without_vat: Optional[float] = None
     vat_rate: Optional[float] = None
