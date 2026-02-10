@@ -218,21 +218,23 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Kar & Kar Marjı */}
-          <Card className="border-l-4 border-l-emerald-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <Percent className="h-5 w-5 text-emerald-600" />
+          {/* Kar & Kar Marjı - SADECE YÖNETİCİ */}
+          {canViewProfit && (
+            <Card className="border-l-4 border-l-emerald-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <Percent className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Toplam Kar</p>
+                    <p className="text-lg font-bold text-emerald-600">{formatTRY(stats?.total_sale_profit_tl)}</p>
+                    <p className="text-xs text-emerald-600">Marj: %{stats?.profit_margin || 0}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Toplam Kar</p>
-                  <p className="text-lg font-bold text-emerald-600">{formatTRY(stats?.total_sale_profit_tl)}</p>
-                  <p className="text-xs text-emerald-600">Marj: %{stats?.profit_margin || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
