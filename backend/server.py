@@ -82,21 +82,20 @@ PERMISSIONS = {
     "customer_sources_manage": "Müşteri Edinme Yeri Yönetimi",
     # Teklif
     "quotes_view": "Teklifleri Görüntüleme",
-    "quotes_manage": "Teklif Oluşturma/Düzenleme",
-    "quotes_approve": "Teklif Onaylama/Satışa Dönüştürme",
+    "quotes_manage": "Teklif Oluşturma/Düzenleme/Satışa Dönüştürme",
+    "quotes_approve": "Teklif Onaylama",
     "quotes_pdf": "Teklif PDF İndirme",
     # Satış
     "sales_view": "Satışları Görüntüleme",
-    "sales_manage": "Satış Ekleme/Düzenleme/Silme",
+    "sales_manage": "Satış Ekleme/Düzenleme/Tahsilat",
     # Bayi Yönetimi
     "dealers_view": "Bayileri Görüntüleme",
     "dealers_manage": "Bayi Ekleme/Düzenleme/Silme",
     "dealer_groups_manage": "Bayi Grubu Yönetimi",
-    # Finans & Muhasebe
+    # Finans & Muhasebe (AYRILDI)
     "finance_view": "Finans Raporları Görüntüleme",
-    "finance_manage": "Satış/Gider/Muhasebe Yönetimi",
     "accounting_view": "Muhasebe Görüntüleme",
-    "accounting_manage": "Gelir/Gider Yönetimi",
+    "accounting_manage": "Bütçe Yönetimi",
     "expenses_view": "Giderleri Görüntüleme",
     "expenses_manage": "Gider Ekleme/Düzenleme/Silme",
     "incomes_view": "Gelirleri Görüntüleme",
