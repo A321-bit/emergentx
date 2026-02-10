@@ -1914,8 +1914,8 @@ async def export_products_template(current_user: dict = Depends(require_permissi
     note_fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
     
     # Headers (required fields marked with *)
-    headers = ["Ürün Adı *", "Kategori *", "Para Birimi", "Alış Fiyatı (KDV Hariç) *", 
-               "KDV %", "Kar Marjı %", "Stok", "Birim", "Stok Yeri", "Açıklama"]
+    headers = ["Ürün Kodu", "Ürün Adı *", "Kategori *", "Para Birimi", "Alış Fiyatı (KDV Hariç) *", 
+               "KDV %", "Kar Marjı %", "Stok", "Birim", "Stok Yeri", "Garanti (Yıl)", "Açıklama"]
     
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
@@ -1924,8 +1924,8 @@ async def export_products_template(current_user: dict = Depends(require_permissi
         cell.alignment = Alignment(horizontal="center")
     
     # Example row
-    example_data = ["Örnek Solar Panel 400W", categories[0]["name"] if categories else "Panel", 
-                    "USD", 100, 20, 30, 50, "adet", "Aktürk Depo", "Açıklama buraya"]
+    example_data = ["SP-400W-001", "Örnek Solar Panel 400W", categories[0]["name"] if categories else "Panel", 
+                    "USD", 100, 20, 30, 50, "adet", "Aktürk Depo", 25, "Açıklama buraya"]
     for col, value in enumerate(example_data, 1):
         cell = ws.cell(row=2, column=col, value=value)
         cell.fill = note_fill
@@ -1942,6 +1942,7 @@ async def export_products_template(current_user: dict = Depends(require_permissi
         "3. Dosyayı kaydedin ve sisteme yükleyin",
         "",
         "ALAN AÇIKLAMALARI:",
+        "- Ürün Kodu: Benzersiz ürün kodu (opsiyonel, boş bırakılırsa otomatik oluşturulur)",
         "- Ürün Adı: Ürünün tam adı (zorunlu)",
         "- Kategori: Aşağıdaki listeden seçin (zorunlu)",
         "- Para Birimi: USD, EUR veya TRY (varsayılan: USD)",
@@ -1951,6 +1952,7 @@ async def export_products_template(current_user: dict = Depends(require_permissi
         "- Stok: Başlangıç stok miktarı (varsayılan: 0)",
         "- Birim: adet, paket, kutu vb. (varsayılan: adet)",
         "- Stok Yeri: 'Aktürk Depo' veya 'Tedarikçi Stok' (varsayılan: Aktürk Depo)",
+        "- Garanti (Yıl): Garanti süresi yıl olarak (opsiyonel, PDF teklifinde gösterilir)",
         "",
         "MEVCUT KATEGORİLER:"
     ]
