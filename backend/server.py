@@ -5388,7 +5388,7 @@ async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Dep
     return budget_dict
 
 @api_router.delete("/budgets/{year}/{month}")
-async def delete_budget(year: int, month: int, current_user: dict = Depends(require_permission("sales_manage"))):
+async def delete_budget(year: int, month: int, current_user: dict = Depends(require_permission("accounting_manage"))):
     result = await db.budgets.update_one(
         {"year": year, "month": month, "is_active": True},
         {"$set": {"is_active": False}}
