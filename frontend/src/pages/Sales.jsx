@@ -874,12 +874,14 @@ const Sales = () => {
             <p className="text-xl font-bold">{formatCurrency(currentStats.sale_usd, 'USD')}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Kar (TL)</p>
-            <p className="text-xl font-bold text-green-600">{formatCurrency(currentStats.profit_tl)}</p>
-          </CardContent>
-        </Card>
+        {canViewProfit && (
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Kar (TL)</p>
+              <p className="text-xl font-bold text-green-600">{formatCurrency(currentStats.profit_tl)}</p>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Satış Adedi</p>
