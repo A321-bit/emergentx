@@ -1612,7 +1612,20 @@ MADDE 6 - GENEL HÜKÜMLER
                   ) : (
                     <Percent className="h-4 w-4 mr-2" />
                   )}
-                  Solinved %26 İskonto Uygula
+                  Solinved %26 İskonto
+                </Button>
+                <Button 
+                  onClick={handleApplyMexxsunDiscount} 
+                  disabled={applyingMexxsunDiscount}
+                  variant="outline"
+                  className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                >
+                  {applyingMexxsunDiscount ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Percent className="h-4 w-4 mr-2" />
+                  )}
+                  Mexxsun %4.6 İskonto
                 </Button>
               </div>
             </CardContent>
