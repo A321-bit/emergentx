@@ -5323,7 +5323,7 @@ async def get_incomes(
     return incomes
 
 @api_router.post("/incomes")
-async def create_income(income: IncomeCreate, current_user: dict = Depends(require_permission("sales_manage"))):
+async def create_income(income: IncomeCreate, current_user: dict = Depends(require_permission("incomes_manage"))):
     inc_dict = income.model_dump()
     inc_dict["id"] = str(uuid.uuid4())
     inc_dict["created_by"] = current_user["name"]
