@@ -311,7 +311,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {hasDealersAccess && renderExpandableMenu('dealers', Building2, 'Bayiler', dealersSubItems, isDealersActive)}
           
           {/* Satışlar */}
-          {(hasPermission('finance_view') || hasPermission('finance_manage')) && 
+          {(hasPermission('sales_view') || hasPermission('sales_manage')) && 
             renderNavItem('/sales', ShoppingCart, 'Satışlar')}
           
           {/* Muhasebe (Alt menü: Gider/Gelir, Finans, Personel, Puantaj, Bordro) */}
