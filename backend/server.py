@@ -6920,6 +6920,11 @@ async def execute_xml_import(
                 
                 # Calculate prices
                 purchase_price_usd = xml_product["price_usd"] or 0
+                
+                # Solinved için %26 ekstra iskonto uygula
+                if supplier_name.lower() == "solinved":
+                    purchase_price_usd = purchase_price_usd * (1 - 0.26)  # %26 iskonto
+                
                 purchase_price_with_vat = purchase_price_usd * (1 + vat_rate / 100)
                 sale_price = purchase_price_with_vat * (1 + profit_margin / 100)
                 
