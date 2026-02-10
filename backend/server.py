@@ -5469,7 +5469,7 @@ async def create_recurring_expense(expense: RecurringExpenseCreate, current_user
     return exp_dict
 
 @api_router.put("/recurring-expenses/{expense_id}")
-async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
+async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("expenses_manage"))):
     exp_dict = expense.model_dump()
     
     # Kategori adını al
