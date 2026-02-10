@@ -7449,8 +7449,13 @@ async def execute_supplier_import(
             "stats": stats
         }
         
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail=f"XML indirme zaman aşımı - {supplier_name} sunucusu yanıt vermiyor")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"XML sunucu hatası: {e.response.status_code}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Import hatası: {str(e)}")
+        logging.error(f"XML Import error for {supplier_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Import hatası ({supplier_name}): {str(e)[:200]}")
 
 # ==================== SALARY/PAYROLL API ====================
 
