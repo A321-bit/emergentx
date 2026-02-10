@@ -259,6 +259,7 @@ class ProductBase(BaseModel):
     description: Optional[str] = None
     short_description: Optional[str] = None  # PDF için kısa açıklama
     benefits: Optional[List[str]] = None  # PDF için 3 fayda maddesi
+    warranty_years: Optional[int] = None  # Garanti süresi (yıl)
     currency: str = "USD"
     purchase_price_without_vat: float
     vat_rate: float = 20
