@@ -482,57 +482,61 @@ const Finance = () => {
           </CardContent>
         </Card>
 
-        {/* Satış Kar */}
-        <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Percent className="h-5 w-5 text-purple-600" />
+        {/* Satış Kar - SADECE YÖNETİCİ */}
+        {canViewProfit && (
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Percent className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Satış Karı</p>
+                  <p className="text-lg font-bold text-purple-600">{formatTRY(financeData?.annual_sales_profit)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Satış Karı</p>
-                <p className="text-lg font-bold text-purple-600">{formatTRY(financeData?.annual_sales_profit)}</p>
-              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Monthly Profit Trend Line - SADECE YÖNETİCİ */}
+      {canViewProfit && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendUp className="h-4 w-4 text-muted-foreground" />
+              Aylık Kar Trendi
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={financeData?.monthly_data || []}>
+                  <defs>
+                    <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month_name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                  <Tooltip formatter={(value) => formatTRY(value)} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="profit" 
+                    name="Kar" 
+                    stroke="#8B5CF6" 
+                    fill="url(#colorProfit)" 
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Monthly Profit Trend Line */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendUp className="h-4 w-4 text-muted-foreground" />
-            Aylık Kar Trendi
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={financeData?.monthly_data || []}>
-                <defs>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month_name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
-                <Tooltip formatter={(value) => formatTRY(value)} />
-                <Area 
-                  type="monotone" 
-                  dataKey="profit" 
-                  name="Kar" 
-                  stroke="#8B5CF6" 
-                  fill="url(#colorProfit)" 
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      )}
     </div>
   );
 };
