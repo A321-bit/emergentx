@@ -156,6 +156,7 @@ const Settings = () => {
   };
 
   const [applyingDiscount, setApplyingDiscount] = useState(false);
+  const [applyingMexxsunDiscount, setApplyingMexxsunDiscount] = useState(false);
   
   const handleApplySolinvedDiscount = async () => {
     if (!window.confirm('Tüm Solinved ürünlerine %26 iskonto uygulanacak. Devam etmek istiyor musunuz?')) {
@@ -173,6 +174,25 @@ const Settings = () => {
       toast.error(error.response?.data?.detail || 'İskonto uygulama hatası');
     } finally {
       setApplyingDiscount(false);
+    }
+  };
+
+  const handleApplyMexxsunDiscount = async () => {
+    if (!window.confirm('Tüm Mexxsun ürünlerine %4.6 iskonto uygulanacak. Devam etmek istiyor musunuz?')) {
+      return;
+    }
+    
+    setApplyingMexxsunDiscount(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/xml-import/apply-mexxsun-discount`);
+      toast.success(
+        `${response.data.updated} Mexxsun ürününe %4.6 iskonto uygulandı!`,
+        { duration: 5000 }
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'İskonto uygulama hatası');
+    } finally {
+      setApplyingMexxsunDiscount(false);
     }
   };
 
