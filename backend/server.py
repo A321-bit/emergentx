@@ -1931,7 +1931,13 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
             profit_margin = float(row[5]) if row[5] else None
             stock_quantity = int(row[6]) if row[6] else 0
             unit = str(row[7]).strip() if row[7] else "adet"
-            description = str(row[8]).strip() if len(row) > 8 and row[8] else None
+            stock_location_raw = str(row[8]).strip().lower() if len(row) > 8 and row[8] else ""
+            description = str(row[9]).strip() if len(row) > 9 and row[9] else None
+            
+            # Parse stock location
+            stock_location = "akturk"  # Varsayılan: Aktürk Depo
+            if "tedarik" in stock_location_raw or "supplier" in stock_location_raw:
+                stock_location = "supplier"
             
             # Validations
             if not name:
