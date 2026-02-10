@@ -1979,6 +1979,7 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
                 "sale_price": round(sale_price, 2),
                 "stock_quantity": stock_quantity,
                 "unit": unit,
+                "stock_location": stock_location,
                 "images": [],
                 "datasheet_url": None,
                 "is_active": True,
