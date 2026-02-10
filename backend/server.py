@@ -8020,7 +8020,7 @@ async def init_default_data():
             "description": "Satış ve müşteri yönetimi",
             "permissions": [
                 "dashboard_view", "products_view", "customers_view", "customers_manage",
-                "quotes_view", "quotes_manage", "stock_view"
+                "quotes_view", "quotes_manage", "stock_view", "sales_view", "sales_manage"
             ],
             "is_system": True,
             "is_active": True,
