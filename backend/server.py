@@ -6171,7 +6171,7 @@ async def generate_salary_expenses(
     month: int,
     year: int,
     salary_due_day: int = 5,  # Maaş ödeme günü (varsayılan 5)
-    current_user: dict = Depends(require_permission("sales_manage"))
+    current_user: dict = Depends(require_permission("hr_manage"))
 ):
     """Personel maaşlarını giderlere aktar"""
     month_key = f"{year}-{month:02d}"
