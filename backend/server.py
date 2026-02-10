@@ -5525,7 +5525,7 @@ async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCre
     return updated
 
 @api_router.delete("/recurring-expenses/{expense_id}")
-async def delete_recurring_expense(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def delete_recurring_expense(expense_id: str, current_user: dict = Depends(require_permission("expenses_manage"))):
     result = await db.recurring_expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Tekrarlayan gider bulunamadı")
