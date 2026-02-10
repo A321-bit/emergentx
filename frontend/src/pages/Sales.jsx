@@ -140,6 +140,7 @@ const Sales = () => {
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('sales_manage');
   const canView = user?.permissions?.includes('all') || user?.permissions?.includes('sales_view') || user?.permissions?.includes('sales_manage');
+  const canViewProfit = user?.permissions?.includes('all') || user?.permissions?.includes('profit_view');
 
   // URL'den highlight parametresini kontrol et
   useEffect(() => {
