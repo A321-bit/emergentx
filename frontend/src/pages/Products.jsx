@@ -489,6 +489,16 @@ const Products = () => {
         <div className="flex gap-2">
           {canManage && (
             <>
+              {selectedProducts.length > 0 && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleBulkDelete}
+                  data-testid="bulk-delete-btn"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {selectedProducts.length} Ürün Sil
+                </Button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" data-testid="excel-menu-btn">
