@@ -2290,7 +2290,8 @@ async def create_quote(quote_data: QuoteCreate, current_user: dict = Depends(req
             "power_watt": product.get("power_watt"),  # Güç bilgisi
             "category_name": product.get("category_name", ""),  # Kategori adı
             "short_description": product.get("short_description", ""),  # PDF için kısa açıklama
-            "benefits": product.get("benefits", [])  # PDF için 3 fayda maddesi
+            "benefits": product.get("benefits", []),  # PDF için 3 fayda maddesi
+            "warranty_years": product.get("warranty_years")  # Garanti süresi (yıl)
         })
         subtotal_usd += total_price_usd
         subtotal_tl += total_price_tl
@@ -2558,7 +2559,8 @@ async def update_quote(quote_id: str, quote_data: QuoteCreate, current_user: dic
             "power_watt": product.get("power_watt"),  # Güç bilgisi
             "category_name": product.get("category_name", ""),  # Kategori adı
             "short_description": product.get("short_description", ""),  # PDF için kısa açıklama
-            "benefits": product.get("benefits", [])  # PDF için 3 fayda maddesi
+            "benefits": product.get("benefits", []),  # PDF için 3 fayda maddesi
+            "warranty_years": product.get("warranty_years")  # Garanti süresi (yıl)
         })
         subtotal_usd += total_price_usd
         subtotal_tl += total_price_tl
