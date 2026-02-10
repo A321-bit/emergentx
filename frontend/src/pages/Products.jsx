@@ -453,17 +453,71 @@ const Products = () => {
     });
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.product_code?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  // Sıralama fonksiyonu
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1); // Sıralama değişince ilk sayfaya dön
+  };
+
+  // Sıralama ve filtreleme
+  const filteredAndSortedProducts = useMemo(() => {
+    // Önce filtrele
+    let result = products.filter(product => {
+      const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.product_code?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+    
+    // Sonra sırala
+    result.sort((a, b) => {
+      let aVal = a[sortField];
+      let bVal = b[sortField];
+      
+      // Sayısal değerler için özel işlem
+      if (['stock_quantity', 'sale_price', 'purchase_price', 'purchase_price_without_vat'].includes(sortField)) {
+        aVal = parseFloat(aVal) || 0;
+        bVal = parseFloat(bVal) || 0;
+      } else {
+        aVal = (aVal || '').toString().toLowerCase();
+        bVal = (bVal || '').toString().toLowerCase();
+      }
+      
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    return result;
+  }, [products, searchTerm, categoryFilter, sortField, sortDirection]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedProducts.slice(start, start + itemsPerPage);
+  }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
+
+  // Eski filteredProducts yerine paginatedProducts kullan
+  const filteredProducts = paginatedProducts;
 
   const getCurrencySymbol = (currency) => {
     const symbols = { USD: '$', EUR: '€', TRY: '₺' };
     return symbols[currency] || '$';
+  };
+
+  // Sıralama ikonu
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 ml-1" /> 
+      : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
   if (loading) {
