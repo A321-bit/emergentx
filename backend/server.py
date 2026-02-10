@@ -5343,7 +5343,7 @@ async def create_income(income: IncomeCreate, current_user: dict = Depends(requi
     return inc_dict
 
 @api_router.delete("/incomes/{income_id}")
-async def delete_income(income_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def delete_income(income_id: str, current_user: dict = Depends(require_permission("incomes_manage"))):
     result = await db.incomes.update_one({"id": income_id}, {"$set": {"is_active": False}})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Gelir bulunamadı")
