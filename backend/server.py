@@ -7369,8 +7369,19 @@ async def execute_supplier_import(
                 xml_code = xml_product["product_code"]
                 product_code = f"{prefix}-{xml_code}" if prefix else xml_code
                 
-                # Calculate prices
+                # Calculate prices with supplier-specific discounts
                 purchase_price_usd = xml_product["price_usd"] or 0
+                
+                # Tedarikçiye göre iskonto uygula
+                discount_rate = 0
+                if supplier_name.lower() == "solinved":
+                    discount_rate = 0.26  # %26 iskonto
+                elif supplier_name.lower() == "mexxsun":
+                    discount_rate = 0.046  # %4.6 iskonto
+                
+                if discount_rate > 0:
+                    purchase_price_usd = purchase_price_usd * (1 - discount_rate)
+                
                 purchase_price_with_vat = purchase_price_usd * (1 + vat_rate / 100)
                 sale_price = purchase_price_with_vat * (1 + profit_margin / 100)
                 
