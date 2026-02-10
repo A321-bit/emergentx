@@ -4791,7 +4791,7 @@ async def mark_expense_paid(expense_id: str, current_user: dict = Depends(requir
     return updated
 
 @api_router.put("/expenses/{expense_id}/unpay")
-async def mark_expense_unpaid(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def mark_expense_unpaid(expense_id: str, current_user: dict = Depends(require_permission("expenses_manage"))):
     """Gideri ödenmedi olarak işaretle"""
     result = await db.expenses.update_one(
         {"id": expense_id, "is_active": True},
