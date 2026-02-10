@@ -1850,8 +1850,8 @@ async def export_products_excel(current_user: dict = Depends(require_permission(
     )
     
     # Headers
-    headers = ["Ürün Adı", "Kategori", "Para Birimi", "Alış Fiyatı (KDV Hariç)", "KDV %", 
-               "Kar Marjı %", "Maliyet", "Satış Fiyatı", "Stok", "Birim", "Açıklama"]
+    headers = ["Ürün Kodu", "Ürün Adı", "Kategori", "Para Birimi", "Alış Fiyatı (KDV Hariç)", "KDV %", 
+               "Kar Marjı %", "Maliyet", "Satış Fiyatı", "Stok", "Birim", "Stok Yeri", "Garanti (Yıl)", "Açıklama"]
     
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
@@ -1862,17 +1862,21 @@ async def export_products_excel(current_user: dict = Depends(require_permission(
     
     # Data rows
     for row, product in enumerate(products, 2):
-        ws.cell(row=row, column=1, value=product.get("name", "")).border = thin_border
-        ws.cell(row=row, column=2, value=categories.get(product.get("category_id"), "")).border = thin_border
-        ws.cell(row=row, column=3, value=product.get("currency", "USD")).border = thin_border
-        ws.cell(row=row, column=4, value=product.get("purchase_price_without_vat", 0)).border = thin_border
-        ws.cell(row=row, column=5, value=product.get("vat_rate", 20)).border = thin_border
-        ws.cell(row=row, column=6, value=product.get("profit_margin", 30)).border = thin_border
-        ws.cell(row=row, column=7, value=product.get("purchase_price", 0)).border = thin_border
-        ws.cell(row=row, column=8, value=product.get("sale_price", 0)).border = thin_border
-        ws.cell(row=row, column=9, value=product.get("stock_quantity", 0)).border = thin_border
-        ws.cell(row=row, column=10, value=product.get("unit", "adet")).border = thin_border
-        ws.cell(row=row, column=11, value=product.get("description", "")).border = thin_border
+        ws.cell(row=row, column=1, value=product.get("product_code", "")).border = thin_border
+        ws.cell(row=row, column=2, value=product.get("name", "")).border = thin_border
+        ws.cell(row=row, column=3, value=categories.get(product.get("category_id"), "")).border = thin_border
+        ws.cell(row=row, column=4, value=product.get("currency", "USD")).border = thin_border
+        ws.cell(row=row, column=5, value=product.get("purchase_price_without_vat", 0)).border = thin_border
+        ws.cell(row=row, column=6, value=product.get("vat_rate", 20)).border = thin_border
+        ws.cell(row=row, column=7, value=product.get("profit_margin", 30)).border = thin_border
+        ws.cell(row=row, column=8, value=product.get("purchase_price", 0)).border = thin_border
+        ws.cell(row=row, column=9, value=product.get("sale_price", 0)).border = thin_border
+        ws.cell(row=row, column=10, value=product.get("stock_quantity", 0)).border = thin_border
+        ws.cell(row=row, column=11, value=product.get("unit", "adet")).border = thin_border
+        stock_loc = "Aktürk Depo" if product.get("stock_location") == "akturk" else "Tedarikçi Stok"
+        ws.cell(row=row, column=12, value=stock_loc).border = thin_border
+        ws.cell(row=row, column=13, value=product.get("warranty_years", "")).border = thin_border
+        ws.cell(row=row, column=14, value=product.get("description", "")).border = thin_border
     
     # Auto-adjust column widths
     for col in ws.columns:
