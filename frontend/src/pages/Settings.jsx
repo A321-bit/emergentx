@@ -1581,6 +1581,19 @@ MADDE 6 - GENEL HÜKÜMLER
                   )}
                   Aktarımı Başlat
                 </Button>
+                <Button 
+                  onClick={handleApplySolinvedDiscount} 
+                  disabled={applyingDiscount}
+                  variant="outline"
+                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  {applyingDiscount ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Percent className="h-4 w-4 mr-2" />
+                  )}
+                  Solinved %26 İskonto Uygula
+                </Button>
               </div>
             </CardContent>
           </Card>
