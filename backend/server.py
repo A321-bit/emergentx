@@ -1758,6 +1758,73 @@ async def bulk_delete_products(data: BulkDeleteRequest, current_user: dict = Dep
         "deleted_count": result.modified_count
     }
 
+@api_router.post("/products/fix-missing-codes")
+async def fix_missing_product_codes(current_user: dict = Depends(require_permission("products_manage"))):
+    """Eksik ürün kodlarını otomatik oluştur"""
+    products = await db.products.find(
+        {"is_active": True, "$or": [{"product_code": None}, {"product_code": ""}]}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    fixed_count = 0
+    for product in products:
+        # Ürün adından otomatik kod oluştur
+        name_hash = hashlib.md5(product["name"].encode()).hexdigest()[:8].upper()
+        
+        # XML kaynağına göre prefix ekle
+        if product.get("xml_supplier"):
+            supplier_prefix = product["xml_supplier"][:3].upper()
+            new_code = f"{supplier_prefix}-{name_hash}"
+        else:
+            new_code = f"GEN-{name_hash}"
+        
+        await db.products.update_one(
+            {"id": product["id"]},
+            {"$set": {"product_code": new_code}}
+        )
+        fixed_count += 1
+    
+    return {
+        "message": f"{fixed_count} ürüne otomatik kod oluşturuldu",
+        "fixed_count": fixed_count
+    }
+
+@api_router.post("/products/fix-image-urls")
+async def fix_product_image_urls(current_user: dict = Depends(require_permission("products_manage"))):
+    """Bozuk resim URL'lerini düzelt"""
+    products = await db.products.find({"is_active": True, "images": {"$exists": True, "$ne": []}}, {"_id": 0}).to_list(10000)
+    
+    fixed_count = 0
+    for product in products:
+        original_images = product.get("images", [])
+        fixed_images = []
+        
+        for img_url in original_images:
+            if not img_url:
+                continue
+            img_url = img_url.strip()
+            
+            # URL düzeltmeleri
+            if img_url.startswith('//'):
+                img_url = 'https:' + img_url
+            
+            # Sadece geçerli URL'leri ekle
+            if img_url.startswith(('http://', 'https://')):
+                fixed_images.append(img_url)
+        
+        # Değişiklik varsa güncelle
+        if fixed_images != original_images:
+            await db.products.update_one(
+                {"id": product["id"]},
+                {"$set": {"images": fixed_images}}
+            )
+            fixed_count += 1
+    
+    return {
+        "message": f"{fixed_count} ürünün resimleri düzeltildi",
+        "fixed_count": fixed_count
+    }
+
 # ==================== EXCEL IMPORT/EXPORT ROUTES ====================
 
 @api_router.get("/products/export/excel")
