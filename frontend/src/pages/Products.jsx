@@ -647,12 +647,12 @@ const Products = () => {
           <Input
             placeholder="Ürün ara..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             className="pl-10"
             data-testid="product-search"
           />
         </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); }}>
           <SelectTrigger className="w-full sm:w-48" data-testid="category-filter">
             <SelectValue placeholder="Kategori" />
           </SelectTrigger>
