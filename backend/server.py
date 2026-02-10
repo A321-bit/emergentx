@@ -6636,9 +6636,33 @@ async def fetch_and_parse_xml(xml_url: str):
                 else:
                     in_stock = stock_status not in ["0", "yok", "Yok", ""]
             
-            # Skip if no product code or name
-            if not product_code or not product_title:
+            # Skip if no product name
+            if not product_title:
                 continue
+            
+            # Generate product code if missing
+            if not product_code:
+                # Ürün adından otomatik kod oluştur
+                import hashlib
+                name_hash = hashlib.md5(product_title.encode()).hexdigest()[:8].upper()
+                product_code = f"XML-{name_hash}"
+            
+            # Fix image URLs - ensure full URL
+            fixed_images = []
+            for img_url in images:
+                if img_url:
+                    img_url = img_url.strip()
+                    # Remove any whitespace or invalid chars
+                    if img_url and not img_url.startswith(('http://', 'https://')):
+                        # Try common URL prefixes
+                        if img_url.startswith('//'):
+                            img_url = 'https:' + img_url
+                        elif img_url.startswith('/'):
+                            continue  # Relative URL without base, skip
+                    if img_url and img_url.startswith('http'):
+                        fixed_images.append(img_url)
+            
+            images = fixed_images
             
             products.append({
                 "product_code": product_code,
