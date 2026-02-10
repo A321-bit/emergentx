@@ -4660,7 +4660,7 @@ async def get_personnel(current_user: dict = Depends(require_permission("finance
     return personnel
 
 @api_router.post("/personnel")
-async def create_personnel(person: PersonnelBase, current_user: dict = Depends(require_permission("sales_manage"))):
+async def create_personnel(person: PersonnelBase, current_user: dict = Depends(require_permission("hr_manage"))):
     person_dict = person.model_dump()
     person_dict["id"] = str(uuid.uuid4())
     person_dict["is_active"] = True
@@ -4671,7 +4671,7 @@ async def create_personnel(person: PersonnelBase, current_user: dict = Depends(r
     return person_dict
 
 @api_router.put("/personnel/{person_id}")
-async def update_personnel(person_id: str, person: PersonnelBase, current_user: dict = Depends(require_permission("sales_manage"))):
+async def update_personnel(person_id: str, person: PersonnelBase, current_user: dict = Depends(require_permission("hr_manage"))):
     person_dict = person.model_dump()
     if person_dict.get("start_date"):
         person_dict["start_date"] = person_dict["start_date"].isoformat() if isinstance(person_dict["start_date"], datetime) else person_dict["start_date"]
@@ -4681,7 +4681,7 @@ async def update_personnel(person_id: str, person: PersonnelBase, current_user: 
     return {"message": "Personel güncellendi"}
 
 @api_router.delete("/personnel/{person_id}")
-async def delete_personnel(person_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def delete_personnel(person_id: str, current_user: dict = Depends(require_permission("hr_manage"))):
     result = await db.personnel.update_one({"id": person_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Personel bulunamadı")
