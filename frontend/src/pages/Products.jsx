@@ -337,7 +337,7 @@ const Products = () => {
       setSelectedProducts([]);
       setSelectAll(false);
     } else {
-      setSelectedProducts(filteredProducts.map(p => p.id));
+      setSelectedProducts(filteredAndSortedProducts.map(p => p.id));
       setSelectAll(true);
     }
   };
