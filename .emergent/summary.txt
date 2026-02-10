@@ -1,124 +1,175 @@
 <analysis>**original_problem_statement:**
-The user is building a Solar Energy Sales Management System. After a series of iterative design changes to the quote PDF, the user has provided a comprehensive list of new features and improvements. The highest priorities are related to enhancing the quote generation logic with package support and category-specific templates, followed by updates to roles, payroll, and financial dashboards. The user had previously reported a bug with quote updates, but has since confirmed it is resolved and asked the agent to proceed with the new feature list.
+The user is building a comprehensive Solar Energy Sales Management System. The initial goal was to enhance quote generation and add package support. However, priorities have shifted to a series of critical bug fixes and feature enhancements across the application.
+
+Recent user requests include:
+1.  **Hide Profit Information (P0):** Profit-related figures (Net Profit, Profit Margin, etc.) on the Dashboard, Accounting, and Finance pages should only be visible to users with Admin/Manager roles.
+2.  **Product Page Enhancements (P0):**
+    *   Add advanced filtering options (by category, stock location, etc.).
+    *   Improve performance for the very large product list.
+    *   Add sorting capabilities to all table columns.
+    *   Implement bulk product deletion.
+    *   Add Stock Location to the Excel import/export template.
+3.  **XML Integration Fixes (P1):**
+    *   Address errors where XML feeds from suppliers (Solinved, ACS) fail to parse, especially in the deployed environment.
+    *   Fix issues with products being imported without product codes.
+    *   Resolve problems with broken or incorrect image URLs from the feeds.
+4.  **Permissions & Roles (P1):**
+    *   Separate the monolithic Sales/Accounting Management permission into granular controls for Sales, Expenses, Income, etc., to prevent sales staff from accessing accounting data.
+    *   Fix an authorization error preventing sales staff from converting quotes to sales.
+5.  **User Management (P2):** Add a feature for an administrator to reset a user's password.
+6.  **Reporting & Analytics Fixes (P2):** Correct bugs in various dashboards and reports, including the total value calculation in the Teklif Analizi (Quote Analysis) report and broken trend graphs in the Accounting and Finance modules.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A full-stack application (React/FastAPI/MongoDB) with modules for sales, quotes, products, settings, and B2B XML integration. The PDF generation system () is highly customized and now supports two distinct layouts: a detailed 9-page structure for system sales (on-grid, off-grid) and a simplified 6-page structure for retail/wholesale sales. It also dynamically selects the cover image based on the quote's category and allows for a user-uploaded custom image for the Neden Biz (Why Us) page. The system is also capable of attaching product datasheets to the generated PDFs.
+A full-stack application (React/FastAPI/MongoDB) for managing solar energy sales.
+- **Modules:** Quote Management, PDF Generation, Product/Package Management, Accounting, Finance, HR/Payroll, XML Integration, and User/Role Management.
+- **Recent State:** The application has undergone extensive modifications. Key dashboards and reports in the Accounting and Finance modules have been fixed. The permissions system has been completely refactored. The Products page has been significantly optimized with pagination, sorting, and new filtering capabilities. A password reset feature has been added. Fixes for XML import issues (missing codes, broken images) have been implemented.
 
 **Last working item**:
--   **Last item agent was working**: Implementing feature #2 from the user's new list: Paketler (Packages). The goal is to allow users to add pre-defined product packages to a quote from the UI and have the PDF correctly display the package name and its contents. The agent has modified  to add UI elements for selecting packages and  to render them in the product table.
+-   **Last item agent was working**: The user requested that all profit-related information be hidden from non-administrative users. The agent started this by:
+    1.  Creating a new  permission in .
+    2.  Adding a new Kar/Zarar Gösterimi (Profit/Loss Display) permission group in .
+    3.  Beginning to implement conditional rendering logic in  to hide profit cards based on the new permission.
 -   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
 -   **Which testing method agent to use?**: both
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-There are no pending bugs. The previously reported issue with updating quotes has been marked as resolved by the user.
+-   **Issue 1**: (P0) Complete the implementation of hiding profit information across all relevant pages.
+
+**Issues Detail:**
+-   **Issue 1: Complete Hiding Profit Information**
+    -   **Attempted fixes**: A  permission was created in the backend. Conditional rendering was added to the  file to hide some profit-related cards.
+    -   **Next debug checklist**:
+        1.  Verify the Yönetici role has the new  permission by default.
+        2.  In , ensure ALL profit-related cards and figures (e.g., Monthly Net Profit, Potential Profit) are wrapped in the  check.
+        3.  In , find the Net Kar card and the 6 Aylık Trend chart's profit line and wrap them in the same permission check.
+        4.  In , find all profit-related cards and charts (Yıllık Net Kar, Aylık Kar Trendi, Brüt Kar Marjı) and wrap them in the permission check.
+        5.  Test by logging in as a Satış Personeli (Salesperson) and confirming that no profit data is visible on any of these pages.
+    -   **Why fix this issue and what will be achieved with the fix?**: This is a critical access control requirement from the user to protect sensitive financial data.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: Both
+    -   **Blocked on other issue**: None
 
 **In progress Task List**:
--   **Task 1**: (P0) Finalize and Test Paketler (Packages) Feature
-    -   **Where to resume**: The backend () and frontend () code has been modified. The next step is to perform an end-to-end test: create a quote with a package, generate the PDF, and verify its content and layout.
-    -   **What will be achieved with this?**: Users will be able to efficiently create quotes using predefined product bundles, and the PDF will clearly itemize the package and its contents for the customer.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on something**: No.
+None.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-    - **P1: Roles & Permissions Update:** The permissions screen in Roller ve Yetkiler is outdated. It needs to be updated to include toggles for all the new features and modules that have been added.
-    - **P2: Payroll (Puantaj) UI Improvement:** In the payroll calendar, all days should default to present ('geldi'). The user will then only need to mark the days an employee was absent.
-    - **P3: Expense/Income - Payroll Integration:** The Personel Giderleri (Personnel Expenses) screen should automatically fetch the list of employees and their corresponding salary amounts from the payroll module.
-    - **P4: Display Recurring Expenses:** Ensure that expenses marked as recurring are correctly displayed under the main Giderler (Expenses) tab.
-    - **P5: Real-time Dashboard Calculation:** The widgets on the main dashboard (Total Income, Total Expense) must be updated to calculate values in real-time. Total Expense should be the sum of personnel salaries, fixed recurring expenses, and any other expenses entered for the current month.
-    - **P6: Finance Tab Overhaul:** The Finans tab (located under the Muhasebe section) needs to be redesigned with the following financial widgets:
-        - Total Stock Value (in both USD and TL).
-        - Total Annual Sales Amount.
-        - Total Annual Expense Amount.
-        - Total Annual Profit Margin.
-        - Potential Profit Summary.
-        - Other relevant financial metrics can be added.
-
-- **Future Tasks:**
-    - **New 'Terms' for Retail/Wholesale PDFs:** Create a separate, new Teklif Şartları page specifically for retail and wholesale quotes.
-    - Corporate Landing Page.
-    - Finalize City/District Selection in customer forms.
-    - Personnel & Payroll Module (Advance, Bonus, Expenses).
-    - WhatsApp Quote Sending integration.
-    - PayTR Payment Integration.
-    - Comprehensive Accounting Module PDF report.
-    - Upcoming Payments widget on the dashboard.
+-   **Upcoming Tasks:**
+    -   (P1) **Verify XML Fixes in Production:** The user reported XML errors in the deployed environment. Although the agent implemented fixes (better encoding, error handling, auto-generating product codes), it's crucial to confirm with the user if these fixes resolved the issue post-deployment. The agent should be prepared to investigate deployment-specific issues (e.g., network, environment variables).
+-   **Future Tasks:**
+    -   (P2) Create a separate Teklif Şartları (Terms and Conditions) page for retail/wholesale PDFs.
+    -   (P2) Finalize City/District Selection in customer forms.
+    -   (P3) Corporate Landing Page.
+    -   (P3) WhatsApp Quote Sending integration.
+    -   (P3) PayTR Payment Integration.
+    -   (P3) Comprehensive Accounting Module PDF report.
+    -   (P3) Upcoming Payments widget on the main dashboard.
 
 **Completed work in this session**
--   **Category-Based PDF Generation (#8 & #9):** Implemented logic to generate different PDF layouts based on the quote category. System sales (On-Grid, Off-Grid) use the full 9-page format, while Perakende (Retail) and Toptan (Wholesale) use a simplified 6-page format with the default cover image.
--   **Datasheet Integration Fix:** Resolved an issue preventing product datasheets from being attached to the generated PDF. The logic now correctly finds datasheet files and appends them between the payment options and closing pages.
--   **Dynamic Neden Biz Page:** Added a feature in the Settings UI for the user to upload a custom, full-page image for the Neden Biz (Why Us) page of the PDF.
--   **Extensive PDF Layout & Style Fixes:**
-    -   Addressed multiple user requests to adjust top margins across several pages to move content higher.
-    -   Corrected text overlapping issues on the Proje Verileri and Ödeme Seçenekleri pages.
-    -   Re-styled the Teklif Şartları (Terms and Conditions) page to be purely text-based (no boxes) with larger fonts and better spacing.
-    -   Re-added system power details (Panel, Inverter, Battery) to the Sistem Analizi page.
--   **Settings UI Enhancements:** Added a new section in the Settings page to manage editable PDF Ödeme Notları (PDF Payment Notes).
--   **Frontend Bug Fix:** Corrected a JavaScript error on the Settings page caused by a wrong function name ( vs ).
+-   **Product Page Overhaul:**
+    -   **Performance:** Implemented pagination (50 items per page) to fix severe performance issues with a large product list.
+    -   **Sorting:** Added clickable sorting headers for all major columns (Product Name, Code, Stock, Price, etc.).
+    -   **Filtering:** Added advanced filter controls for Stock Location, Stock Status, and Has Product Code.
+    -   **Bulk Actions:** Implemented a bulk deletion feature with checkboxes on the product list.
+    -   **Excel Template:** Added the Stok Yeri (Stock Location) column to the Excel import/export template.
+-   **Permissions & Roles Refactor:**
+    -   Decomposed the overloaded  permission into granular permissions: , , , , .
+    -   Corrected all relevant backend endpoints to use the new, more specific permissions.
+    -   Updated the  UI to group permissions logically (Sales, Accounting, Expenses, etc.), significantly improving usability.
+    -   **Resolved Convert to Sale Bug:** Fixed the authorization error that prevented sales staff from converting quotes to sales by assigning the  permission correctly.
+-   **XML Import Fixes:**
+    -   Implemented a fallback to automatically generate a unique product code (e.g., ) if a product from an XML feed is missing one.
+    -   Created a one-time migration endpoint () and ran it to retroactively fix 145 existing products that had no product code.
+    -   Improved the  function with better error handling and encoding detection to prevent crashes on malformed XML.
+-   **User Management:**
+    -   Added a Reset Password feature on the  page, allowing an admin to generate a new password for any user. Implemented the backend endpoint () and the frontend modal.
+-   **Dashboard & Report Bug Fixes:**
+    -   Fixed the Teklif Analizi report to correctly calculate and display the Toplam Tutar (Total Value).
+    -   Fixed the 6 Aylık Trend graph in the Accounting module to correctly display data.
+    -   Fixed the Aylık Satış ve Gider Grafiği in the Finance module.
+
+**Earlier issues found/mentioned but not fixed**
+None. All user-reported issues from this session were addressed. The remaining work is the in-progress profit-hiding feature.
+
+**Known issue recurrence from previous fork**
+None.
 
 **Code Architecture**
 
 
+**Key Technical Concepts**
+-   **Frontend:** React, Shadcn UI, Axios, Tailwind CSS
+-   **Backend:** FastAPI (Python), Pydantic
+-   **Database:** MongoDB
+-   **Performance Optimization:** Implemented client-side pagination and sorting () to handle large datasets efficiently on the frontend.
+-   **Access Control:** Refactored a role-based permission system, moving from broad permissions to granular controls for different application modules.
+
 **key DB schema**
--   ****: Modified to include  and .
--   ****: The  array can now contain objects with  in addition to .
--   ****: A collection storing predefined bundles of products that can be added to quotes.
+-   ****: All products now have a . A migration was run to enforce this.
+-   ****, ****: Schema unchanged, but a new permission  was added to the system's permission list.
 
 **All files of reference**
--   : The primary file for all PDF-related work. It is very large and contains complex conditional logic.
--   : The FastAPI backend application file.
--   : The React component for the entire quote creation and management workflow.
--   : The React component for application settings.
+-   : Core file for all new endpoints and permission logic.
+-   : For all product page enhancements.
+-   : For the password reset feature.
+-   : For the permission UI refactor.
+-   , , : Files relevant to the in-progress profit-hiding task.
 
 **Areas that need refactoring**:
--   ****: This file has grown extremely large. The main  function, which now dispatches to  or , is a good first step, but the entire file would benefit from being broken down into smaller, more manageable modules, perhaps one for each page type.
--   ****: This component handles the quote list, the multi-step creation/editing wizard, product search, and package selection. It should be broken down into smaller, specialized components (e.g., , , ).
+-   ****: The file continues to grow and is now over 7000 lines. It urgently needs to be modularized into FastAPI s for each domain (e.g., , , ).
+-   ****: While optimized, this component is now very large and complex due to the addition of state and logic for filtering, sorting, pagination, and bulk actions. It could be broken down into smaller components (, , ).
 
 **key api endpoints**
--   ****: Fetches the list of available product packages for the quote creation UI.
--   ****: New endpoint to upload the custom image for the Neden Biz PDF page.
--   ****: The main endpoint to trigger PDF generation. Its backend logic now varies significantly based on the quote's category.
+-   ****: (NEW) Resets a user's password.
+-   ****: (NEW) Deletes a list of products by their IDs.
+-   ****: (NEW - One-time migration) Fills in missing product codes for existing products.
+-   ****: (MODIFIED) Now includes Stok Yeri column.
+-   ****: (MODIFIED) Now supports importing Stok Yeri.
+-   **Numerous Endpoints**: Permissions updated from  to more granular ones like , , etc. (e.g., , , ).
 
 **Critical Info for New Agent**
--   The user has provided a clear, prioritized list of tasks. The immediate task is to finish and test the Packages feature (#2 on the user's list).
--   After completing the current task, you **must** present the plan for the next set of tasks from the user's list and get their approval before proceeding. The highest priority items are #1 (Roles), #3 (Payroll UI), #4 (Expense Integration), #5 (Recurring Expenses), and #6 (Dashboard).
--   The PDF generation logic in  is the most complex part of the application. Be extremely cautious when making changes. It has two main flows ( and ) for different quote categories. Any changes must be tested for both flows.
+-   **Highest Priority:** The immediate task is to finish implementing the  permission. This involves hiding all profit-related data in  and  for users without this permission.
+-   **Grant Permission:** After implementing the code, ensure the Yönetici (Admin) role is granted the new  permission so they can still see the profit data for testing.
+-   **User Feedback Loop:** The user is highly engaged and provides feedback quickly, often reporting issues that may only appear in the deployed environment. Be prepared to investigate issues that you cannot reproduce locally. The XML parsing error is a prime example of this.
+-   **Refactoring Needed:** While not an immediate task, be aware that  is critically oversized. Future work should ideally start by breaking it into smaller, manageable router files.
 
 **documents and test reports created in this job**
--    was updated.
+-   
+-    (updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Reports the quote update functionality is failing. (PENDING DEBUG)
-2.  **User:** Provides a large, new list of 9 features/tasks to implement, effectively changing all priorities. (NEW BACKLOG)
-3.  **Agent:** Asks for confirmation on the new plan based on the 9-item list.
-4.  **User:** Confirms the quote update bug is now resolved and should be removed from the list.
-5.  **Agent:** Asks for confirmation on the updated plan.
-6.  **User:** Confirms the plan and provides clarifications: the Finance tab is under Accounting, and the existing Terms page can be used for now.
-7.  **User:** Asks why datasheets are not being added to the PDF. (RESOLVED)
-8.  **User:** Provides feedback that the top margins on several PDF pages are too large and gives a visual reference for correction. (RESOLVED)
-9.  **User:** Reports the quote update functionality is failing again. (DE-PRIORITIZED by user's next message).
-10. **User:** Re-sends the large list of 9 features, making it the current priority. (CURRENT BACKLOG)
+10. **User:** Asks for product page performance improvements and sorting. (Completed)
+9.  **Agent:** Implements pagination and sorting on the product page. (Completed)
+8.  **User:** Asks for advanced filtering on the product page and a fix for XML issues (missing codes, bad images). (Completed)
+7.  **Agent:** Implements advanced filters and fixes XML import logic to generate codes and handle bad images. (Completed)
+6.  **User:** Requests that profit information be hidden from non-admin users. (In Progress)
+5.  **Agent:** Starts implementing the  permission. (In Progress)
+4.  **User:** Reports Convert to Sale fails for sales staff and that permissions are too broad. (Completed)
+3.  **Agent:** Refactors the entire permission system and fixes the Convert to Sale bug. (Completed)
+2.  **User:** Requests a password reset feature for users. (Completed)
+1.  **Agent:** Implements the password reset feature. (Completed)
 
 **Project Health Check:**
 -   **Broken:** None.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
--   **XML Feed**: Used for B2B product import from suppliers (e.g., ).
--   **ReportLab**: The Python library used for all PDF generation.
+-   **ReportLab**: For PDF generation.
+-   **XML Processing**: For B2B product import from suppliers.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
--   **Test files created:** None. Testing was performed using ad-hoc  and  scripts.
+-   **Testing agent used after significant changes:** YES
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** []
+-   **Known regressions:** None. The latest user bug reports were all successfully addressed.
 
 **Credentials to test flow:**
 -   **Email:** 
 -   **Password:** 
 
 **What agent forgot to execute**
-The agent correctly followed the user's shifting priorities. An investigation into a quote update bug was superseded by a direct user request to implement a new, large list of features, which the agent correctly prioritized.</analysis>
+The agent correctly started the profit-hiding feature but has not yet completed it. The logic needs to be applied to the  and  pages to fully satisfy the user's request.</analysis>
