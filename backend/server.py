@@ -4775,7 +4775,7 @@ async def delete_expense(expense_id: str, current_user: dict = Depends(require_p
     return {"message": "Gider silindi"}
 
 @api_router.put("/expenses/{expense_id}/pay")
-async def mark_expense_paid(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def mark_expense_paid(expense_id: str, current_user: dict = Depends(require_permission("expenses_manage"))):
     """Gideri ödendi olarak işaretle"""
     result = await db.expenses.update_one(
         {"id": expense_id, "is_active": True},
