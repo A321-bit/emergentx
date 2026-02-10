@@ -53,6 +53,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const isAdmin = user?.permissions?.includes('all') || user?.permissions?.includes('finance_view');
+  const canViewProfit = user?.permissions?.includes('all') || user?.permissions?.includes('profit_view');
 
   useEffect(() => {
     fetchStats();
