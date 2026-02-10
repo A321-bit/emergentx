@@ -313,6 +313,49 @@ const Products = () => {
     setIsMediaModalOpen(true);
   };
 
+  // Toplu seçim fonksiyonları
+  const toggleSelectProduct = (productId) => {
+    setSelectedProducts(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      }
+      return [...prev, productId];
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedProducts([]);
+      setSelectAll(false);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.id));
+      setSelectAll(true);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error('Silinecek ürün seçilmedi');
+      return;
+    }
+
+    if (!window.confirm(`${selectedProducts.length} ürünü silmek istediğinizden emin misiniz?`)) {
+      return;
+    }
+
+    try {
+      await axios.post(`${API_URL}/api/products/bulk-delete`, {
+        product_ids: selectedProducts
+      });
+      toast.success(`${selectedProducts.length} ürün silindi`);
+      setSelectedProducts([]);
+      setSelectAll(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Toplu silme başarısız');
+    }
+  };
+
   // Excel functions
   const handleExportExcel = async () => {
     try {
