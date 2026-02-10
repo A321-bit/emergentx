@@ -465,13 +465,15 @@ const Dashboard = () => {
                   <span className="text-sm">Toplam Maliyet</span>
                   <span className="font-bold text-red-600">{formatTRY(stats?.total_sale_cost_tl)}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                  <span className="text-sm">Toplam Kar</span>
-                  <div className="text-right">
-                    <span className="font-bold text-green-600">{formatTRY(stats?.total_sale_profit_tl)}</span>
-                    <span className="text-xs text-green-600 ml-2">(%{stats?.profit_margin || 0})</span>
+                {canViewProfit && (
+                  <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                    <span className="text-sm">Toplam Kar</span>
+                    <div className="text-right">
+                      <span className="font-bold text-green-600">{formatTRY(stats?.total_sale_profit_tl)}</span>
+                      <span className="text-xs text-green-600 ml-2">(%{stats?.profit_margin || 0})</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Bayi Ciro */}
