@@ -309,6 +309,7 @@ const Products = () => {
       description: product.description || '',
       short_description: product.short_description || '',
       benefits: paddedBenefits,
+      warranty_years: product.warranty_years?.toString() || '',
       currency: product.currency || 'USD',
       purchase_price_without_vat: product.purchase_price_without_vat?.toString() || '',
       vat_rate: product.vat_rate?.toString() || '20',
