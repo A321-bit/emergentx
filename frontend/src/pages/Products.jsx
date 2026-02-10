@@ -1413,6 +1413,25 @@ const Products = () => {
                     </div>
                     <p className="text-xs text-muted-foreground">Her madde maksimum 60 karakter</p>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="warranty_years">Garanti Süresi (Yıl)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="warranty_years"
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={formData.warranty_years}
+                        onChange={(e) => setFormData({...formData, warranty_years: e.target.value})}
+                        placeholder="Örn: 25"
+                        className="w-32"
+                        data-testid="product-warranty-years-input"
+                      />
+                      <span className="text-sm text-muted-foreground">yıl</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">PDF teklifinde "Garanti Koşulları" bölümünde gösterilecektir</p>
+                  </div>
                 </div>
               </div>
             </div>
