@@ -2073,6 +2073,7 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
                 "category_id": category["id"],
                 "category_name": category["name"],
                 "description": description,
+                "power_watt": power_watt,
                 "warranty_years": warranty_years,
                 "currency": currency,
                 "purchase_price_without_vat": round(purchase_price_without_vat, 2),
