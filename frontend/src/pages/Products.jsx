@@ -446,6 +446,7 @@ const Products = () => {
       description: '',
       short_description: '',
       benefits: ['', '', ''],
+      warranty_years: '',
       currency: 'USD',
       purchase_price_without_vat: '',
       vat_rate: '20',
