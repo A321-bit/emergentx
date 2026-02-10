@@ -379,7 +379,7 @@ const Finance = () => {
                   <Legend />
                   <Bar dataKey="sales" name="Satış" fill="#10B981" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="expenses" name="Gider" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                  <Line type="monotone" dataKey="profit" name="Kar" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />
+                  {canViewProfit && <Line type="monotone" dataKey="profit" name="Kar" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
