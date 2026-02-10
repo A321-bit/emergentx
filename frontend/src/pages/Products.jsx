@@ -665,29 +665,100 @@ const Products = () => {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Ürün ara..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            className="pl-10"
-            data-testid="product-search"
-          />
-        </div>
-        <Select value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); }}>
-          <SelectTrigger className="w-full sm:w-48" data-testid="category-filter">
-            <SelectValue placeholder="Kategori" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tüm Kategoriler</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Card className="mb-4">
+        <CardContent className="p-4">
+          <div className="flex flex-col gap-4">
+            {/* Satır 1: Arama ve Kategori */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Ürün adı, kodu veya açıklama ara..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  className="pl-10"
+                  data-testid="product-search"
+                />
+              </div>
+              <Select value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); }}>
+                <SelectTrigger className="w-full sm:w-48" data-testid="category-filter">
+                  <SelectValue placeholder="Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm Kategoriler</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Satır 2: Diğer Filtreler */}
+            <div className="flex flex-wrap gap-3">
+              {/* Stok Yeri */}
+              <Select value={stockLocationFilter} onValueChange={(val) => { setStockLocationFilter(val); setCurrentPage(1); }}>
+                <SelectTrigger className="w-40" data-testid="stock-location-filter">
+                  <SelectValue placeholder="Stok Yeri" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm Stoklar</SelectItem>
+                  <SelectItem value="akturk">Aktürk Depo</SelectItem>
+                  <SelectItem value="supplier">Tedarikçi Stok</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Stok Durumu */}
+              <Select value={hasStockFilter} onValueChange={(val) => { setHasStockFilter(val); setCurrentPage(1); }}>
+                <SelectTrigger className="w-36" data-testid="has-stock-filter">
+                  <SelectValue placeholder="Stok Durumu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="in_stock">Stokta Var</SelectItem>
+                  <SelectItem value="out_of_stock">Stokta Yok</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Ürün Kodu */}
+              <Select value={hasCodeFilter} onValueChange={(val) => { setHasCodeFilter(val); setCurrentPage(1); }}>
+                <SelectTrigger className="w-40" data-testid="has-code-filter">
+                  <SelectValue placeholder="Ürün Kodu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="has_code">Kodu Var</SelectItem>
+                  <SelectItem value="no_code">Kodu Yok</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Filtreleri Temizle */}
+              {(categoryFilter !== 'all' || stockLocationFilter !== 'all' || hasStockFilter !== 'all' || hasCodeFilter !== 'all' || searchTerm) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setCategoryFilter('all');
+                    setStockLocationFilter('all');
+                    setHasStockFilter('all');
+                    setHasCodeFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  className="text-muted-foreground"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Filtreleri Temizle
+                </Button>
+              )}
+            </div>
+            
+            {/* Filtre özeti */}
+            <div className="text-sm text-muted-foreground">
+              {filteredAndSortedProducts.length} / {products.length} ürün gösteriliyor
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Table - Desktop */}
       <Card className="hidden sm:block">
