@@ -4637,7 +4637,7 @@ async def get_expense_categories(current_user: dict = Depends(require_permission
     return categories
 
 @api_router.post("/expense-categories")
-async def create_expense_category(category: ExpenseCategoryBase, current_user: dict = Depends(require_permission("sales_manage"))):
+async def create_expense_category(category: ExpenseCategoryBase, current_user: dict = Depends(require_permission("expenses_manage"))):
     cat_dict = category.model_dump()
     cat_dict["id"] = str(uuid.uuid4())
     cat_dict["is_active"] = True
@@ -4646,7 +4646,7 @@ async def create_expense_category(category: ExpenseCategoryBase, current_user: d
     return cat_dict
 
 @api_router.delete("/expense-categories/{category_id}")
-async def delete_expense_category(category_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def delete_expense_category(category_id: str, current_user: dict = Depends(require_permission("expenses_manage"))):
     result = await db.expense_categories.update_one({"id": category_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Kategori bulunamadı")
