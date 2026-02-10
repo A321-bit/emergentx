@@ -5535,7 +5535,7 @@ async def delete_recurring_expense(expense_id: str, current_user: dict = Depends
 async def generate_recurring_expenses(
     month: int,
     year: int,
-    current_user: dict = Depends(require_permission("sales_manage"))
+    current_user: dict = Depends(require_permission("expenses_manage"))
 ):
     """Belirli ay için tekrarlayan giderleri oluştur"""
     month_key = f"{year}-{month:02d}"
