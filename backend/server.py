@@ -2581,6 +2581,12 @@ async def update_quote_status(quote_id: str, status_update: QuoteStatusUpdate, c
                 "discount_amount": quote.get("discount_amount_tl", 0),
                 "net_total": quote.get("total_tl", 0),
                 "manual_override": False,
+                # KDV ve Nakliye
+                "subtotal_tl": quote.get("subtotal_tl", 0),
+                "vat_rate": quote.get("vat_rate", 20),
+                "vat_amount_tl": quote.get("vat_amount_tl", 0),
+                "shipping_cost": quote.get("shipping_cost", 0),
+                "total_tl": quote.get("total_tl", 0),
                 # Ödeme alanları (henüz ödeme yok)
                 "nakit_tl": 0,
                 "kart_tl": 0,
