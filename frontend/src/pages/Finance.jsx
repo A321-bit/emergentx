@@ -318,40 +318,42 @@ const Finance = () => {
         </Card>
       </div>
 
-      {/* Potential Profit Summary */}
-      <Card className="border-2 border-dashed border-green-300 dark:border-green-700 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-900/20 dark:to-emerald-900/20">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <PiggyBank className="h-5 w-5 text-green-600" />
-            Potansiyel Kar Özeti
-          </CardTitle>
-          <CardDescription>Stok satıldığında elde edilecek tahmini kar</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
-              <p className="text-sm text-muted-foreground">Potansiyel Kar (USD)</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">
-                {formatUSD(financeData?.potential_profit_usd)}
-              </p>
+      {/* Potential Profit Summary - SADECE YÖNETİCİ */}
+      {canViewProfit && (
+        <Card className="border-2 border-dashed border-green-300 dark:border-green-700 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-900/20 dark:to-emerald-900/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <PiggyBank className="h-5 w-5 text-green-600" />
+              Potansiyel Kar Özeti
+            </CardTitle>
+            <CardDescription>Stok satıldığında elde edilecek tahmini kar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+                <p className="text-sm text-muted-foreground">Potansiyel Kar (USD)</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">
+                  {formatUSD(financeData?.potential_profit_usd)}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+                <p className="text-sm text-muted-foreground">Potansiyel Kar (TL)</p>
+                <p className="text-2xl font-bold text-blue-600 mt-2">
+                  {formatTRY(financeData?.potential_profit_tl)}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+                <p className="text-sm text-muted-foreground">Tahmini Kar Marjı</p>
+                <p className="text-2xl font-bold text-purple-600 mt-2">
+                  %{financeData?.stock_value_usd > 0 
+                    ? ((financeData?.potential_profit_usd / financeData?.stock_value_usd) * 100).toFixed(1)
+                    : 0}
+                </p>
+              </div>
             </div>
-            <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
-              <p className="text-sm text-muted-foreground">Potansiyel Kar (TL)</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">
-                {formatTRY(financeData?.potential_profit_tl)}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
-              <p className="text-sm text-muted-foreground">Tahmini Kar Marjı</p>
-              <p className="text-2xl font-bold text-purple-600 mt-2">
-                %{financeData?.stock_value_usd > 0 
-                  ? ((financeData?.potential_profit_usd / financeData?.stock_value_usd) * 100).toFixed(1)
-                  : 0}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
