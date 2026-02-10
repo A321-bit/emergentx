@@ -6603,7 +6603,7 @@ def extract_datasheet_from_description(description):
 async def fetch_and_parse_xml(xml_url: str):
     """Fetch XML from URL and parse products - supports multiple XML formats"""
     try:
-        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
             response = await client.get(xml_url)
             response.raise_for_status()
         
