@@ -1851,7 +1851,7 @@ async def export_products_excel(current_user: dict = Depends(require_permission(
     
     # Headers
     headers = ["Ürün Kodu", "Ürün Adı", "Kategori", "Para Birimi", "Alış Fiyatı (KDV Hariç)", "KDV %", 
-               "Kar Marjı %", "Maliyet", "Satış Fiyatı", "Stok", "Birim", "Stok Yeri", "Garanti (Yıl)", "Açıklama"]
+               "Kar Marjı %", "Maliyet", "Satış Fiyatı", "Stok", "Birim", "Stok Yeri", "Güç (W)", "Garanti (Yıl)", "Açıklama"]
     
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
@@ -1875,8 +1875,9 @@ async def export_products_excel(current_user: dict = Depends(require_permission(
         ws.cell(row=row, column=11, value=product.get("unit", "adet")).border = thin_border
         stock_loc = "Aktürk Depo" if product.get("stock_location") == "akturk" else "Tedarikçi Stok"
         ws.cell(row=row, column=12, value=stock_loc).border = thin_border
-        ws.cell(row=row, column=13, value=product.get("warranty_years", "")).border = thin_border
-        ws.cell(row=row, column=14, value=product.get("description", "")).border = thin_border
+        ws.cell(row=row, column=13, value=product.get("power_watt", "")).border = thin_border
+        ws.cell(row=row, column=14, value=product.get("warranty_years", "")).border = thin_border
+        ws.cell(row=row, column=15, value=product.get("description", "")).border = thin_border
     
     # Auto-adjust column widths
     for col in ws.columns:
