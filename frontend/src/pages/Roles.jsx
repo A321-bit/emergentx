@@ -135,9 +135,11 @@ const Roles = () => {
     'Teklifler': ['quotes_view', 'quotes_manage', 'quotes_approve', 'quotes_pdf'],
     'Satış': ['sales_view', 'sales_manage'],
     'Bayi Yönetimi': ['dealers_view', 'dealers_manage', 'dealer_groups_manage'],
-    'Finans & Muhasebe': ['finance_view', 'finance_manage', 'accounting_view', 'accounting_manage', 'expenses_view', 'expenses_manage', 'incomes_view', 'incomes_manage'],
+    'Finans & Raporlar': ['finance_view', 'reports_view', 'reports_export'],
+    'Muhasebe & Bütçe': ['accounting_view', 'accounting_manage'],
+    'Giderler': ['expenses_view', 'expenses_manage'],
+    'Gelirler': ['incomes_view', 'incomes_manage'],
     'İK & Bordro': ['hr_view', 'hr_manage', 'payroll_view', 'payroll_manage', 'attendance_view', 'attendance_manage'],
-    'Raporlar': ['reports_view', 'reports_export'],
     'Ayarlar': ['settings_manage', 'xml_import_manage']
   };
 
