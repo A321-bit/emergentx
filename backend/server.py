@@ -100,6 +100,8 @@ PERMISSIONS = {
     "expenses_manage": "Gider Ekleme/Düzenleme/Silme",
     "incomes_view": "Gelirleri Görüntüleme",
     "incomes_manage": "Gelir Ekleme/Düzenleme/Silme",
+    # Kar Bilgileri (SADECE YÖNETİCİ)
+    "profit_view": "Kar/Zarar Bilgilerini Görme (Sadece Yönetici)",
     # İK & Bordro
     "hr_view": "Personel Görüntüleme",
     "hr_manage": "Personel Ekleme/Düzenleme/Silme",
