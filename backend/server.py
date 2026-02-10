@@ -1739,6 +1739,25 @@ async def delete_product(product_id: str, current_user: dict = Depends(require_p
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
     return {"message": "Ürün silindi"}
 
+class BulkDeleteRequest(BaseModel):
+    product_ids: List[str]
+
+@api_router.post("/products/bulk-delete")
+async def bulk_delete_products(data: BulkDeleteRequest, current_user: dict = Depends(require_permission("products_manage"))):
+    """Toplu ürün silme (soft delete)"""
+    if not data.product_ids:
+        raise HTTPException(status_code=400, detail="Silinecek ürün seçilmedi")
+    
+    result = await db.products.update_many(
+        {"id": {"$in": data.product_ids}},
+        {"$set": {"is_active": False}}
+    )
+    
+    return {
+        "message": f"{result.modified_count} ürün silindi",
+        "deleted_count": result.modified_count
+    }
+
 # ==================== EXCEL IMPORT/EXPORT ROUTES ====================
 
 @api_router.get("/products/export/excel")
