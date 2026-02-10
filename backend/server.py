@@ -2010,21 +2010,24 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
     errors = []
     
     # Skip header row
+    # New column order: Ürün Kodu, Ürün Adı, Kategori, Para Birimi, Alış Fiyatı, KDV %, Kar Marjı %, Stok, Birim, Stok Yeri, Garanti (Yıl), Açıklama
     for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
-        if not row or not row[0]:  # Skip empty rows
+        if not row or (not row[0] and not row[1]):  # Skip empty rows
             continue
         
         try:
-            name = str(row[0]).strip() if row[0] else None
-            category_name = str(row[1]).strip().lower() if row[1] else None
-            currency = str(row[2]).strip().upper() if row[2] else "USD"
-            purchase_price_without_vat = float(row[3]) if row[3] else None
-            vat_rate = float(row[4]) if row[4] else 20
-            profit_margin = float(row[5]) if row[5] else None
-            stock_quantity = int(row[6]) if row[6] else 0
-            unit = str(row[7]).strip() if row[7] else "adet"
-            stock_location_raw = str(row[8]).strip().lower() if len(row) > 8 and row[8] else ""
-            description = str(row[9]).strip() if len(row) > 9 and row[9] else None
+            product_code = str(row[0]).strip() if row[0] else None
+            name = str(row[1]).strip() if row[1] else None
+            category_name = str(row[2]).strip().lower() if row[2] else None
+            currency = str(row[3]).strip().upper() if row[3] else "USD"
+            purchase_price_without_vat = float(row[4]) if row[4] else None
+            vat_rate = float(row[5]) if row[5] else 20
+            profit_margin = float(row[6]) if row[6] else None
+            stock_quantity = int(row[7]) if row[7] else 0
+            unit = str(row[8]).strip() if row[8] else "adet"
+            stock_location_raw = str(row[9]).strip().lower() if len(row) > 9 and row[9] else ""
+            warranty_years = int(row[10]) if len(row) > 10 and row[10] else None
+            description = str(row[11]).strip() if len(row) > 11 and row[11] else None
             
             # Parse stock location
             stock_location = "akturk"  # Varsayılan: Aktürk Depo
@@ -2037,7 +2040,7 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
                 continue
             
             if not category_name or category_name not in category_map:
-                errors.append(f"Satır {row_num}: Geçersiz kategori '{row[1]}'")
+                errors.append(f"Satır {row_num}: Geçersiz kategori '{row[2]}'")
                 continue
             
             if purchase_price_without_vat is None or purchase_price_without_vat < 0:
@@ -2059,10 +2062,12 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
             # Create product
             product_dict = {
                 "id": str(uuid.uuid4()),
+                "product_code": product_code,
                 "name": name,
                 "category_id": category["id"],
                 "category_name": category["name"],
                 "description": description,
+                "warranty_years": warranty_years,
                 "currency": currency,
                 "purchase_price_without_vat": round(purchase_price_without_vat, 2),
                 "vat_rate": vat_rate,
