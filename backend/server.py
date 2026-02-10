@@ -4768,7 +4768,7 @@ async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: 
     return updated
 
 @api_router.delete("/expenses/{expense_id}")
-async def delete_expense(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
+async def delete_expense(expense_id: str, current_user: dict = Depends(require_permission("expenses_manage"))):
     result = await db.expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Gider bulunamadı")
