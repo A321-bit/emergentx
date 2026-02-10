@@ -139,6 +139,7 @@ const Roles = () => {
     'Muhasebe & Bütçe': ['accounting_view', 'accounting_manage'],
     'Giderler': ['expenses_view', 'expenses_manage'],
     'Gelirler': ['incomes_view', 'incomes_manage'],
+    'Kar Bilgileri (Yönetici)': ['profit_view'],
     'İK & Bordro': ['hr_view', 'hr_manage', 'payroll_view', 'payroll_manage', 'attendance_view', 'attendance_manage'],
     'Ayarlar': ['settings_manage', 'xml_import_manage']
   };
