@@ -4739,7 +4739,7 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(re
     return exp_dict
 
 @api_router.put("/expenses/{expense_id}")
-async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
+async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: dict = Depends(require_permission("expenses_manage"))):
     """Gideri güncelle"""
     exp_dict = expense.model_dump()
     exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
