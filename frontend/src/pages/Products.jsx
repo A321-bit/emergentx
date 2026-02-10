@@ -180,6 +180,7 @@ const Products = () => {
       description: formData.description || null,
       short_description: formData.short_description || null,
       benefits: formData.benefits?.filter(b => b.trim()) || [],  // Boş olmayanları filtrele
+      warranty_years: formData.warranty_years ? parseInt(formData.warranty_years) : null,
       currency: formData.currency,
       purchase_price_without_vat: parseFloat(formData.purchase_price_without_vat),
       vat_rate: parseFloat(formData.vat_rate) || 20,
