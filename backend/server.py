@@ -4270,7 +4270,7 @@ async def get_sales_by_dealer(current_user: dict = Depends(require_permission("f
 # ==================== SALES ROUTES (Satışlar) ====================
 
 @api_router.get("/sales")
-async def get_sales(current_user: dict = Depends(require_permission("finance_view"))):
+async def get_sales(current_user: dict = Depends(require_permission("sales_view"))):
     sales = await db.sales.find({"is_active": True}, {"_id": 0}).sort("sale_date", -1).to_list(1000)
     return sales
 

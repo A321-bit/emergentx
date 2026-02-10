@@ -138,7 +138,8 @@ const Sales = () => {
     due_date: ''
   };
 
-  const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('finance_manage');
+  const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('sales_manage');
+  const canView = user?.permissions?.includes('all') || user?.permissions?.includes('sales_view') || user?.permissions?.includes('sales_manage');
 
   // URL'den highlight parametresini kontrol et
   useEffect(() => {
