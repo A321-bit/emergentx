@@ -84,6 +84,7 @@ const Products = () => {
     description: '',
     short_description: '',  // PDF için kısa açıklama
     benefits: ['', '', ''],  // PDF için 3 fayda maddesi
+    warranty_years: '',  // Garanti süresi (yıl)
     currency: 'USD',
     purchase_price_without_vat: '',
     vat_rate: '20',
