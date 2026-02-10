@@ -72,6 +72,11 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(50);
   
+  // Filtreleme state'leri
+  const [stockLocationFilter, setStockLocationFilter] = useState('all');
+  const [hasStockFilter, setHasStockFilter] = useState('all');
+  const [hasCodeFilter, setHasCodeFilter] = useState('all');
+  
   const [formData, setFormData] = useState({
     name: '',
     product_code: '',
