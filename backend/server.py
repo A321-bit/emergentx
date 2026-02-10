@@ -4406,7 +4406,7 @@ async def delete_sale(sale_id: str, current_user: dict = Depends(require_permiss
     return {"message": "Satış silindi"}
 
 @api_router.get("/sales/stats")
-async def get_sales_stats(current_user: dict = Depends(require_permission("finance_view"))):
+async def get_sales_stats(current_user: dict = Depends(require_permission("sales_view"))):
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
