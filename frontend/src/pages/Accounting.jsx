@@ -164,6 +164,7 @@ const Accounting = () => {
   });
 
   const canManage = user?.permissions?.includes('all') || user?.permissions?.includes('finance_manage');
+  const canViewProfit = user?.permissions?.includes('all') || user?.permissions?.includes('profit_view');
 
   // Fetch all data
   const fetchData = useCallback(async () => {
