@@ -33,7 +33,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '../components/ui/dropdown-menu';
-import { Plus, Pencil, Trash2, Search, Upload, Image, FileText, X, Loader2, Download, FileSpreadsheet, Package, CheckSquare } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload, Image, FileText, X, Loader2, Download, FileSpreadsheet, Package, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Checkbox } from '../components/ui/checkbox';
 import { toast } from 'sonner';
 import axios from 'axios';
