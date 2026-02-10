@@ -4180,7 +4180,7 @@ async def get_sales(current_user: dict = Depends(require_permission("finance_vie
     return sales
 
 @api_router.post("/sales")
-async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     sale_dict = sale.model_dump()
     sale_dict["id"] = str(uuid.uuid4())
     sale_dict["created_by"] = current_user.get("id", current_user.get("email", ""))
@@ -4244,7 +4244,7 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(require_per
     return sale_dict
 
 @api_router.put("/sales/{sale_id}")
-async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     sale_dict = sale.model_dump()
     sale_dict["sale_date"] = sale_dict["sale_date"].isoformat() if isinstance(sale_dict["sale_date"], datetime) else sale_dict["sale_date"]
     if sale_dict.get("due_date"):
@@ -4304,7 +4304,7 @@ async def update_sale(sale_id: str, sale: SaleCreate, current_user: dict = Depen
     return {"message": "Satış güncellendi"}
 
 @api_router.delete("/sales/{sale_id}")
-async def delete_sale(sale_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_sale(sale_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.sales.update_one({"id": sale_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Satış bulunamadı")
@@ -4380,7 +4380,7 @@ async def get_sale_payments(sale_id: str, current_user: dict = Depends(require_p
     return payments
 
 @api_router.post("/sales/{sale_id}/payments")
-async def add_payment(sale_id: str, payment: PaymentCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def add_payment(sale_id: str, payment: PaymentCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     # Get sale
     sale = await db.sales.find_one({"id": sale_id, "is_active": True}, {"_id": 0})
     if not sale:
@@ -4419,7 +4419,7 @@ async def add_payment(sale_id: str, payment: PaymentCreate, current_user: dict =
     return payment_dict
 
 @api_router.delete("/payments/{payment_id}")
-async def delete_payment(payment_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_payment(payment_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     # Get payment to find sale_id
     payment = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     if not payment:
@@ -4525,7 +4525,7 @@ async def get_payment_methods():
 # ==================== CHECK (ÇEK) ROUTES ====================
 
 @api_router.put("/sales/{sale_id}/checks/{check_id}/collect")
-async def collect_check(sale_id: str, check_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def collect_check(sale_id: str, check_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     """Mark a check as collected"""
     sale = await db.sales.find_one({"id": sale_id, "is_active": True}, {"_id": 0})
     if not sale:
@@ -4637,7 +4637,7 @@ async def get_expense_categories(current_user: dict = Depends(require_permission
     return categories
 
 @api_router.post("/expense-categories")
-async def create_expense_category(category: ExpenseCategoryBase, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_expense_category(category: ExpenseCategoryBase, current_user: dict = Depends(require_permission("sales_manage"))):
     cat_dict = category.model_dump()
     cat_dict["id"] = str(uuid.uuid4())
     cat_dict["is_active"] = True
@@ -4646,7 +4646,7 @@ async def create_expense_category(category: ExpenseCategoryBase, current_user: d
     return cat_dict
 
 @api_router.delete("/expense-categories/{category_id}")
-async def delete_expense_category(category_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_expense_category(category_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.expense_categories.update_one({"id": category_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Kategori bulunamadı")
@@ -4660,7 +4660,7 @@ async def get_personnel(current_user: dict = Depends(require_permission("finance
     return personnel
 
 @api_router.post("/personnel")
-async def create_personnel(person: PersonnelBase, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_personnel(person: PersonnelBase, current_user: dict = Depends(require_permission("sales_manage"))):
     person_dict = person.model_dump()
     person_dict["id"] = str(uuid.uuid4())
     person_dict["is_active"] = True
@@ -4671,7 +4671,7 @@ async def create_personnel(person: PersonnelBase, current_user: dict = Depends(r
     return person_dict
 
 @api_router.put("/personnel/{person_id}")
-async def update_personnel(person_id: str, person: PersonnelBase, current_user: dict = Depends(require_permission("finance_manage"))):
+async def update_personnel(person_id: str, person: PersonnelBase, current_user: dict = Depends(require_permission("sales_manage"))):
     person_dict = person.model_dump()
     if person_dict.get("start_date"):
         person_dict["start_date"] = person_dict["start_date"].isoformat() if isinstance(person_dict["start_date"], datetime) else person_dict["start_date"]
@@ -4681,7 +4681,7 @@ async def update_personnel(person_id: str, person: PersonnelBase, current_user: 
     return {"message": "Personel güncellendi"}
 
 @api_router.delete("/personnel/{person_id}")
-async def delete_personnel(person_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_personnel(person_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.personnel.update_one({"id": person_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Personel bulunamadı")
@@ -4706,7 +4706,7 @@ async def get_expenses(month: Optional[int] = None, year: Optional[int] = None, 
     return expenses
 
 @api_router.post("/expenses")
-async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     exp_dict = expense.model_dump()
     exp_dict["id"] = str(uuid.uuid4())
     exp_dict["created_by"] = current_user["id"]
@@ -4739,7 +4739,7 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(re
     return exp_dict
 
 @api_router.put("/expenses/{expense_id}")
-async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     """Gideri güncelle"""
     exp_dict = expense.model_dump()
     exp_dict["expense_date"] = exp_dict["expense_date"].isoformat() if isinstance(exp_dict["expense_date"], datetime) else exp_dict["expense_date"]
@@ -4768,14 +4768,14 @@ async def update_expense(expense_id: str, expense: ExpenseCreate, current_user: 
     return updated
 
 @api_router.delete("/expenses/{expense_id}")
-async def delete_expense(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_expense(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Gider bulunamadı")
     return {"message": "Gider silindi"}
 
 @api_router.put("/expenses/{expense_id}/pay")
-async def mark_expense_paid(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def mark_expense_paid(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     """Gideri ödendi olarak işaretle"""
     result = await db.expenses.update_one(
         {"id": expense_id, "is_active": True},
@@ -4791,7 +4791,7 @@ async def mark_expense_paid(expense_id: str, current_user: dict = Depends(requir
     return updated
 
 @api_router.put("/expenses/{expense_id}/unpay")
-async def mark_expense_unpaid(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def mark_expense_unpaid(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     """Gideri ödenmedi olarak işaretle"""
     result = await db.expenses.update_one(
         {"id": expense_id, "is_active": True},
@@ -5323,7 +5323,7 @@ async def get_incomes(
     return incomes
 
 @api_router.post("/incomes")
-async def create_income(income: IncomeCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_income(income: IncomeCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     inc_dict = income.model_dump()
     inc_dict["id"] = str(uuid.uuid4())
     inc_dict["created_by"] = current_user["name"]
@@ -5343,7 +5343,7 @@ async def create_income(income: IncomeCreate, current_user: dict = Depends(requi
     return inc_dict
 
 @api_router.delete("/incomes/{income_id}")
-async def delete_income(income_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_income(income_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.incomes.update_one({"id": income_id}, {"$set": {"is_active": False}})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Gelir bulunamadı")
@@ -5365,7 +5365,7 @@ async def get_budget(year: int, month: int, current_user: dict = Depends(require
     return budget
 
 @api_router.post("/budgets")
-async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     existing = await db.budgets.find_one({"year": budget.year, "month": budget.month, "is_active": True})
     
     budget_dict = budget.model_dump()
@@ -5388,7 +5388,7 @@ async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Dep
     return budget_dict
 
 @api_router.delete("/budgets/{year}/{month}")
-async def delete_budget(year: int, month: int, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_budget(year: int, month: int, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.budgets.update_one(
         {"year": year, "month": month, "is_active": True},
         {"$set": {"is_active": False}}
@@ -5405,7 +5405,7 @@ async def get_recurring_expenses(current_user: dict = Depends(require_permission
     return expenses
 
 @api_router.post("/recurring-expenses")
-async def create_recurring_expense(expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def create_recurring_expense(expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     exp_dict = expense.model_dump()
     exp_dict["id"] = str(uuid.uuid4())
     exp_dict["is_active"] = True
@@ -5469,7 +5469,7 @@ async def create_recurring_expense(expense: RecurringExpenseCreate, current_user
     return exp_dict
 
 @api_router.put("/recurring-expenses/{expense_id}")
-async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("finance_manage"))):
+async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
     exp_dict = expense.model_dump()
     
     # Kategori adını al
@@ -5525,7 +5525,7 @@ async def update_recurring_expense(expense_id: str, expense: RecurringExpenseCre
     return updated
 
 @api_router.delete("/recurring-expenses/{expense_id}")
-async def delete_recurring_expense(expense_id: str, current_user: dict = Depends(require_permission("finance_manage"))):
+async def delete_recurring_expense(expense_id: str, current_user: dict = Depends(require_permission("sales_manage"))):
     result = await db.recurring_expenses.update_one({"id": expense_id}, {"$set": {"is_active": False}})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Tekrarlayan gider bulunamadı")
@@ -5535,7 +5535,7 @@ async def delete_recurring_expense(expense_id: str, current_user: dict = Depends
 async def generate_recurring_expenses(
     month: int,
     year: int,
-    current_user: dict = Depends(require_permission("finance_manage"))
+    current_user: dict = Depends(require_permission("sales_manage"))
 ):
     """Belirli ay için tekrarlayan giderleri oluştur"""
     month_key = f"{year}-{month:02d}"
@@ -6171,7 +6171,7 @@ async def generate_salary_expenses(
     month: int,
     year: int,
     salary_due_day: int = 5,  # Maaş ödeme günü (varsayılan 5)
-    current_user: dict = Depends(require_permission("finance_manage"))
+    current_user: dict = Depends(require_permission("sales_manage"))
 ):
     """Personel maaşlarını giderlere aktar"""
     month_key = f"{year}-{month:02d}"
