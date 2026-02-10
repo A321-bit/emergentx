@@ -64,6 +64,14 @@ const Products = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   
+  // Sıralama state'leri
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+  
+  // Pagination state'leri
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50);
+  
   const [formData, setFormData] = useState({
     name: '',
     product_code: '',
