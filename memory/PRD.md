@@ -6,26 +6,29 @@
 
 ## ✅ TAMAMLANAN ÖZELLİKLER
 
-### 10 Şubat 2026 - Kar Bilgisi Gizleme ve Satış İzinleri ✅
-**P0 Bug Fix & Feature - Güvenlik ve Yetkilendirme**
+### 10 Şubat 2026 - Satışlar Menüsü ve Kar Bilgisi Gizleme ✅
+**P0 Bug Fix - Menü Görünürlüğü ve Yetkilendirme**
 
-#### 1. Kar Bilgisi Gizleme (profit_view) ✅
+#### 1. Satışlar Menüsü Görünmüyor - KRİTİK DÜZELTME ✅
+- **SORUN:** Sidebar.jsx'te "Satışlar" menüsü yanlış izin kontrol ediyordu (`finance_view` yerine `sales_view`)
+- **ÇÖZÜM:** Menü görünürlük kontrolü `sales_view || sales_manage` olarak düzeltildi
+- Yeni oluşturulan roller için Satışlar menüsü artık doğru çalışıyor
+
+#### 2. Kar Bilgisi Gizleme (profit_view) ✅
 - **Dashboard:** Potansiyel Kar, Aylık Net Kar, Toplam Kar kartları gizlendi
 - **Muhasebe:** Brüt Kâr, Net Kâr kartları ve trend grafiğindeki kar çizgisi gizlendi
-- **Finans:** Brüt Kar Marjı, Yıllık Net Kar, Potansiyel Kar Özeti, Satış Karı kartları ve kar trend grafiği gizlendi
+- **Finans:** Brüt Kar Marjı, Yıllık Net Kar, Potansiyel Kar Özeti, Satış Karı kartları gizlendi
 - **Satışlar:** Kar (TL) kartı gizlendi
 - `profit_view` izni ile kontrol ediliyor
-- Admin/Yönetici rolü ("all" izni) kar bilgilerini görebilir
 
-#### 2. Satış Personeli Satışları Göremiyor - DÜZELTME ✅
-- `GET /api/sales` endpoint'i `finance_view` → `sales_view` olarak değiştirildi
-- `GET /api/sales/stats` endpoint'i `finance_view` → `sales_view` olarak değiştirildi
-- Satış personeli artık satışlar sayfasına tam erişebilir
-- Frontend'de `canView` ve `canManage` değişkenleri düzeltildi
+#### 3. Satış API Endpoint İzinleri Düzeltmesi ✅
+- `GET /api/sales` → `sales_view` (önceki: `finance_view`)
+- `GET /api/sales/stats` → `sales_view` (önceki: `finance_view`)
 
 #### Test Sonuçları:
-- ✅ Backend: 14/14 test geçti (%100)
-- ✅ Frontend: 8/8 UI doğrulaması geçti (%100)
+- ✅ Satış Mühendisi rolü ile "Satışlar" menüsü görünür
+- ✅ Satış sayfasına tam erişim sağlanır
+- ✅ Kar bilgileri doğru şekilde gizlenir
 
 ---
 
