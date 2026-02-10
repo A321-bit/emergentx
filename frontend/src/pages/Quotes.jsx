@@ -1401,7 +1401,12 @@ const Quotes = () => {
                               >
                                 <div className="flex flex-col">
                                   <span className="text-sm font-medium">{product.name}</span>
-                                  <span className="text-xs text-muted-foreground">{product.category_name}</span>
+                                  <div className="flex items-center gap-2">
+                                    {product.product_code && (
+                                      <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{product.product_code}</span>
+                                    )}
+                                    <span className="text-xs text-muted-foreground">{product.category_name}</span>
+                                  </div>
                                 </div>
                                 <span className="text-sm font-semibold text-primary">{formatTRY(product.sale_price * (product.currency === 'USD' ? exchangeRate : 1))}</span>
                               </button>
