@@ -1956,6 +1956,7 @@ async def export_products_template(current_user: dict = Depends(require_permissi
         "- Stok: Başlangıç stok miktarı (varsayılan: 0)",
         "- Birim: adet, paket, kutu vb. (varsayılan: adet)",
         "- Stok Yeri: 'Aktürk Depo' veya 'Tedarikçi Stok' (varsayılan: Aktürk Depo)",
+        "- Güç (W): Ürün güç değeri Watt cinsinden (opsiyonel, panel/inverter için)",
         "- Garanti (Yıl): Garanti süresi yıl olarak (opsiyonel, PDF teklifinde gösterilir)",
         "",
         "MEVCUT KATEGORİLER:"
