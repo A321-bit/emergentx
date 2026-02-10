@@ -6995,6 +6995,61 @@ async def execute_xml_import(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Import hatası: {str(e)}")
 
+@api_router.post("/xml-import/apply-solinved-discount")
+async def apply_solinved_discount(current_user: dict = Depends(require_permission("products_manage"))):
+    """Mevcut Solinved ürünlerine %26 iskonto uygula ve fiyatları güncelle"""
+    
+    # Solinved'den gelen tüm ürünleri bul
+    solinved_products = await db.products.find(
+        {"xml_supplier": {"$regex": "solinved", "$options": "i"}, "is_active": True},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    if not solinved_products:
+        return {"message": "Solinved ürünü bulunamadı", "updated": 0}
+    
+    # Get settings for VAT and profit margin
+    settings = await db.xml_import_settings.find_one({"id": "xml_import_settings"}, {"_id": 0})
+    vat_rate = settings.get("default_vat_rate", 20) if settings else 20
+    profit_margin = settings.get("default_profit_margin", 30) if settings else 30
+    
+    updated_count = 0
+    
+    for product in solinved_products:
+        try:
+            # Orijinal fiyatı al (iskonto uygulanmamış)
+            original_price = product.get("xml_original_price") or product.get("purchase_price_without_vat", 0)
+            
+            # %26 iskonto uygula
+            discounted_price = original_price * (1 - 0.26)
+            
+            # Fiyatları hesapla
+            purchase_price_with_vat = discounted_price * (1 + vat_rate / 100)
+            sale_price = purchase_price_with_vat * (1 + profit_margin / 100)
+            
+            # Ürünü güncelle
+            await db.products.update_one(
+                {"id": product["id"]},
+                {"$set": {
+                    "xml_original_price": original_price,  # Orijinal fiyatı sakla
+                    "purchase_price_without_vat": round(discounted_price, 2),
+                    "purchase_price": round(purchase_price_with_vat, 2),
+                    "sale_price": round(sale_price, 2),
+                    "xml_discount_applied": 26,  # Uygulanan iskonto oranı
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            updated_count += 1
+            
+        except Exception as e:
+            logging.error(f"Error updating Solinved product {product.get('id')}: {e}")
+    
+    return {
+        "message": f"Solinved ürünlerine %26 iskonto uygulandı",
+        "total_solinved_products": len(solinved_products),
+        "updated": updated_count
+    }
+
 @api_router.get("/xml-import/history")
 async def get_xml_import_history(current_user: dict = Depends(require_permission("products_view"))):
     """Get XML import history"""
