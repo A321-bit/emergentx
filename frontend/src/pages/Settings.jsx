@@ -129,24 +129,42 @@ const Settings = () => {
   };
 
   const handleXmlImport = async () => {
-    if (!window.confirm('XML\'den ürün aktarımı başlatılsın mı? Bu işlem mevcut ürünleri güncelleyebilir veya yeni ürünler ekleyebilir.')) {
+    if (!window.confirm('XML\'den ürün aktarımı başlatılsın mı? Tüm aktif tedarikçilerden ürünler güncellenecek.')) {
       return;
     }
     
     setXmlImporting(true);
     try {
-      const response = await axios.post(`${API_URL}/api/xml-import/execute`, {
-        skip_without_price: true,
-        update_existing: true
-      });
+      // Tüm aktif tedarikçileri al ve sırayla import et
+      const suppliersResponse = await axios.get(`${API_URL}/api/xml-suppliers`);
+      const activeSuppliers = suppliersResponse.data.filter(s => s.is_active);
       
-      const stats = response.data.stats;
+      let totalCreated = 0;
+      let totalUpdated = 0;
+      let errors = [];
+      
+      for (const supplier of activeSuppliers) {
+        try {
+          const response = await axios.post(`${API_URL}/api/xml-suppliers/${supplier.id}/import`, {
+            skip_without_price: true,
+            update_existing: true
+          });
+          totalCreated += response.data.stats?.created || 0;
+          totalUpdated += response.data.stats?.updated || 0;
+        } catch (err) {
+          errors.push(`${supplier.name}: ${err.response?.data?.detail || err.message}`);
+        }
+      }
+      
+      if (errors.length > 0) {
+        toast.error(`Bazı tedarikçilerde hata: ${errors.join(', ')}`, { duration: 8000 });
+      }
+      
       toast.success(
-        `Import tamamlandı! ${stats.created} yeni ürün eklendi, ${stats.updated} ürün güncellendi.`,
+        `Import tamamlandı! ${totalCreated} yeni ürün, ${totalUpdated} güncelleme.`,
         { duration: 5000 }
       );
       
-      // Refresh settings to get last sync info
       fetchXmlSettings();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Import hatası');
