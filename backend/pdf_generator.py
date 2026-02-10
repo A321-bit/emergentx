@@ -1437,15 +1437,66 @@ class PremiumQuotePDFGenerator:
         c.setFillColor(TEXT_COLOR)
         c.setFont(FONT_NORMAL, 10)
         
-        garanti_items = [
-            "Güneş Panelleri: 35 yıl elektrik üretim garantilidir.",
-            "İnverter: 2 yıl üretici garantisi geçerlidir.",
-            "Batarya: 2 yıl üretici garantisi geçerlidir.",
-            "İşçilik ve Kurulum: 2 yıl Aktürk Enerji Teknolojileri garanti kapsamındadır."
-        ]
+        # Ürünlerden garanti bilgilerini topla
+        garanti_items = []
+        items = quote_data.get('items', [])
+        
+        # Kategori bazlı garanti süreleri (varsayılanlar)
+        kategori_garantileri = {
+            'panel': 'Güneş Panelleri: {warranty} yıl elektrik üretim garantilidir.',
+            'inverter': 'İnverter: {warranty} yıl üretici garantisi geçerlidir.',
+            'batarya': 'Batarya: {warranty} yıl üretici garantisi geçerlidir.',
+            'akü': 'Akü: {warranty} yıl üretici garantisi geçerlidir.',
+            'default': '{name}: {warranty} yıl üretici garantisi geçerlidir.'
+        }
+        
+        # Ürün bazlı garanti süreleri
+        eklenen_kategoriler = set()
+        for item in items:
+            warranty_years = item.get('warranty_years')
+            if warranty_years and warranty_years > 0:
+                product_name = item.get('product_name', item.get('name', 'Ürün'))
+                category_name = item.get('category_name', '').lower()
+                
+                # Kategori bazlı şablon seç
+                template = kategori_garantileri.get('default')
+                if 'panel' in category_name:
+                    if 'panel' not in eklenen_kategoriler:
+                        template = kategori_garantileri.get('panel')
+                        eklenen_kategoriler.add('panel')
+                    else:
+                        continue  # Zaten panel garantisi eklendi
+                elif 'inverter' in category_name:
+                    if 'inverter' not in eklenen_kategoriler:
+                        template = kategori_garantileri.get('inverter')
+                        eklenen_kategoriler.add('inverter')
+                    else:
+                        continue
+                elif 'batarya' in category_name or 'akü' in category_name:
+                    if 'batarya' not in eklenen_kategoriler:
+                        template = kategori_garantileri.get('batarya')
+                        eklenen_kategoriler.add('batarya')
+                    else:
+                        continue
+                
+                garanti_text = template.format(warranty=warranty_years, name=product_name)
+                if garanti_text not in garanti_items:
+                    garanti_items.append(garanti_text)
+        
+        # Varsayılan garanti maddeleri (eğer ürünlerden çekilemezse)
+        if not garanti_items:
+            garanti_items = [
+                "Güneş Panelleri: 25 yıl elektrik üretim garantilidir.",
+                "İnverter: 5 yıl üretici garantisi geçerlidir.",
+                "Batarya: 10 yıl üretici garantisi geçerlidir.",
+            ]
+        
+        # İşçilik garantisi her zaman ekle
+        garanti_items.append("İşçilik ve Kurulum: 2 yıl Aktürk Enerji Teknolojileri garanti kapsamındadır.")
         
         for item in garanti_items:
             c.drawString(MARGIN_LEFT + 20, y, f"• {item}")
+            y -= 14
             y -= 14
         
         y -= 10
