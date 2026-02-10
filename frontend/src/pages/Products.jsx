@@ -59,6 +59,10 @@ const Products = () => {
   const datasheetInputRef = useRef(null);
   const excelInputRef = useRef(null);
   
+  // Toplu seçim state'leri
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: '',
     product_code: '',
