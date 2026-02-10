@@ -6514,11 +6514,37 @@ def extract_datasheet_from_description(description):
 
 async def fetch_and_parse_xml(xml_url: str):
     """Fetch XML from URL and parse products - supports multiple XML formats"""
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.get(xml_url)
-        response.raise_for_status()
+    try:
+        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+            response = await client.get(xml_url)
+            response.raise_for_status()
         
-    root = ET.fromstring(response.content)
+        # Try to decode content with different encodings
+        content = response.content
+        xml_text = None
+        
+        # Try UTF-8 first, then ISO-8859-9 (Turkish), then latin-1
+        for encoding in ['utf-8', 'iso-8859-9', 'latin-1', 'cp1254']:
+            try:
+                xml_text = content.decode(encoding)
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+        
+        if xml_text is None:
+            xml_text = content.decode('utf-8', errors='ignore')
+        
+        # Clean up XML text - remove invalid characters
+        import re
+        # Remove XML-illegal characters
+        xml_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', xml_text)
+        
+        root = ET.fromstring(xml_text.encode('utf-8'))
+    except ET.ParseError as e:
+        raise Exception(f"XML ayrıştırma hatası: {str(e)}")
+    except Exception as e:
+        raise Exception(f"XML indirme hatası: {str(e)}")
+    
     products = []
     
     # Try different XML formats
