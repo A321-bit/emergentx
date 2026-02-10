@@ -278,27 +278,29 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Aylık Net Kar/Zarar */}
-          <Card className={`border-0 shadow-lg ${stats?.monthly_is_loss 
-            ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
-            : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`text-sm font-medium ${stats?.monthly_is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
-                    Aylık Net {stats?.monthly_is_loss ? 'Zarar' : 'Kar'}
-                  </p>
-                  <p className="text-3xl font-bold mt-1">{formatTRY(Math.abs(stats?.monthly_net || 0))}</p>
-                  <p className={`text-xs mt-2 ${stats?.monthly_is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
-                    Gelir - Gider hesabı
-                  </p>
+          {/* Aylık Net Kar/Zarar - SADECE YÖNETİCİ */}
+          {canViewProfit && (
+            <Card className={`border-0 shadow-lg ${stats?.monthly_is_loss 
+              ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
+              : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${stats?.monthly_is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
+                      Aylık Net {stats?.monthly_is_loss ? 'Zarar' : 'Kar'}
+                    </p>
+                    <p className="text-3xl font-bold mt-1">{formatTRY(Math.abs(stats?.monthly_net || 0))}</p>
+                    <p className={`text-xs mt-2 ${stats?.monthly_is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
+                      Gelir - Gider hesabı
+                    </p>
+                  </div>
+                  <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                    {stats?.monthly_is_loss ? <AlertTriangle className="h-7 w-7" /> : <Wallet className="h-7 w-7" />}
+                  </div>
                 </div>
-                <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
-                  {stats?.monthly_is_loss ? <AlertTriangle className="h-7 w-7" /> : <Wallet className="h-7 w-7" />}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
