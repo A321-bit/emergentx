@@ -83,6 +83,8 @@ const Finance = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
 
+  const canViewProfit = user?.permissions?.includes('all') || user?.permissions?.includes('profit_view');
+
   const fetchData = async () => {
     try {
       setLoading(true);
