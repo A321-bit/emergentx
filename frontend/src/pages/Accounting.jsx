@@ -682,43 +682,47 @@ const Accounting = () => {
           </CardContent>
         </Card>
 
-        {/* Brüt Kar */}
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-xs font-medium">Brüt Kâr</p>
-                <p className="text-xl font-bold mt-1">{formatCurrency(summary?.gross_profit)}</p>
-                <p className="text-xs text-blue-200 mt-1">Satış - Maliyet</p>
+        {/* Brüt Kar - SADECE YÖNETİCİ */}
+        {canViewProfit && (
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-xs font-medium">Brüt Kâr</p>
+                  <p className="text-xl font-bold mt-1">{formatCurrency(summary?.gross_profit)}</p>
+                  <p className="text-xs text-blue-200 mt-1">Satış - Maliyet</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <PiggyBank className="h-6 w-6" />
+                </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                <PiggyBank className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Net Kar */}
-        <Card className={`border-0 shadow-lg ${summary?.is_loss 
-          ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
-          : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-xs font-medium ${summary?.is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
-                  Net Kâr {summary?.is_loss && <Badge className="ml-1 bg-red-600 text-white text-[10px]">ZARAR</Badge>}
-                </p>
-                <p className="text-xl font-bold mt-1">{formatCurrency(summary?.net_profit)}</p>
-                <p className={`text-xs mt-1 ${summary?.is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
-                  Marj: %{summary?.profit_margin || 0}
-                </p>
+        {/* Net Kar - SADECE YÖNETİCİ */}
+        {canViewProfit && (
+          <Card className={`border-0 shadow-lg ${summary?.is_loss 
+            ? 'bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/20' 
+            : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'} text-white`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium ${summary?.is_loss ? 'text-orange-100' : 'text-violet-100'}`}>
+                    Net Kâr {summary?.is_loss && <Badge className="ml-1 bg-red-600 text-white text-[10px]">ZARAR</Badge>}
+                  </p>
+                  <p className="text-xl font-bold mt-1">{formatCurrency(summary?.net_profit)}</p>
+                  <p className={`text-xs mt-1 ${summary?.is_loss ? 'text-orange-200' : 'text-violet-200'}`}>
+                    Marj: %{summary?.profit_margin || 0}
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                  {summary?.is_loss ? <AlertTriangle className="h-6 w-6" /> : <Wallet className="h-6 w-6" />}
+                </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                {summary?.is_loss ? <AlertTriangle className="h-6 w-6" /> : <Wallet className="h-6 w-6" />}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Bütçe Durumu */}
         <Card className={`border-0 shadow-lg ${budget?.exceeded 
