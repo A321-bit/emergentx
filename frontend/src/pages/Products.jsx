@@ -519,7 +519,7 @@ const Products = () => {
     });
     
     return result;
-  }, [products, searchTerm, categoryFilter, sortField, sortDirection]);
+  }, [products, searchTerm, categoryFilter, stockLocationFilter, hasStockFilter, hasCodeFilter, sortField, sortDirection]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
