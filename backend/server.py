@@ -2015,7 +2015,7 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
     errors = []
     
     # Skip header row
-    # New column order: Ürün Kodu, Ürün Adı, Kategori, Para Birimi, Alış Fiyatı, KDV %, Kar Marjı %, Stok, Birim, Stok Yeri, Garanti (Yıl), Açıklama
+    # New column order: Ürün Kodu, Ürün Adı, Kategori, Para Birimi, Alış Fiyatı, KDV %, Kar Marjı %, Stok, Birim, Stok Yeri, Güç (W), Garanti (Yıl), Açıklama
     for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
         if not row or (not row[0] and not row[1]):  # Skip empty rows
             continue
@@ -2031,8 +2031,9 @@ async def import_products_excel(file: UploadFile = File(...), current_user: dict
             stock_quantity = int(row[7]) if row[7] else 0
             unit = str(row[8]).strip() if row[8] else "adet"
             stock_location_raw = str(row[9]).strip().lower() if len(row) > 9 and row[9] else ""
-            warranty_years = int(row[10]) if len(row) > 10 and row[10] else None
-            description = str(row[11]).strip() if len(row) > 11 and row[11] else None
+            power_watt = float(row[10]) if len(row) > 10 and row[10] else None
+            warranty_years = int(row[11]) if len(row) > 11 and row[11] else None
+            description = str(row[12]).strip() if len(row) > 12 and row[12] else None
             
             # Parse stock location
             stock_location = "akturk"  # Varsayılan: Aktürk Depo
