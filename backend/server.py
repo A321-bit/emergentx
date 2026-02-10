@@ -5365,7 +5365,7 @@ async def get_budget(year: int, month: int, current_user: dict = Depends(require
     return budget
 
 @api_router.post("/budgets")
-async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Depends(require_permission("sales_manage"))):
+async def create_or_update_budget(budget: BudgetCreate, current_user: dict = Depends(require_permission("accounting_manage"))):
     existing = await db.budgets.find_one({"year": budget.year, "month": budget.month, "is_active": True})
     
     budget_dict = budget.model_dump()
