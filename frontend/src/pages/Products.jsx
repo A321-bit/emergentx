@@ -473,11 +473,30 @@ const Products = () => {
   const filteredAndSortedProducts = useMemo(() => {
     // Önce filtrele
     let result = products.filter(product => {
+      // Metin arama
       const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.product_code?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Kategori filtresi
       const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
-      return matchesSearch && matchesCategory;
+      
+      // Stok yeri filtresi
+      const matchesStockLocation = stockLocationFilter === 'all' || 
+        (stockLocationFilter === 'akturk' && (product.stock_location === 'akturk' || !product.stock_location)) ||
+        (stockLocationFilter === 'supplier' && product.stock_location === 'supplier');
+      
+      // Stok durumu filtresi
+      const matchesHasStock = hasStockFilter === 'all' ||
+        (hasStockFilter === 'in_stock' && (product.stock_quantity || 0) > 0) ||
+        (hasStockFilter === 'out_of_stock' && (product.stock_quantity || 0) === 0);
+      
+      // Ürün kodu filtresi
+      const matchesHasCode = hasCodeFilter === 'all' ||
+        (hasCodeFilter === 'has_code' && product.product_code) ||
+        (hasCodeFilter === 'no_code' && !product.product_code);
+      
+      return matchesSearch && matchesCategory && matchesStockLocation && matchesHasStock && matchesHasCode;
     });
     
     // Sonra sırala
