@@ -4706,7 +4706,7 @@ async def get_expenses(month: Optional[int] = None, year: Optional[int] = None, 
     return expenses
 
 @api_router.post("/expenses")
-async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
+async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(require_permission("expenses_manage"))):
     exp_dict = expense.model_dump()
     exp_dict["id"] = str(uuid.uuid4())
     exp_dict["created_by"] = current_user["id"]
