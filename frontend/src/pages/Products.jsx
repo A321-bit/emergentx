@@ -608,6 +608,17 @@ const Products = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                {canManage && (
+                  <TableHead className="w-10">
+                    <input 
+                      type="checkbox" 
+                      checked={selectAll && selectedProducts.length === filteredProducts.length}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-gray-300"
+                      data-testid="select-all-checkbox"
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Medya</TableHead>
                 <TableHead>Ürün Kodu</TableHead>
                 <TableHead>Ürün Adı</TableHead>
@@ -624,7 +635,22 @@ const Products = () => {
             </TableHeader>
             <TableBody>
               {filteredProducts.map((product) => (
-                <TableRow key={product.id} data-testid={`product-row-${product.id}`}>
+                <TableRow 
+                  key={product.id} 
+                  data-testid={`product-row-${product.id}`}
+                  className={selectedProducts.includes(product.id) ? "bg-primary/5" : ""}
+                >
+                  {canManage && (
+                    <TableCell>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedProducts.includes(product.id)}
+                        onChange={() => toggleSelectProduct(product.id)}
+                        className="h-4 w-4 rounded border-gray-300"
+                        data-testid={`select-product-${product.id}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <button
                       onClick={() => openMediaModal(product)}
