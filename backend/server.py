@@ -1860,6 +1860,7 @@ async def export_products_template(current_user: dict = Depends(require_permissi
         "- Kar Marjı %: Kar oranı (boş bırakılırsa kategori marjı kullanılır)",
         "- Stok: Başlangıç stok miktarı (varsayılan: 0)",
         "- Birim: adet, paket, kutu vb. (varsayılan: adet)",
+        "- Stok Yeri: 'Aktürk Depo' veya 'Tedarikçi Stok' (varsayılan: Aktürk Depo)",
         "",
         "MEVCUT KATEGORİLER:"
     ]
