@@ -155,6 +155,27 @@ const Settings = () => {
     }
   };
 
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
+  
+  const handleApplySolinvedDiscount = async () => {
+    if (!window.confirm('Tüm Solinved ürünlerine %26 iskonto uygulanacak. Devam etmek istiyor musunuz?')) {
+      return;
+    }
+    
+    setApplyingDiscount(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/xml-import/apply-solinved-discount`);
+      toast.success(
+        `${response.data.updated} Solinved ürününe %26 iskonto uygulandı!`,
+        { duration: 5000 }
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'İskonto uygulama hatası');
+    } finally {
+      setApplyingDiscount(false);
+    }
+  };
+
   const handleAddCardProvider = async () => {
     if (!newCardProviderName.trim()) {
       toast.error('Tedarikçi adı zorunludur');
