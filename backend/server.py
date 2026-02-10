@@ -1919,7 +1919,7 @@ async def export_products_template(current_user: dict = Depends(require_permissi
     
     # Headers (required fields marked with *)
     headers = ["Ürün Kodu", "Ürün Adı *", "Kategori *", "Para Birimi", "Alış Fiyatı (KDV Hariç) *", 
-               "KDV %", "Kar Marjı %", "Stok", "Birim", "Stok Yeri", "Garanti (Yıl)", "Açıklama"]
+               "KDV %", "Kar Marjı %", "Stok", "Birim", "Stok Yeri", "Güç (W)", "Garanti (Yıl)", "Açıklama"]
     
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
@@ -1929,7 +1929,7 @@ async def export_products_template(current_user: dict = Depends(require_permissi
     
     # Example row
     example_data = ["SP-400W-001", "Örnek Solar Panel 400W", categories[0]["name"] if categories else "Panel", 
-                    "USD", 100, 20, 30, 50, "adet", "Aktürk Depo", 25, "Açıklama buraya"]
+                    "USD", 100, 20, 30, 50, "adet", "Aktürk Depo", 400, 25, "Açıklama buraya"]
     for col, value in enumerate(example_data, 1):
         cell = ws.cell(row=2, column=col, value=value)
         cell.fill = note_fill
