@@ -5405,7 +5405,7 @@ async def get_recurring_expenses(current_user: dict = Depends(require_permission
     return expenses
 
 @api_router.post("/recurring-expenses")
-async def create_recurring_expense(expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("sales_manage"))):
+async def create_recurring_expense(expense: RecurringExpenseCreate, current_user: dict = Depends(require_permission("expenses_manage"))):
     exp_dict = expense.model_dump()
     exp_dict["id"] = str(uuid.uuid4())
     exp_dict["is_active"] = True
