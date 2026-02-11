@@ -33,6 +33,7 @@ import Payroll from "./pages/Payroll";
 import Settings from "./pages/Settings";
 import QuoteTemplates from "./pages/QuoteTemplates";
 import XMLSettings from "./pages/XMLSettings";
+import Banks from "./pages/Banks";
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
               <Route path="/dealer-groups" element={<DealerGroups />} />
               <Route path="/dealers" element={<Dealers />} />
               <Route path="/sales" element={<Sales />} />
+              <Route path="/banks" element={<Banks />} />
               <Route path="/accounting" element={<Accounting />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/reports" element={<Reports />} />
