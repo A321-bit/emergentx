@@ -135,6 +135,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   // ===== MUHASEBE ALT MENÜSÜ =====
   const accountingSubItems = [];
+  if (hasPermission('accounting_manage') || hasPermission('finance_manage')) {
+    accountingSubItems.push({ path: '/banks', icon: Building2, label: 'Bankalar' });
+  }
   if (hasPermission('finance_view') || hasPermission('finance_manage')) {
     accountingSubItems.push({ path: '/accounting', icon: Calculator, label: 'Gider/Gelir' });
   }
@@ -151,7 +154,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     accountingSubItems.push({ path: '/payroll', icon: Banknote, label: 'Bordro' });
   }
   const hasAccountingAccess = accountingSubItems.length > 0;
-  const isAccountingActive = ['/accounting', '/finance', '/employees', '/attendance', '/payroll'].includes(location.pathname);
+  const isAccountingActive = ['/banks', '/accounting', '/finance', '/employees', '/attendance', '/payroll'].includes(location.pathname);
 
   // ===== TEKLİFLER ALT MENÜSÜ =====
   const quotesSubItems = [];
