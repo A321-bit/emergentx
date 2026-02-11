@@ -555,6 +555,82 @@ class ExchangeRateSettings(BaseModel):
     last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
+# ==================== FINANCIAL TRACKING MODELS ====================
+
+# Bank Account Model (Banka Hesapları)
+class BankAccountBase(BaseModel):
+    bank_name: str
+    account_name: str  # Hesap adı/açıklaması
+    account_type: str  # vadesiz, vadeli, altin, doviz
+    balance: float = 0
+    currency: str = "TRY"  # TRY, USD, EUR, XAU (Altın gram)
+    iban: Optional[str] = None
+    notes: Optional[str] = None
+
+class BankAccountCreate(BankAccountBase):
+    pass
+
+class BankAccountUpdate(BaseModel):
+    bank_name: Optional[str] = None
+    account_name: Optional[str] = None
+    account_type: Optional[str] = None
+    balance: Optional[float] = None
+    currency: Optional[str] = None
+    iban: Optional[str] = None
+    notes: Optional[str] = None
+
+# Credit Card Model (Kredi Kartları)
+class CreditCardBase(BaseModel):
+    card_name: str  # Kart adı
+    bank_name: str
+    total_limit: float  # Toplam limit
+    current_debt: float = 0  # Güncel borç
+    statement_date: int  # Hesap kesim günü (1-31)
+    due_date: int  # Son ödeme günü (1-31)
+    notes: Optional[str] = None
+
+class CreditCardCreate(CreditCardBase):
+    pass
+
+class CreditCardUpdate(BaseModel):
+    card_name: Optional[str] = None
+    bank_name: Optional[str] = None
+    total_limit: Optional[float] = None
+    current_debt: Optional[float] = None
+    statement_date: Optional[int] = None
+    due_date: Optional[int] = None
+    notes: Optional[str] = None
+
+# Loan Model (Krediler)
+class LoanBase(BaseModel):
+    loan_name: str  # Kredi adı
+    bank_name: str
+    total_amount: float  # Toplam kredi tutarı
+    remaining_amount: float  # Kalan borç
+    monthly_payment: float  # Aylık taksit tutarı
+    total_installments: int  # Toplam taksit sayısı
+    paid_installments: int = 0  # Ödenen taksit sayısı
+    interest_rate: Optional[float] = None  # Faiz oranı (%)
+    start_date: str  # Kredi başlangıç tarihi
+    payment_day: int  # Ödeme günü (1-31)
+    notes: Optional[str] = None
+
+class LoanCreate(LoanBase):
+    pass
+
+class LoanUpdate(BaseModel):
+    loan_name: Optional[str] = None
+    bank_name: Optional[str] = None
+    total_amount: Optional[float] = None
+    remaining_amount: Optional[float] = None
+    monthly_payment: Optional[float] = None
+    total_installments: Optional[int] = None
+    paid_installments: Optional[int] = None
+    interest_rate: Optional[float] = None
+    start_date: Optional[str] = None
+    payment_day: Optional[int] = None
+    notes: Optional[str] = None
+
 # ==================== SALES & ACCOUNTING MODELS ====================
 
 # Payment Method Options
