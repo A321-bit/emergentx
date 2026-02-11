@@ -7533,6 +7533,261 @@ async def execute_supplier_import(
         logging.error(f"XML Import error for {supplier_name}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Import hatası ({supplier_name}): {str(e)[:200]}")
 
+# ==================== FINANCIAL TRACKING API (BANKALAR) ====================
+
+# Bank Accounts CRUD
+@api_router.get("/bank-accounts")
+async def get_bank_accounts(current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Tüm banka hesaplarını listele"""
+    accounts = await db.bank_accounts.find({"is_active": True}, {"_id": 0}).sort("bank_name", 1).to_list(100)
+    return accounts
+
+@api_router.post("/bank-accounts")
+async def create_bank_account(account: BankAccountCreate, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Yeni banka hesabı oluştur"""
+    account_dict = account.model_dump()
+    account_dict["id"] = str(uuid.uuid4())
+    account_dict["is_active"] = True
+    account_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    account_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.bank_accounts.insert_one(account_dict.copy())
+    return account_dict
+
+@api_router.put("/bank-accounts/{account_id}")
+async def update_bank_account(account_id: str, account: BankAccountUpdate, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Banka hesabını güncelle"""
+    update_data = {k: v for k, v in account.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.bank_accounts.update_one({"id": account_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Hesap bulunamadı")
+    
+    updated = await db.bank_accounts.find_one({"id": account_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/bank-accounts/{account_id}")
+async def delete_bank_account(account_id: str, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Banka hesabını sil (soft delete)"""
+    result = await db.bank_accounts.update_one({"id": account_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Hesap bulunamadı")
+    return {"message": "Hesap silindi"}
+
+# Credit Cards CRUD
+@api_router.get("/credit-cards")
+async def get_credit_cards(current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Tüm kredi kartlarını listele"""
+    cards = await db.credit_cards.find({"is_active": True}, {"_id": 0}).sort("bank_name", 1).to_list(100)
+    # Calculate available limit for each card
+    for card in cards:
+        card["available_limit"] = card.get("total_limit", 0) - card.get("current_debt", 0)
+        card["usage_percent"] = round((card.get("current_debt", 0) / card.get("total_limit", 1)) * 100, 1) if card.get("total_limit", 0) > 0 else 0
+    return cards
+
+@api_router.post("/credit-cards")
+async def create_credit_card(card: CreditCardCreate, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Yeni kredi kartı oluştur"""
+    card_dict = card.model_dump()
+    card_dict["id"] = str(uuid.uuid4())
+    card_dict["is_active"] = True
+    card_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    card_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.credit_cards.insert_one(card_dict.copy())
+    return card_dict
+
+@api_router.put("/credit-cards/{card_id}")
+async def update_credit_card(card_id: str, card: CreditCardUpdate, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Kredi kartını güncelle"""
+    update_data = {k: v for k, v in card.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.credit_cards.update_one({"id": card_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kart bulunamadı")
+    
+    updated = await db.credit_cards.find_one({"id": card_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/credit-cards/{card_id}")
+async def delete_credit_card(card_id: str, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Kredi kartını sil (soft delete)"""
+    result = await db.credit_cards.update_one({"id": card_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kart bulunamadı")
+    return {"message": "Kart silindi"}
+
+# Loans CRUD
+@api_router.get("/loans")
+async def get_loans(current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Tüm kredileri listele"""
+    loans = await db.loans.find({"is_active": True}, {"_id": 0}).sort("payment_day", 1).to_list(100)
+    # Calculate remaining installments
+    for loan in loans:
+        loan["remaining_installments"] = loan.get("total_installments", 0) - loan.get("paid_installments", 0)
+    return loans
+
+@api_router.post("/loans")
+async def create_loan(loan: LoanCreate, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Yeni kredi oluştur"""
+    loan_dict = loan.model_dump()
+    loan_dict["id"] = str(uuid.uuid4())
+    loan_dict["is_active"] = True
+    loan_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    loan_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.loans.insert_one(loan_dict.copy())
+    return loan_dict
+
+@api_router.put("/loans/{loan_id}")
+async def update_loan(loan_id: str, loan: LoanUpdate, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Krediyi güncelle"""
+    update_data = {k: v for k, v in loan.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.loans.update_one({"id": loan_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kredi bulunamadı")
+    
+    updated = await db.loans.find_one({"id": loan_id}, {"_id": 0})
+    return updated
+
+@api_router.put("/loans/{loan_id}/pay-installment")
+async def pay_loan_installment(loan_id: str, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Kredi taksiti öde"""
+    loan = await db.loans.find_one({"id": loan_id}, {"_id": 0})
+    if not loan:
+        raise HTTPException(status_code=404, detail="Kredi bulunamadı")
+    
+    new_paid = loan.get("paid_installments", 0) + 1
+    new_remaining = loan.get("remaining_amount", 0) - loan.get("monthly_payment", 0)
+    
+    await db.loans.update_one(
+        {"id": loan_id},
+        {"$set": {
+            "paid_installments": new_paid,
+            "remaining_amount": max(0, new_remaining),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Taksit ödendi", "paid_installments": new_paid}
+
+@api_router.delete("/loans/{loan_id}")
+async def delete_loan(loan_id: str, current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Krediyi sil (soft delete)"""
+    result = await db.loans.update_one({"id": loan_id}, {"$set": {"is_active": False}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kredi bulunamadı")
+    return {"message": "Kredi silindi"}
+
+# Financial Summary
+@api_router.get("/financial-summary")
+async def get_financial_summary(current_user: dict = Depends(require_permission("accounting_manage"))):
+    """Finansal özet - Net varlık, toplam borç, yaklaşan ödemeler"""
+    
+    # Get exchange rates
+    exchange_settings = await db.exchange_rate_settings.find_one({"id": "exchange_rate_settings"}, {"_id": 0})
+    usd_rate = exchange_settings.get("usd_to_try", 34.0) if exchange_settings else 34.0
+    eur_rate = exchange_settings.get("eur_to_try", 37.0) if exchange_settings else 37.0
+    gold_rate = 3200  # Approximate gold gram price in TRY
+    
+    # Bank accounts
+    accounts = await db.bank_accounts.find({"is_active": True}, {"_id": 0}).to_list(100)
+    total_assets_try = 0
+    assets_by_currency = {"TRY": 0, "USD": 0, "EUR": 0, "XAU": 0}
+    
+    for acc in accounts:
+        balance = acc.get("balance", 0)
+        currency = acc.get("currency", "TRY")
+        assets_by_currency[currency] = assets_by_currency.get(currency, 0) + balance
+        
+        # Convert to TRY
+        if currency == "USD":
+            total_assets_try += balance * usd_rate
+        elif currency == "EUR":
+            total_assets_try += balance * eur_rate
+        elif currency == "XAU":
+            total_assets_try += balance * gold_rate
+        else:
+            total_assets_try += balance
+    
+    # Credit cards
+    cards = await db.credit_cards.find({"is_active": True}, {"_id": 0}).to_list(100)
+    total_card_debt = sum(c.get("current_debt", 0) for c in cards)
+    total_card_limit = sum(c.get("total_limit", 0) for c in cards)
+    
+    # Loans
+    loans = await db.loans.find({"is_active": True}, {"_id": 0}).to_list(100)
+    total_loan_debt = sum(l.get("remaining_amount", 0) for l in loans)
+    monthly_loan_payments = sum(l.get("monthly_payment", 0) for l in loans)
+    
+    # Total debt and net worth
+    total_debt = total_card_debt + total_loan_debt
+    net_worth = total_assets_try - total_debt
+    
+    # Upcoming payments (next 7 days)
+    today = datetime.now().day
+    upcoming_payments = []
+    
+    for card in cards:
+        due_day = card.get("due_date", 1)
+        days_until = (due_day - today) % 30
+        if days_until <= 7 and card.get("current_debt", 0) > 0:
+            upcoming_payments.append({
+                "type": "credit_card",
+                "name": card.get("card_name"),
+                "amount": card.get("current_debt"),
+                "due_day": due_day,
+                "days_until": days_until
+            })
+    
+    for loan in loans:
+        payment_day = loan.get("payment_day", 1)
+        days_until = (payment_day - today) % 30
+        if days_until <= 7:
+            upcoming_payments.append({
+                "type": "loan",
+                "name": loan.get("loan_name"),
+                "amount": loan.get("monthly_payment"),
+                "due_day": payment_day,
+                "days_until": days_until
+            })
+    
+    # Sort by days until payment
+    upcoming_payments.sort(key=lambda x: x["days_until"])
+    
+    # Warnings
+    warnings = []
+    for card in cards:
+        usage = (card.get("current_debt", 0) / card.get("total_limit", 1)) * 100 if card.get("total_limit", 0) > 0 else 0
+        if usage >= 80:
+            warnings.append({
+                "type": "high_usage",
+                "message": f"{card.get('card_name')} kartı %{usage:.0f} kullanımda",
+                "severity": "high" if usage >= 90 else "medium"
+            })
+    
+    return {
+        "total_assets_try": round(total_assets_try, 2),
+        "assets_by_currency": assets_by_currency,
+        "total_card_debt": round(total_card_debt, 2),
+        "total_card_limit": round(total_card_limit, 2),
+        "total_loan_debt": round(total_loan_debt, 2),
+        "monthly_loan_payments": round(monthly_loan_payments, 2),
+        "total_debt": round(total_debt, 2),
+        "net_worth": round(net_worth, 2),
+        "upcoming_payments": upcoming_payments,
+        "warnings": warnings,
+        "exchange_rates": {
+            "usd_to_try": usd_rate,
+            "eur_to_try": eur_rate,
+            "gold_gram_try": gold_rate
+        }
+    }
+
 # ==================== SALARY/PAYROLL API ====================
 
 @api_router.get("/salaries")
