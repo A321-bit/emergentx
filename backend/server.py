@@ -8489,7 +8489,7 @@ async def forgot_password(request_data: dict):
     user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user:
         # Güvenlik için kullanıcı bulunamasa bile aynı mesajı dön
-        return {"message": "Eğer bu e-posta kayıtlıysa, şifre sıfırlama kodu oluşturuldu."}
+        return {"message": "Eğer bu e-posta kayıtlıysa, şifre sıfırlama kodu gönderildi."}
     
     # 6 haneli güvenlik kodu oluştur
     import random
@@ -8505,14 +8505,61 @@ async def forgot_password(request_data: dict):
         "used": False
     })
     
-    # Kodu logla (gerçek uygulamada e-posta gönderilir)
-    logging.info(f"Password reset code for {email}: {reset_code}")
+    # Email gönder
+    email_sent = False
+    try:
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+            <div style="max-width: 500px; margin: 0 auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #f97316; text-align: center; margin-bottom: 20px;">🔐 Şifre Sıfırlama</h2>
+                <p style="color: #333; font-size: 16px;">Merhaba,</p>
+                <p style="color: #333; font-size: 16px;">Şifre sıfırlama talebiniz alındı. Aşağıdaki kodu kullanarak şifrenizi sıfırlayabilirsiniz:</p>
+                <div style="background-color: #f97316; color: white; font-size: 32px; font-weight: bold; text-align: center; padding: 20px; border-radius: 8px; letter-spacing: 8px; margin: 20px 0;">
+                    {reset_code}
+                </div>
+                <p style="color: #666; font-size: 14px; text-align: center;">Bu kod <strong>15 dakika</strong> içinde geçerliliğini yitirecektir.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="color: #999; font-size: 12px; text-align: center;">Bu talebi siz yapmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+                <p style="color: #999; font-size: 12px; text-align: center;">Solar CRM</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [email],
+            "subject": "🔐 Şifre Sıfırlama Kodu - Solar CRM",
+            "html": html_content
+        }
+        
+        # Run sync SDK in thread to keep FastAPI non-blocking
+        await asyncio.to_thread(resend.Emails.send, params)
+        email_sent = True
+        logging.info(f"Password reset email sent to {email}")
+        
+    except Exception as e:
+        logging.error(f"Failed to send password reset email to {email}: {str(e)}")
+        # Email gönderilemese bile devam et, kodu hint olarak göster
     
-    return {
-        "message": "Şifre sıfırlama kodu oluşturuldu.",
-        "hint": f"Kod: {reset_code}",  # Geliştirme aşamasında göster, production'da kaldır
-        "expires_in_minutes": 15
-    }
+    if email_sent:
+        return {
+            "message": "Şifre sıfırlama kodu e-posta adresinize gönderildi.",
+            "email_sent": True,
+            "expires_in_minutes": 15
+        }
+    else:
+        return {
+            "message": "Şifre sıfırlama kodu oluşturuldu.",
+            "email_sent": False,
+            "hint": f"Kod: {reset_code}",  # Email gönderilemezse kodu göster
+            "expires_in_minutes": 15
+        }
 
 @api_router.post("/auth/reset-password")
 async def reset_password_with_code(request_data: dict):
