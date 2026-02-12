@@ -25,12 +25,12 @@ import asyncio
 import re
 import resend
 
-# Resend API yapılandırması
-resend.api_key = os.environ.get("RESEND_API_KEY")
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Resend API yapılandırması (load_dotenv sonrasında)
+resend.api_key = os.environ.get("RESEND_API_KEY")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
