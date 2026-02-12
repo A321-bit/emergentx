@@ -212,6 +212,18 @@ const Login = () => {
             </Button>
           </form>
 
+          {/* Şifremi Unuttum Link */}
+          <div className="text-center mt-4">
+            <Button 
+              variant="link" 
+              className="text-sm text-muted-foreground hover:text-primary"
+              onClick={() => { setForgotPasswordOpen(true); resetForgotForm(); }}
+            >
+              <KeyRound className="h-3 w-3 mr-1" />
+              Şifremi Unuttum
+            </Button>
+          </div>
+
           <div className="mt-6 pt-4 border-t border-border">
             <Button
               variant="outline"
