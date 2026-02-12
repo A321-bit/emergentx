@@ -8474,6 +8474,116 @@ async def export_sales_excel(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+# ==================== PASSWORD RESET ====================
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(request_data: dict):
+    """Şifre sıfırlama talebi - güvenlik kodu gönderir"""
+    email = request_data.get("email", "").lower().strip()
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        # Güvenlik için kullanıcı bulunamasa bile aynı mesajı dön
+        return {"message": "Eğer bu e-posta kayıtlıysa, şifre sıfırlama kodu oluşturuldu."}
+    
+    # 6 haneli güvenlik kodu oluştur
+    import random
+    reset_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    
+    # Kodu veritabanına kaydet (15 dakika geçerli)
+    await db.password_resets.delete_many({"email": email})  # Eski kodları sil
+    await db.password_resets.insert_one({
+        "email": email,
+        "code": reset_code,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+        "used": False
+    })
+    
+    # Kodu logla (gerçek uygulamada e-posta gönderilir)
+    logging.info(f"Password reset code for {email}: {reset_code}")
+    
+    return {
+        "message": "Şifre sıfırlama kodu oluşturuldu.",
+        "hint": f"Kod: {reset_code}",  # Geliştirme aşamasında göster, production'da kaldır
+        "expires_in_minutes": 15
+    }
+
+@api_router.post("/auth/reset-password")
+async def reset_password_with_code(request_data: dict):
+    """Kod ile şifre sıfırlama"""
+    email = request_data.get("email", "").lower().strip()
+    code = request_data.get("code", "").strip()
+    new_password = request_data.get("new_password", "")
+    
+    if not email or not code or not new_password:
+        raise HTTPException(status_code=400, detail="E-posta, kod ve yeni şifre gereklidir")
+    
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Şifre en az 6 karakter olmalıdır")
+    
+    # Kodu kontrol et
+    reset_record = await db.password_resets.find_one({
+        "email": email,
+        "code": code,
+        "used": False
+    })
+    
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş kod")
+    
+    # Süre kontrolü
+    expires_at = datetime.fromisoformat(reset_record["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=400, detail="Kodun süresi dolmuş")
+    
+    # Kullanıcıyı bul
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    # Şifreyi güncelle
+    password_hash = hashlib.sha256(new_password.encode()).hexdigest()
+    await db.user_passwords.update_one(
+        {"user_id": user["id"]},
+        {"$set": {"password_hash": password_hash}},
+        upsert=True
+    )
+    
+    # Kodu kullanıldı olarak işaretle
+    await db.password_resets.update_one(
+        {"email": email, "code": code},
+        {"$set": {"used": True}}
+    )
+    
+    return {"message": "Şifreniz başarıyla güncellendi"}
+
+# Acil şifre sıfırlama (sadece geliştirme/acil durumlar için)
+@api_router.post("/auth/emergency-reset")
+async def emergency_password_reset(request_data: dict):
+    """Acil şifre sıfırlama - güvenlik anahtarı ile"""
+    email = request_data.get("email", "").lower().strip()
+    new_password = request_data.get("new_password", "")
+    secret_key = request_data.get("secret_key", "")
+    
+    # Güvenlik anahtarı kontrolü
+    EMERGENCY_KEY = "AKTURK-SOLAR-2024-RESET"
+    if secret_key != EMERGENCY_KEY:
+        raise HTTPException(status_code=403, detail="Geçersiz güvenlik anahtarı")
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    password_hash = hashlib.sha256(new_password.encode()).hexdigest()
+    await db.user_passwords.update_one(
+        {"user_id": user["id"]},
+        {"$set": {"password_hash": password_hash}},
+        upsert=True
+    )
+    
+    return {"message": f"Şifre başarıyla sıfırlandı: {email}"}
+
 # ==================== INIT DEFAULT DATA ====================
 
 @api_router.post("/init-data")
