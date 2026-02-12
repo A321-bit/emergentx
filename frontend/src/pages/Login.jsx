@@ -247,6 +247,102 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Şifremi Unuttum Modal */}
+      <Dialog open={forgotPasswordOpen} onOpenChange={(open) => { setForgotPasswordOpen(open); if (!open) resetForgotForm(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              Şifremi Unuttum
+            </DialogTitle>
+            <DialogDescription>
+              {forgotStep === 1 && "E-posta adresinizi girin, size bir doğrulama kodu göndereceğiz."}
+              {forgotStep === 2 && "Size gönderilen 6 haneli kodu ve yeni şifrenizi girin."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {forgotStep === 1 && (
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email">E-posta Adresi</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="ornek@email.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            )}
+
+            {forgotStep === 2 && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="reset-code">Doğrulama Kodu (6 haneli)</Label>
+                  <Input
+                    id="reset-code"
+                    type="text"
+                    placeholder="123456"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    className="text-center text-2xl tracking-widest font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Yeni Şifre</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="En az 6 karakter"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Şifre Tekrar</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Şifreyi tekrar girin"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {forgotStep === 2 && (
+              <Button variant="outline" onClick={() => setForgotStep(1)} className="w-full sm:w-auto">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Geri
+              </Button>
+            )}
+            <Button 
+              onClick={forgotStep === 1 ? handleForgotPassword : handleResetPassword}
+              disabled={forgotLoading}
+              className="w-full sm:w-auto"
+            >
+              {forgotLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  İşleniyor...
+                </>
+              ) : forgotStep === 1 ? (
+                'Kod Gönder'
+              ) : (
+                'Şifreyi Değiştir'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
