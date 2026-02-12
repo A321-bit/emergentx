@@ -6,7 +6,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Sun, Moon, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
+import { Sun, Moon, Eye, EyeOff, Loader2, KeyRound, Mail, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -18,6 +19,15 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
+  
+  // Şifremi Unuttum states
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: email, 2: code, 3: new password
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
   
   const { login, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -58,6 +68,63 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast.error('Lütfen e-posta adresinizi girin');
+      return;
+    }
+    
+    setForgotLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/forgot-password`, { email: forgotEmail });
+      toast.success('Kod gönderildi!', { description: response.data.hint || 'E-postanızı kontrol edin' });
+      setForgotStep(2);
+    } catch (error) {
+      toast.error('Hata', { description: error.response?.data?.detail || 'İşlem başarısız' });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetCode || resetCode.length !== 6) {
+      toast.error('Lütfen 6 haneli kodu girin');
+      return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('Şifre en az 6 karakter olmalıdır');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Şifreler eşleşmiyor');
+      return;
+    }
+    
+    setForgotLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/auth/reset-password`, {
+        email: forgotEmail,
+        code: resetCode,
+        new_password: newPassword
+      });
+      toast.success('Şifreniz başarıyla değiştirildi!');
+      setForgotPasswordOpen(false);
+      resetForgotForm();
+    } catch (error) {
+      toast.error('Hata', { description: error.response?.data?.detail || 'Şifre değiştirilemedi' });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const resetForgotForm = () => {
+    setForgotStep(1);
+    setForgotEmail('');
+    setResetCode('');
+    setNewPassword('');
+    setConfirmPassword('');
   };
 
   return (
