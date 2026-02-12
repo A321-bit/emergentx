@@ -9,6 +9,7 @@ import MainLayout from "./components/layout/MainLayout";
 
 // Pages
 import Login from "./pages/Login";
+import EmergencyReset from "./pages/EmergencyReset";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Roles from "./pages/Roles";
