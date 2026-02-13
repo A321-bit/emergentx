@@ -224,7 +224,7 @@ const Quotes = () => {
   // Product selection
   const [productSearch, setProductSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
-  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [selectedQuantity, setSelectedQuantity] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({}); // Accordion için
   const [showCategoryBrowser, setShowCategoryBrowser] = useState(false); // Kategori tarayıcısı görünürlüğü
   
