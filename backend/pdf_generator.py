@@ -1893,9 +1893,12 @@ class PremiumQuotePDFGenerator:
         """Collect datasheet PDFs"""
         
         datasheets = []
+        logger.info(f"Collecting datasheets from {len(items)} items, upload_dir: {self.upload_dir}")
         
         for item in items:
             datasheet_url = item.get('datasheet_url')
+            logger.info(f"Item: {item.get('product_name', 'N/A')[:30]}, datasheet_url: {datasheet_url}")
+            
             if not datasheet_url:
                 continue
             
@@ -1903,7 +1906,7 @@ class PremiumQuotePDFGenerator:
             filename = datasheet_url.replace('/api/uploads/', '').replace('/uploads/', '').replace('uploads/', '')
             full_path = self.upload_dir / filename
             
-            logger.info(f"Looking for datasheet: {filename} at {full_path}")
+            logger.info(f"Looking for datasheet: {filename} at {full_path}, exists: {full_path.exists()}")
             
             if full_path.exists() and str(full_path).lower().endswith('.pdf'):
                 try:
