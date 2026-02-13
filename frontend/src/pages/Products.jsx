@@ -1564,7 +1564,7 @@ const Products = () => {
                   <div className="flex-1">
                     <p className="font-medium">Datasheet.pdf</p>
                     <a 
-                      href={`${API_URL}${selectedProduct.datasheet_url}`}
+                      href={selectedProduct.datasheet_url.startsWith('http') ? selectedProduct.datasheet_url : `${API_URL}${selectedProduct.datasheet_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-primary hover:underline"
