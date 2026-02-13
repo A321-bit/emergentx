@@ -770,9 +770,11 @@ class PremiumQuotePDFGenerator:
                 total_battery_watt += power * quantity
             elif any(x in category or x in product_name for x in ['inverter', 'invertor', 'evirici']):
                 total_inverter_watt += power * quantity
-            elif any(x in category or x in product_name for x in ['panel', 'güneş', 'solar', 'mono', 'poli']):
-                total_panel_watt += power * quantity
-                panel_count += quantity
+            elif any(x in category or x in product_name for x in ['panel', 'güneş paneli', 'günes paneli']):
+                # Exclude cables and accessories
+                if not any(exclude in product_name for exclude in ['kablo', 'cable', 'kelepçe', 'profil', 'konnektör', 'connector', 'montaj', 'vida', 'somun']):
+                    total_panel_watt += power * quantity
+                    panel_count += quantity
         
         if total_panel_watt == 0:
             return None
