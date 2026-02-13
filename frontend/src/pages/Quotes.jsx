@@ -470,6 +470,12 @@ const Quotes = () => {
       return;
     }
     
+    const qty = parseInt(selectedQuantity) || 0;
+    if (qty < 1) {
+      toast.error('Lütfen geçerli bir adet girin');
+      return;
+    }
+    
     const product = products.find(p => p.id === selectedProduct);
     if (!product) return;
     
@@ -486,7 +492,7 @@ const Quotes = () => {
     
     if (existingIndex >= 0) {
       const updatedItems = [...formData.items];
-      updatedItems[existingIndex].quantity += selectedQuantity;
+      updatedItems[existingIndex].quantity += qty;
       updatedItems[existingIndex].total_price_tl = updatedItems[existingIndex].unit_price_tl * updatedItems[existingIndex].quantity;
       updatedItems[existingIndex].total_price_usd = updatedItems[existingIndex].unit_price_usd * updatedItems[existingIndex].quantity;
       setFormData({ ...formData, items: updatedItems });
@@ -494,11 +500,11 @@ const Quotes = () => {
       const newItem = {
         product_id: product.id,
         product_name: product.name,
-        quantity: selectedQuantity,
+        quantity: qty,
         unit_price_usd: unit_price_usd,
         unit_price_tl: unit_price_tl,
-        total_price_usd: unit_price_usd * selectedQuantity,
-        total_price_tl: unit_price_tl * selectedQuantity,
+        total_price_usd: unit_price_usd * qty,
+        total_price_tl: unit_price_tl * qty,
         unit: product.unit || 'adet',
         datasheet_url: product.datasheet_url,
         currency: productCurrency,
