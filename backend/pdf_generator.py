@@ -1958,6 +1958,8 @@ class PremiumQuotePDFGenerator:
                     panel_single_watt = power
         
         logger.info(f"PDF CALC RESULT - panel_count={panel_count}, total_panel_watt={total_panel_watt}, inverter={total_inverter_watt}, battery={total_battery_watt}")
+        
+        if total_panel_watt == 0 and total_inverter_watt == 0 and total_battery_watt == 0:
             return None
         
         panel_kwp = total_panel_watt / 1000
