@@ -1267,18 +1267,18 @@ class PremiumQuotePDFGenerator:
         # Header with company | customer
         header_table = self._create_header(quote_data, company_settings)
         elements.append(header_table)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 5))
         
         # Quote info bar
         info_bar = self._create_info_bar(quote_data)
         elements.append(info_bar)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 5))
         
         # Title
         category_name = quote_data.get('customer_category_name', '')
         title_text = f"{category_name} Fiyat Teklifi" if category_name else "Fiyat Teklifi"
         elements.append(Paragraph(f"<b>{title_text}</b>", self.styles['QuoteTitle']))
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 5))
         
         # Check for segment options (Off-Grid 3-segment)
         include_segment_options = quote_data.get('include_segment_options', False)
