@@ -1685,9 +1685,9 @@ class PremiumQuotePDFGenerator:
             ('BACKGROUND', (0, 0), (-1, -1), HEADER_BG),
             ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
         ]))
         
         return info_table
