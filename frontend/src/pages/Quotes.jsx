@@ -369,7 +369,7 @@ const Quotes = () => {
     setEditingQuote(null);
     setProductSearch('');
     setSelectedProduct('');
-    setSelectedQuantity(1);
+    setSelectedQuantity('');
     setWizardCategoryFilter('all');
     setWizardCustomerSearch('');
     setPendingCustomerId(null);
@@ -511,7 +511,7 @@ const Quotes = () => {
     
     setSelectedProduct('');
     setProductSearch('');
-    setSelectedQuantity(1);
+    setSelectedQuantity('');
     toast.success('Ürün eklendi');
   };
 
@@ -550,7 +550,7 @@ const Quotes = () => {
     
     setFormData({ ...formData, items: [...formData.items, newItem] });
     setSelectedPackage('');
-    setSelectedQuantity(1);
+    setSelectedQuantity('');
     toast.success('Paket eklendi');
   };
 
