@@ -1944,6 +1944,9 @@ class PremiumQuotePDFGenerator:
             category = (item.get('category_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
             product_name = (item.get('product_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
             
+            # DEBUG LOG
+            logger.info(f"PDF CALC - Item: {item.get('product_name', 'N/A')[:30]}, power={power}, qty={quantity}, cat={category[:20] if category else 'N/A'}")
+            
             if any(x in category or x in product_name for x in ['batarya', 'akü', 'battery', 'depolama', 'lityum']):
                 total_battery_watt += power * quantity
             elif any(x in category or x in product_name for x in ['inverter', 'invertor', 'evirici']):
@@ -1954,7 +1957,7 @@ class PremiumQuotePDFGenerator:
                 if power > 0:
                     panel_single_watt = power
         
-        if total_panel_watt == 0 and total_inverter_watt == 0 and total_battery_watt == 0:
+        logger.info(f"PDF CALC RESULT - panel_count={panel_count}, total_panel_watt={total_panel_watt}, inverter={total_inverter_watt}, battery={total_battery_watt}")
             return None
         
         panel_kwp = total_panel_watt / 1000
