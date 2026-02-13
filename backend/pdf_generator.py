@@ -1966,22 +1966,27 @@ class PremiumQuotePDFGenerator:
             power = item.get('power_watt', 0) or 0
             quantity = item.get('quantity', 1)
             category = (item.get('category_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
-            product_name = (item.get('product_name') or '').lower().replace('i̇', 'i').replace('ı', 'i')
             
             # DEBUG LOG
-            logger.info(f"PDF CALC - Item: {item.get('product_name', 'N/A')[:30]}, power={power}, qty={quantity}, cat={category[:20] if category else 'N/A'}")
+            logger.info(f"PDF CALC - Item: {item.get('product_name', 'N/A')[:30]}, power={power}, qty={quantity}, cat={category}")
             
-            if any(x in category or x in product_name for x in ['batarya', 'akü', 'battery', 'depolama', 'lityum']):
+            # SADECE KATEGORİ BAZLI HESAPLAMA
+            # Panel kategorileri
+            if category in ['solar panel', 'güneş paneli', 'monokristal güneş panelleri']:
+                total_panel_watt += power * quantity
+                panel_count += quantity
+                if power > 0:
+                    panel_single_watt = power
+            # Batarya/Akü kategorileri
+            elif category in ['lityum batarya', 'lityum aküler', 'solar jel akü', 'jel aküler']:
                 total_battery_watt += power * quantity
-            elif any(x in category or x in product_name for x in ['inverter', 'invertor', 'evirici']):
+            # İnverter kategorileri
+            elif category in ['tam sinüs inverter', 'modifiye sinüs inverter', 'smart akıllı inverter', 
+                             'on grid inverter', 'hibrit inverter', 'tam sinüs akıllı inverterler',
+                             'tam sinüs inverterler', 'modifiye sinüs inverterler', 'deye hibrit inverterler',
+                             'deye string inverterler', 'auxsol string inverterler', 'micro inverter',
+                             'tam sinüs ups (karavan) inverterler', 'pompa sürücüleri', 'solar pompa sürücüsü']:
                 total_inverter_watt += power * quantity
-            elif any(x in category or x in product_name for x in ['panel', 'güneş paneli', 'günes paneli']):
-                # Exclude cables and accessories that contain "solar" word
-                if not any(exclude in product_name for exclude in ['kablo', 'cable', 'kelepçe', 'profil', 'konnektör', 'connector', 'montaj', 'vida', 'somun']):
-                    total_panel_watt += power * quantity
-                    panel_count += quantity
-                    if power > 0:
-                        panel_single_watt = power
         
         logger.info(f"PDF CALC RESULT - panel_count={panel_count}, total_panel_watt={total_panel_watt}, inverter={total_inverter_watt}, battery={total_battery_watt}")
         
