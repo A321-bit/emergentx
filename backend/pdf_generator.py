@@ -2370,7 +2370,18 @@ class PremiumQuotePDFGenerator:
             # Add bullet if not present
             if not note.startswith('•'):
                 note = f"• {note}"
-            c.drawString(MARGIN_LEFT + 15, note_y, note[:100])  # Max 100 chars per line
+            # Wrap long notes - max 120 chars per line
+            if len(note) > 120:
+                # Split at last space before 120 chars
+                split_idx = note[:120].rfind(' ')
+                if split_idx > 0:
+                    c.drawString(MARGIN_LEFT + 15, note_y, note[:split_idx])
+                    note_y -= 12
+                    c.drawString(MARGIN_LEFT + 20, note_y, note[split_idx+1:])
+                else:
+                    c.drawString(MARGIN_LEFT + 15, note_y, note[:120])
+            else:
+                c.drawString(MARGIN_LEFT + 15, note_y, note)
             note_y -= 13
         
         c.save()
