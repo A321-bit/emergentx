@@ -2347,9 +2347,9 @@ class PremiumQuotePDFGenerator:
         # Default notes if none in settings
         if not payment_notes or len(payment_notes) == 0:
             payment_notes = [
-                "Havale/EFT ödemelerinde açıklama kısmına teklif numaranızı yazınız.",
-                "Taksitli ödemelerde toplam tutara komisyon oranı eklenir.",
-                "Peşin ödemelerde ek indirim için satış temsilcinize danışınız."
+                "Havale/EFT ödemelerinde açıklama kısmına teklif numaranızı yazmanız gerekmektedir.",
+                "Taksitli ödemelerde toplam tutara banka komisyon oranı eklenmektedir.",
+                "Peşin ödemelerde ek indirim için satış temsilcinize danışabilirsiniz."
             ]
         
         # Calculate box height based on notes count
