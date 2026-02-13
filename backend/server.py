@@ -1733,6 +1733,31 @@ async def upload_product_datasheet(product_id: str, file: UploadFile = File(...)
     
     return {"datasheet_url": datasheet_url}
 
+@api_router.post("/products/fix-datasheet-urls")
+async def fix_datasheet_urls(current_user: dict = Depends(require_permission("products_manage"))):
+    """Fix datasheet URLs - convert full URLs to relative paths"""
+    import re
+    
+    products = await db.products.find({"datasheet_url": {"$regex": "^http"}}, {"_id": 0}).to_list(1000)
+    fixed_count = 0
+    
+    for product in products:
+        old_url = product.get("datasheet_url", "")
+        if old_url and old_url.startswith("http"):
+            # Extract just the filename from full URL
+            # Example: https://domain.com/api/uploads/filename.pdf -> /api/uploads/filename.pdf
+            match = re.search(r'/api/uploads/(.+)$', old_url)
+            if match:
+                new_url = f"/api/uploads/{match.group(1)}"
+                await db.products.update_one(
+                    {"id": product["id"]},
+                    {"$set": {"datasheet_url": new_url}}
+                )
+                fixed_count += 1
+                logging.info(f"Fixed datasheet URL for {product.get('name', 'N/A')}: {old_url} -> {new_url}")
+    
+    return {"message": f"{fixed_count} ürünün datasheet URL'si düzeltildi", "fixed_count": fixed_count}
+
 @api_router.delete("/products/{product_id}/images/{image_index}")
 async def delete_product_image(product_id: str, image_index: int, current_user: dict = Depends(require_permission("products_manage"))):
     product = await db.products.find_one({"id": product_id}, {"_id": 0})
