@@ -1902,8 +1902,22 @@ class PremiumQuotePDFGenerator:
             if not datasheet_url:
                 continue
             
-            # Clean filename from various URL formats
-            filename = datasheet_url.replace('/api/uploads/', '').replace('/uploads/', '').replace('uploads/', '')
+            # Clean filename from various URL formats (handle full URLs and relative paths)
+            filename = datasheet_url
+            # Remove domain if present (e.g., https://domain.com/api/uploads/file.pdf)
+            if 'http' in filename:
+                # Extract path after domain
+                import urllib.parse
+                parsed = urllib.parse.urlparse(filename)
+                filename = parsed.path
+            
+            # Remove various prefixes
+            filename = filename.replace('/api/uploads/', '').replace('/uploads/', '').replace('uploads/', '')
+            
+            # Remove leading slash if present
+            if filename.startswith('/'):
+                filename = filename[1:]
+            
             full_path = self.upload_dir / filename
             
             logger.info(f"Looking for datasheet: {filename} at {full_path}, exists: {full_path.exists()}")
