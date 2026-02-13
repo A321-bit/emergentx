@@ -908,7 +908,7 @@ const Products = () => {
                       )}
                       {product.datasheet_url && (
                         <a 
-                          href={`${API_URL}${product.datasheet_url}`}
+                          href={product.datasheet_url.startsWith('http') ? product.datasheet_url : `${API_URL}${product.datasheet_url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="ml-2 inline-flex items-center text-xs text-primary hover:underline"
