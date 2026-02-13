@@ -3224,24 +3224,8 @@ async def generate_quote_pdf_endpoint(quote_id: str, current_user: dict = Depend
             if product:
                 item["datasheet_url"] = product.get("datasheet_url")
                 item["description"] = product.get("description", "")
+                item["power_watt"] = product.get("power_watt")
                 item["category_name"] = product.get("category_name", "")
-                
-                # Get power_watt - if not set, try to extract from product name
-                power_watt = product.get("power_watt")
-                if not power_watt:
-                    # Try to extract watt from product name (e.g., "600W", "15 kW", "15kW")
-                    import re
-                    product_name = product.get("name", "")
-                    # Match patterns like 600W, 600 W, 15kW, 15 kW, 15KW
-                    watt_match = re.search(r'(\d+(?:\.\d+)?)\s*[wW](?![a-zA-Z])', product_name)
-                    kw_match = re.search(r'(\d+(?:\.\d+)?)\s*[kK][wW]', product_name)
-                    
-                    if kw_match:
-                        power_watt = float(kw_match.group(1)) * 1000
-                    elif watt_match:
-                        power_watt = float(watt_match.group(1))
-                
-                item["power_watt"] = power_watt
     
     quote["items"] = items
     
