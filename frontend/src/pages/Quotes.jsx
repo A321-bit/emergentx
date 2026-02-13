@@ -528,6 +528,12 @@ const Quotes = () => {
       return;
     }
     
+    const qty = parseInt(selectedQuantity) || 0;
+    if (qty < 1) {
+      toast.error('Lütfen geçerli bir adet girin');
+      return;
+    }
+    
     const pkg = packages.find(p => p.id === selectedPackage);
     if (!pkg) {
       toast.error('Paket bulunamadı');
@@ -543,11 +549,11 @@ const Quotes = () => {
     const newItem = {
       product_id: pkg.id,
       product_name: pkg.name,
-      quantity: selectedQuantity,
+      quantity: qty,
       unit: 'Paket',
       unit_price_tl: packageTotalTL,
       unit_price_usd: packageTotalTL / exchangeRate,
-      total_price_tl: packageTotalTL * selectedQuantity,
+      total_price_tl: packageTotalTL * qty,
       sort_order: formData.items.length,
       item_type: 'package',
       package_items: pkg.items || [], // Store package contents for PDF
