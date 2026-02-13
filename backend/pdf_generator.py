@@ -1517,11 +1517,11 @@ class PremiumQuotePDFGenerator:
         c.setFont(FONT_NORMAL, 10)
         
         garanti_disi_items = [
-            "Bakım ve kullanım talimatlarına aykırı kullanım",
-            "Yanlış kullanım ve ihmaller",
-            "Mücbir sebepler, doğal felaketler",
-            "Aktürk Enerji Teknolojileri kapsam alanı dışındaki kazalar",
-            "Yetkisiz kişilerce açılmış veya tamir edilmeye çalışılmış ekipmanlar",
+            "Bakım ve kullanım talimatlarına aykırı kullanım,",
+            "Yanlış kullanım ve ihmaller,",
+            "Mücbir sebepler, doğal felaketler,",
+            "Aktürk Enerji Teknolojileri kapsam alanı dışındaki kazalar,",
+            "Yetkisiz kişilerce açılmış veya tamir edilmeye çalışılmış ekipmanlar,",
             "Yukarıda yer almayan koşullarda uluslararası standartlar geçerlidir."
         ]
         
