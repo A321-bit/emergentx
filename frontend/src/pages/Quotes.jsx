@@ -1538,7 +1538,14 @@ const Quotes = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Label>Adet:</Label>
-                      <Input type="number" min="1" value={selectedQuantity} onChange={(e) => setSelectedQuantity(parseInt(e.target.value) || 1)} className="w-20" />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        value={selectedQuantity} 
+                        onChange={(e) => setSelectedQuantity(e.target.value)} 
+                        placeholder="Adet"
+                        className="w-20" 
+                      />
                     </div>
                     <Button type="button" onClick={selectionMode === 'product' ? handleAddProduct : handleAddPackage}>
                       <Plus className="h-4 w-4 mr-1" />Ekle
