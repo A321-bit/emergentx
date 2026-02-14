@@ -1565,13 +1565,7 @@ const Products = () => {
                   <div className="flex-1">
                     <p className="font-medium">Datasheet.pdf</p>
                     <a 
-                      href={(() => {
-                        let url = selectedProduct.datasheet_url;
-                        if (url.includes('/api/uploads/')) {
-                          url = '/api/uploads/' + url.split('/api/uploads/')[1];
-                        }
-                        return `${API_URL}${url}`;
-                      })()}
+                      href={getFileUrl(selectedProduct.datasheet_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-primary hover:underline"
