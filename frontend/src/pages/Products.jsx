@@ -909,14 +909,7 @@ const Products = () => {
                       )}
                       {product.datasheet_url && (
                         <a 
-                          href={(() => {
-                            let url = product.datasheet_url;
-                            // Extract just the path from full URL
-                            if (url.includes('/api/uploads/')) {
-                              url = '/api/uploads/' + url.split('/api/uploads/')[1];
-                            }
-                            return `${API_URL}${url}`;
-                          })()}
+                          href={getFileUrl(product.datasheet_url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="ml-2 inline-flex items-center text-xs text-primary hover:underline"
